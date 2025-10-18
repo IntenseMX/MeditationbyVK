@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'firebase_options.dart';
 import 'core/environment.dart';
 import 'core/theme.dart';
 import 'presentation/app_router.dart';
@@ -13,35 +14,41 @@ import 'presentation/app_router.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Skip Firebase initialization for now - needs configuration
-  // TODO: Run `flutterfire configure` after setting up Firebase project
+  // Initialize Firebase with error handling
+  // Will work once firebase_options.dart is configured with real values
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint('Firebase initialized successfully');
 
-  // // Initialize Firebase
-  // await Firebase.initializeApp();
+    // Connect to Firebase Emulators when in dev mode
+    if (EnvConfig.useEmulator) {
+      try {
+        FirebaseFirestore.instance.useFirestoreEmulator(
+          EnvConfig.host,
+          EnvConfig.firestorePort,
+        );
 
-  // // Connect to Firebase Emulators when in dev mode
-  // if (EnvConfig.useEmulator) {
-  //   try {
-  //     FirebaseFirestore.instance.useFirestoreEmulator(
-  //       EnvConfig.host,
-  //       EnvConfig.firestorePort,
-  //     );
+        await FirebaseAuth.instance.useAuthEmulator(
+          EnvConfig.host,
+          EnvConfig.authPort,
+        );
 
-  //     await FirebaseAuth.instance.useAuthEmulator(
-  //       EnvConfig.host,
-  //       EnvConfig.authPort,
-  //     );
+        await FirebaseStorage.instance.useStorageEmulator(
+          EnvConfig.host,
+          EnvConfig.storagePort,
+        );
 
-  //     await FirebaseStorage.instance.useStorageEmulator(
-  //       EnvConfig.host,
-  //       EnvConfig.storagePort,
-  //     );
-
-  //     debugPrint('Connected to Firebase Emulators');
-  //   } catch (e) {
-  //     debugPrint('Error connecting to emulators: $e');
-  //   }
-  // }
+        debugPrint('Connected to Firebase Emulators');
+      } catch (e) {
+        debugPrint('Error connecting to emulators: $e');
+      }
+    }
+  } catch (e) {
+    debugPrint('Firebase initialization skipped: $e');
+    debugPrint('Please configure firebase_options.dart with your project values');
+  }
 
   runApp(const ProviderScope(child: MyApp()));
 }
