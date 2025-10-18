@@ -1,0 +1,20 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow read access to all users
+    match /{allPaths=**} {
+      allow read: if true;
+    }
+
+    // Allow write access to authenticated users only
+    match /users/{userId}/{allPaths=**} {
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Admin-only uploads for meditation content
+    match /meditations/{allPaths=**} {
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+  }
+}
