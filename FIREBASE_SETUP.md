@@ -1,13 +1,39 @@
 # Firebase Setup Instructions
 
+**Last Updated**: 2025-10-18
+
+## Development Strategy: Emulator-First (2025-10-18)
+
+### 🚨 IMPORTANT: Local Development Only Until Phase 3+
+**All development happens in Firebase Emulators until the app is feature-complete.**
+
+- **Phase 0-2**: Emulator-only development (current stage)
+- **Phase 3+**: Cloud deployment when ready for production
+- **Why**: Zero costs, instant resets, faster iteration, no accidental bills
+
+### Running Local Emulators
+```bash
+# Start all emulators (Auth, Firestore, Storage)
+firebase emulators:start
+
+# Access Emulator UI
+http://localhost:4000
+```
+
+**Note**: Java 11+ required for emulators. If not installed, development will pause until local environment is ready.
+
+---
+
 ## Current Status
 - ✅ Firebase project created: `meditation-by-vk`
 - ✅ Firebase configuration file template created
-- ⚠️ Need to get actual configuration values from Firebase Console
+- ⚠️ Cloud configuration deferred until Phase 3+ (using emulators for now)
 
-## Steps to Complete Firebase Setup
+## Steps to Complete Firebase Setup (Phase 3+ Only)
 
-### 1. Go to Firebase Console
+### ⚠️ SKIP THIS SECTION FOR NOW - Emulators Only Until Phase 3
+
+### 1. Go to Firebase Console (Future - When Ready for Cloud)
 Visit: https://console.firebase.google.com/
 
 ### 2. Select Your Project

@@ -33,6 +33,18 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <script>
+    (function() {
+      try {
+        var isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        if (isLocalhost) {
+          var style = document.createElement('style');
+          style.innerHTML = '[data-emulator-warning], .firebase-emulator-warning { display: none !important; visibility: hidden !important; }';
+          document.head.appendChild(style);
+        }
+      } catch (e) {}
+    })();
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

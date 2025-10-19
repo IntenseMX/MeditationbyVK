@@ -1,31 +1,27 @@
 import 'package:go_router/go_router.dart';
-import 'screens/home_screen.dart';
-import 'screens/discover_screen.dart';
-import 'screens/progress_screen.dart';
-import 'screens/profile_screen.dart';
+import 'screens/splash_screen.dart';
+import 'screens/main_scaffold.dart';
+import 'screens/player_screen.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/splash',
   routes: [
+    GoRoute(
+      path: '/splash',
+      name: 'splash',
+      builder: (context, state) => const SplashScreen(),
+    ),
     GoRoute(
       path: '/',
       name: 'home',
-      builder: (context, state) => const HomeScreen(),
+      builder: (context, state) => const MainScaffold(),
     ),
     GoRoute(
-      path: '/discover',
-      name: 'discover',
-      builder: (context, state) => const DiscoverScreen(),
-    ),
-    GoRoute(
-      path: '/progress',
-      name: 'progress',
-      builder: (context, state) => const ProgressScreen(),
-    ),
-    GoRoute(
-      path: '/profile',
-      name: 'profile',
-      builder: (context, state) => const ProfileScreen(),
+      path: '/player/:id',
+      name: 'player',
+      builder: (context, state) => PlayerScreen(
+        meditationId: state.pathParameters['id'] ?? '',
+      ),
     ),
   ],
 );

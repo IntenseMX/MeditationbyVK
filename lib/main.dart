@@ -4,12 +4,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 import 'firebase_options.dart';
 import 'core/environment.dart';
 import 'core/theme.dart';
 import 'presentation/app_router.dart';
+import 'providers/theme_provider.dart';
+import 'providers/auth_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,21 +53,23 @@ void main() async {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+    // Trigger auth initialization (anonymous sign-in on launch)
+    ref.watch(authProvider);
+
     return MaterialApp.router(
-      title: 'Meditation by VK',
-      theme: AppTheme.lightTheme.copyWith(
-        textTheme: GoogleFonts.poppinsTextTheme(AppTheme.lightTheme.textTheme),
-      ),
-      darkTheme: AppTheme.darkTheme.copyWith(
-        textTheme: GoogleFonts.poppinsTextTheme(AppTheme.darkTheme.textTheme),
-      ),
+      title: 'CLARITY',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
       routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
+      debugShowMaterialGrid: false,
     );
   }
 }

@@ -27,12 +27,13 @@ class DefaultFirebaseOptions {
 
   // TODO: Replace with your actual Firebase Web configuration
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'YOUR_WEB_API_KEY',
-    appId: 'YOUR_WEB_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'meditation-by-vk',
-    authDomain: 'meditation-by-vk.firebaseapp.com',
-    storageBucket: 'meditation-by-vk.appspot.com',
+    apiKey: 'AIzaSyAzupQqwXnViVKkwe7aEx5Oecvm1SIw-vY',
+    appId: '1:93424872011:web:9e1f58c75a125d53737bce',
+    messagingSenderId: '93424872011',
+    projectId: 'meditation-by-vk-89927',
+    authDomain: 'meditation-by-vk-89927.firebaseapp.com',
+    storageBucket: 'meditation-by-vk-89927.appspot.com',
+    measurementId: 'G-9BHFQHQKKR',
   );
 
   // TODO: Replace with your actual Firebase Android configuration

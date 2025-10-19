@@ -1,6 +1,6 @@
 class EnvConfig {
   // Toggle this to switch between emulator and production
-  static const bool useEmulator = false; // Changed to false until Java is installed
+  static const bool useEmulator = true; // Enabled for Phase 1.5 local testing
 
   // Firebase Emulator Configuration
   static const String host = 'localhost';
