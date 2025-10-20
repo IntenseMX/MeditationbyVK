@@ -23,26 +23,33 @@ class MeditationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Create unique hero tag from title
+    final heroTag = 'meditation_$title';
+
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        height: 180,
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: gradientColors.map((color) => Color(color)).toList(),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Color(gradientColors[0]).withOpacity(0.3),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
+      child: Hero(
+        tag: heroTag,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            height: 180,
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: gradientColors.map((color) => Color(color)).toList(),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(gradientColors[0]).withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-          ],
-        ),
         child: Stack(
           children: [
             // Background pattern
@@ -157,6 +164,8 @@ class MeditationCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+          ),
         ),
       ),
     );
