@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/datasources/dummy_data.dart';
 import '../../core/theme.dart';
 import '../../providers/theme_provider.dart';
+import 'package:go_router/go_router.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -197,6 +198,15 @@ class ProfileScreen extends ConsumerWidget {
                       },
                       activeColor: AppTheme.deepCrimson,
                     ),
+                  ),
+                  // TEMP (2025-10-21): Admin button is always visible until login/auth is integrated.
+                  // TODO: Re-enable admin gating by checking authProvider.isAdmin here.
+                  _buildSettingItem(
+                    context,
+                    icon: Icons.admin_panel_settings,
+                    title: 'Admin Panel',
+                    subtitle: 'Manage content and categories',
+                    onTap: () => context.go('/admin'),
                   ),
                   _buildSettingItem(
                     context,

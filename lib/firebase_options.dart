@@ -32,7 +32,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '93424872011',
     projectId: 'meditation-by-vk-89927',
     authDomain: 'meditation-by-vk-89927.firebaseapp.com',
-    storageBucket: 'meditation-by-vk-89927.appspot.com',
+    storageBucket: 'meditation-by-vk-89927.firebasestorage.app',
     measurementId: 'G-9BHFQHQKKR',
   );
 
@@ -41,8 +41,8 @@ class DefaultFirebaseOptions {
     apiKey: 'YOUR_ANDROID_API_KEY',
     appId: 'YOUR_ANDROID_APP_ID',
     messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'meditation-by-vk',
-    storageBucket: 'meditation-by-vk.appspot.com',
+    projectId: 'meditation-by-vk-89927',
+    storageBucket: 'meditation-by-vk-89927.firebasestorage.app',
   );
 
   // TODO: Replace with your actual Firebase iOS configuration
@@ -50,8 +50,8 @@ class DefaultFirebaseOptions {
     apiKey: 'YOUR_IOS_API_KEY',
     appId: 'YOUR_IOS_APP_ID',
     messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'meditation-by-vk',
-    storageBucket: 'meditation-by-vk.appspot.com',
+    projectId: 'meditation-by-vk-89927',
+    storageBucket: 'meditation-by-vk-89927.firebasestorage.app',
     iosBundleId: 'com.example.meditationByVk',
   );
 }

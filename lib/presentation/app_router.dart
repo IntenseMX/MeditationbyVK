@@ -4,6 +4,13 @@ import '../core/animation_constants.dart';
 import 'screens/splash_screen.dart';
 import 'screens/main_scaffold.dart';
 import 'screens/player_screen.dart';
+import 'screens/login_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_provider.dart';
+import 'screens/admin/dashboard_screen.dart';
+import 'screens/admin/meditations_list_screen.dart';
+import 'screens/admin/meditation_editor_screen.dart';
+import 'screens/admin/categories_screen.dart';
 
 /// Custom page transition with fade and slide animation
 Page<dynamic> _buildPageWithTransition({
@@ -114,12 +121,76 @@ Page<dynamic> _buildPlayerTransition({
 
 final appRouter = GoRouter(
   initialLocation: '/splash',
+  redirect: (context, state) {
+    // Admin gate for admin and admin-related routes
+    final path = state.matchedLocation;
+    final isProtectedAdminRoute =
+        path.startsWith('/admin') || path.startsWith('/meditations') || path.startsWith('/categories');
+    if (!isProtectedAdminRoute) return null;
+    final container = ProviderScope.containerOf(context, listen: false);
+    final authState = container.read(authProvider);
+    if (authState.status != AuthStatus.authenticated || authState.isAdmin == false) {
+      return '/login';
+    }
+    return null;
+  },
   routes: [
     GoRoute(
       path: '/splash',
       name: 'splash',
       pageBuilder: (context, state) => _buildPageWithTransition(
         child: const SplashScreen(),
+        state: state,
+      ),
+    ),
+    GoRoute(
+      path: '/login',
+      name: 'login',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        child: const LoginScreen(),
+        state: state,
+      ),
+    ),
+    // Minimal admin landing (guarded by redirect)
+    GoRoute(
+      path: '/admin',
+      name: 'admin',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        child: const AdminDashboardScreen(),
+        state: state,
+      ),
+    ),
+    GoRoute(
+      path: '/meditations',
+      name: 'meditations_list',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        child: const MeditationsListScreen(),
+        state: state,
+      ),
+    ),
+    GoRoute(
+      path: '/meditations/new',
+      name: 'meditation_new',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        child: const MeditationEditorScreen(),
+        state: state,
+      ),
+    ),
+    GoRoute(
+      path: '/meditations/:id',
+      name: 'meditation_edit',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        child: MeditationEditorScreen(
+          meditationId: state.pathParameters['id'],
+        ),
+        state: state,
+      ),
+    ),
+    GoRoute(
+      path: '/categories',
+      name: 'categories',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        child: const CategoriesScreen(),
         state: state,
       ),
     ),

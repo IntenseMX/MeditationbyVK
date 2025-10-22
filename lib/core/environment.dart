@@ -1,6 +1,6 @@
 class EnvConfig {
-  // Toggle this to switch between emulator and production
-  static const bool useEmulator = true; // Enabled for Phase 1.5 local testing
+  // Toggle via --dart-define=USE_EMULATOR=true|false (defaults to false)
+  static const bool useEmulator = (const String.fromEnvironment('USE_EMULATOR', defaultValue: 'false') == 'true');
 
   // Firebase Emulator Configuration
   static const String host = 'localhost';
