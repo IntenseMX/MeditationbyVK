@@ -33,7 +33,8 @@ class AuthNotifier extends Notifier<AuthState> {
       _sub?.cancel();
     });
 
-    _init();
+    // Defer initialization to avoid modifying state during widget tree build
+    Future<void>(() => _init());
     return const AuthState.loading();
   }
 

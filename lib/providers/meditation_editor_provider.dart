@@ -144,7 +144,6 @@ class MeditationEditorNotifier extends Notifier<MeditationEditorState> {
   Future<bool> publish() async {
     state = state.copyWith(isSaving: true, error: null);
     try {
-      // Minimal validation
       if (state.id == null) {
         final id = await saveDraft();
         if (id == null) return false;

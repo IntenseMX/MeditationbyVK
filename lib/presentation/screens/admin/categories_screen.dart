@@ -29,14 +29,12 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          tooltip: 'Admin',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/admin'),
+        ),
         title: const Text('Categories'),
-        actions: [
-          IconButton(
-            tooltip: 'Admin',
-            icon: const Icon(Icons.dashboard_outlined),
-            onPressed: () => context.go('/admin'),
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

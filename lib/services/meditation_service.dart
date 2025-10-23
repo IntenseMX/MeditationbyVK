@@ -1,6 +1,45 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+class MeditationListItem {
+  final String id;
+  final String title;
+  final String? imageUrl;
+  final String? categoryId;
+  final String status; // draft | published
+  final int? durationSec;
+  final Timestamp? createdAt;
+  final String? difficulty; // beginner | intermediate | advanced
+  final bool? isPremium;
+
+  MeditationListItem({
+    required this.id,
+    required this.title,
+    required this.status,
+    this.imageUrl,
+    this.categoryId,
+    this.durationSec,
+    this.createdAt,
+    this.difficulty,
+    this.isPremium,
+  });
+
+  factory MeditationListItem.fromDoc(DocumentSnapshot<Map<String, dynamic>> d) {
+    final data = d.data() ?? <String, dynamic>{};
+    return MeditationListItem(
+      id: d.id,
+      title: (data['title'] ?? '') as String,
+      imageUrl: data['imageUrl'] as String?,
+      categoryId: data['categoryId'] as String?,
+      status: (data['status'] ?? 'draft') as String,
+      durationSec: data['durationSec'] as int?,
+      createdAt: data['createdAt'] is Timestamp ? data['createdAt'] as Timestamp : null,
+      difficulty: data['difficulty'] as String?,
+      isPremium: data['isPremium'] as bool?,
+    );
+  }
+}
+
 class MeditationService {
   MeditationService({FirebaseFirestore? firestore, FirebaseAuth? auth})
       : _firestore = firestore ?? FirebaseFirestore.instance,
@@ -117,6 +156,67 @@ class MeditationService {
       'target': target,
       'ts': Timestamp.now(),
     });
+  }
+
+  // Real-time list stream (index-safe): server filters only on status; others client-side
+  Stream<List<MeditationListItem>> streamMeditations({String? status}) {
+    Query<Map<String, dynamic>> q = _firestore
+        .collection('meditations')
+        .orderBy('createdAt', descending: true);
+
+    if (status != null && status.isNotEmpty) {
+      q = q.where('status', isEqualTo: status);
+    }
+
+    return q.snapshots().map(
+          (snap) => snap.docs.map(MeditationListItem.fromDoc).toList(),
+        );
+  }
+
+  // Bulk operations using WriteBatch and atomic version increments
+  Future<void> bulkPublish(List<String> ids) async {
+    if (ids.isEmpty) return;
+    final now = Timestamp.now();
+    final batch = _firestore.batch();
+    for (final id in ids) {
+      final ref = _firestore.collection('meditations').doc(id);
+      batch.update(ref, {
+        'status': 'published',
+        'publishedAt': now,
+        'updatedAt': now,
+        'version': FieldValue.increment(1),
+      });
+    }
+    await batch.commit();
+    await _logAudit(action: 'bulk_publish', target: {'collection': 'meditations', 'ids': ids});
+  }
+
+  Future<void> bulkUnpublish(List<String> ids) async {
+    if (ids.isEmpty) return;
+    final now = Timestamp.now();
+    final batch = _firestore.batch();
+    for (final id in ids) {
+      final ref = _firestore.collection('meditations').doc(id);
+      batch.update(ref, {
+        'status': 'draft',
+        'publishedAt': null,
+        'updatedAt': now,
+        'version': FieldValue.increment(1),
+      });
+    }
+    await batch.commit();
+    await _logAudit(action: 'bulk_unpublish', target: {'collection': 'meditations', 'ids': ids});
+  }
+
+  Future<void> bulkDelete(List<String> ids) async {
+    if (ids.isEmpty) return;
+    final batch = _firestore.batch();
+    for (final id in ids) {
+      final ref = _firestore.collection('meditations').doc(id);
+      batch.delete(ref);
+    }
+    await batch.commit();
+    await _logAudit(action: 'bulk_delete', target: {'collection': 'meditations', 'ids': ids});
   }
 }
 

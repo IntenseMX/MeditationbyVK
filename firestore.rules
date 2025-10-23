@@ -12,7 +12,8 @@ service cloud.firestore {
 
     // Public content: published meditations, active categories
     match /meditations/{id} {
-      allow read: if resource.data.status == 'published';
+      // Allow public reads for published, and full reads for admins (drafts included)
+      allow read: if resource.data.status == 'published' || isAdmin();
       allow create, update, delete: if isAdmin();
     }
 
