@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../providers/meditations_list_provider.dart';
 import '../../../providers/category_provider.dart';
 import '../../../services/meditation_service.dart';
+
+// Compact control sizes for bulk action buttons
+const double _bulkActionButtonMinSize = 36.0;
 
 class MeditationsListScreen extends ConsumerWidget {
   const MeditationsListScreen({super.key});
@@ -50,7 +54,7 @@ class MeditationsListScreen extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    Text('${selected.length} selected'),
+                    Text('${selected.length} selected', style: TextStyle(color: AppTheme.softCharcoal)),
                     const Spacer(),
                     TextButton.icon(
                       onPressed: () async {
@@ -77,7 +81,15 @@ class MeditationsListScreen extends ConsumerWidget {
                       label: const Text('Publish'),
                     ),
                     const SizedBox(width: 8),
-                    TextButton.icon(
+                    IconButton(
+                      tooltip: 'Delete',
+                      icon: const Icon(Icons.delete_outline),
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                      constraints: const BoxConstraints(
+                        minWidth: _bulkActionButtonMinSize,
+                        minHeight: _bulkActionButtonMinSize,
+                      ),
                       onPressed: () async {
                         final ok = await showDialog<bool>(
                           context: context,
@@ -92,8 +104,6 @@ class MeditationsListScreen extends ConsumerWidget {
                         );
                         if (ok == true) await actions.bulkDelete();
                       },
-                      icon: const Icon(Icons.delete_outline),
-                      label: const Text('Delete'),
                     ),
                   ],
                 ),
@@ -107,7 +117,9 @@ class MeditationsListScreen extends ConsumerWidget {
                     orElse: () => const <String, String>{},
                   );
                   if (items.isEmpty) {
-                    return const Center(child: Text('No meditations found'));
+                    return Center(
+                      child: Text('No meditations found', style: TextStyle(color: AppTheme.softCharcoal)),
+                    );
                   }
                   return _MeditationsTable(
                     items: items,
@@ -309,12 +321,21 @@ class _MeditationsTable extends StatelessWidget {
                     children: [
                       _Thumb(imageUrl: m.imageUrl, size: _thumbSize),
                       const SizedBox(width: _gapMd),
-                      Flexible(child: Text(m.title, overflow: TextOverflow.ellipsis)),
+                      Flexible(
+                        child: Text(
+                          m.title,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: AppTheme.softCharcoal),
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 DataCell(_StatusIcon(status: m.status)),
-                DataCell(Text(m.createdAt != null ? _formatDate(m.createdAt!) : '—')),
+                DataCell(Text(
+                  m.createdAt != null ? _formatDate(m.createdAt!) : '—',
+                  style: TextStyle(color: AppTheme.richTaupe),
+                )),
               ],
             );
           }).toList(),

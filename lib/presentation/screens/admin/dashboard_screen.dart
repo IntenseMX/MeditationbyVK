@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/admin_stats_provider.dart';
 import '../../widgets/admin/stat_card.dart';
 import 'package:go_router/go_router.dart';
+import '../../widgets/main_nav_bar.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
@@ -18,6 +20,7 @@ class AdminDashboardScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
       ),
+      bottomNavigationBar: const MainNavBar(selectedIndex: 0),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Center(
@@ -79,35 +82,78 @@ class AdminDashboardScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 24),
-            Text('Recent Activity', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            recent.when(
-              data: (items) {
-                if (items.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Center(child: Text('No recent activity.')),
-                  );
-                }
-                return ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final a = items[index];
-                    final target = a.target;
-                    final ts = a.ts?.toDate();
-                    return ListTile(
-                      dense: true,
-                      title: Text('${a.action} ${target['collection'] ?? ''}/${target['id'] ?? ''}'),
-                      subtitle: Text('by ${a.actorUid}${ts != null ? ' • ${ts.toLocal()}' : ''}'),
-                    );
-                  },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Theme.of(context).dividerColor),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Recent Activity',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: AppTheme.softCharcoal,
+                            ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => context.go('/admin/activity'),
+                        icon: const Icon(Icons.list_alt),
+                        label: const Text('View all'),
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 220, // fixed height with internal scrolling
+                    child: recent.when(
+                      data: (items) {
+                        if (items.isEmpty) {
+                          return Center(
+                            child: Text(
+                              'No recent activity.',
+                              style: TextStyle(color: AppTheme.richTaupe),
+                            ),
+                          );
+                        }
+                        final limited = items.take(5).toList();
+                        return ListView.separated(
+                          itemCount: limited.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final a = limited[index];
+                            final target = a.target;
+                            final ts = a.ts?.toDate();
+                            return ListTile(
+                              dense: true,
+                              title: Text(
+                                '${a.action} ${target['collection'] ?? ''}/${target['id'] ?? ''}',
+                                style: TextStyle(color: AppTheme.softCharcoal),
+                              ),
+                              subtitle: Text(
+                                'by ${a.actorUid}${ts != null ? ' • ${ts.toLocal()}' : ''}',
+                                style: TextStyle(color: AppTheme.richTaupe),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (e, _) => Center(
+                        child: Text(
+                          'Error: $e',
+                          style: TextStyle(color: AppTheme.richTaupe),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
             ),

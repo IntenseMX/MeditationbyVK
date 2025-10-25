@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/category_provider.dart';
 import '../../../services/category_service.dart';
@@ -99,8 +100,10 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                         ),
                         const SliverToBoxAdapter(child: SizedBox(height: 16)),
                         if (visible.isEmpty)
-                          const SliverToBoxAdapter(
-                            child: Center(child: Text('No categories yet.')),
+                          SliverToBoxAdapter(
+                            child: Center(
+                              child: Text('No categories yet.', style: TextStyle(color: AppTheme.softCharcoal)),
+                            ),
                           )
                         else
                           SliverReorderableList(
@@ -121,12 +124,15 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                               return Container(
                                 key: ValueKey(c.id),
                                 child: ListTile(
-                                  title: Text(c.name),
+                                  title: Text(c.name, style: TextStyle(color: AppTheme.softCharcoal)),
                                   subtitle: AnimatedSwitcher(
                                     duration: const Duration(milliseconds: 150),
                                     switchInCurve: Curves.easeOut,
                                     switchOutCurve: Curves.easeIn,
-                                    child: _buildOrderSubtitle(index, c.order),
+                                    child: DefaultTextStyle.merge(
+                                      style: TextStyle(color: AppTheme.richTaupe),
+                                      child: _buildOrderSubtitle(index, c.order),
+                                    ),
                                   ),
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,

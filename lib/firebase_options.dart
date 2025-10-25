@@ -25,7 +25,6 @@ class DefaultFirebaseOptions {
     }
   }
 
-  // TODO: Replace with your actual Firebase Web configuration
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyAzupQqwXnViVKkwe7aEx5Oecvm1SIw-vY',
     appId: '1:93424872011:web:9e1f58c75a125d53737bce',
@@ -36,14 +35,17 @@ class DefaultFirebaseOptions {
     measurementId: 'G-9BHFQHQKKR',
   );
 
-  // TODO: Replace with your actual Firebase Android configuration
+  // TODO: Replace with your actual Firebase Web configuration
+
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_ANDROID_API_KEY',
-    appId: 'YOUR_ANDROID_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
+    apiKey: 'AIzaSyC39vVURaV9BYnAqQXOIH0dB1vMudcAaS0',
+    appId: '1:93424872011:android:fd80c9cbb252fce8737bce',
+    messagingSenderId: '93424872011',
     projectId: 'meditation-by-vk-89927',
     storageBucket: 'meditation-by-vk-89927.firebasestorage.app',
   );
+
+  // TODO: Replace with your actual Firebase Android configuration
 
   // TODO: Replace with your actual Firebase iOS configuration
   static const FirebaseOptions ios = FirebaseOptions(

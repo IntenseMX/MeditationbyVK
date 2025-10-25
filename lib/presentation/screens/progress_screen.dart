@@ -78,11 +78,11 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
               child: TabBar(
                 controller: _tabController,
                 indicator: BoxDecoration(
-                  color: AppTheme.deepCrimson,
+                  color: AppTheme.brandPrimaryLight,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 indicatorPadding: const EdgeInsets.all(4),
-                labelColor: AppTheme.warmSandBeige,
+                labelColor: Colors.white,
                 unselectedLabelColor: AppTheme.softCharcoal,
                 tabs: const [
                   Tab(text: 'Day'),
@@ -130,11 +130,11 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                 SizedBox(
                   width: 200,
                   height: 200,
-                  child: CircularProgressIndicator(
+                    child: CircularProgressIndicator(
                     value: percentage / 100,
                     strokeWidth: 12,
                     backgroundColor: AppTheme.richTaupe.withOpacity(0.2),
-                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.deepCrimson),
+                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.brandPrimaryLight),
                   ),
                 ),
                 Column(
@@ -178,7 +178,7 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                   'Goal',
                   '$goalMinutes min',
                   Icons.flag,
-                  AppTheme.deepCrimson,
+                  AppTheme.brandPrimaryLight,
                 ),
               ),
             ],
@@ -259,7 +259,7 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppTheme.deepCrimson, AppTheme.amberBrown],
+                colors: [AppTheme.brandPrimaryLight, AppTheme.amberBrown],
               ),
               borderRadius: BorderRadius.circular(20),
             ),
@@ -331,7 +331,7 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                               width: 30,
                               margin: const EdgeInsets.only(bottom: 8),
                               decoration: BoxDecoration(
-                                color: value > 0 ? AppTheme.deepCrimson : AppTheme.richTaupe.withOpacity(0.2),
+                                color: value > 0 ? AppTheme.brandPrimaryLight : AppTheme.richTaupe.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               height: value > 0 ? (value / maxValue) * 100 : 10,

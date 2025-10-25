@@ -1,5 +1,30 @@
 import 'package:flutter/material.dart';
 
+@immutable
+class AppColors extends ThemeExtension<AppColors> {
+  final Color pop;
+  final Color onPop;
+
+  const AppColors({required this.pop, required this.onPop});
+
+  @override
+  AppColors copyWith({Color? pop, Color? onPop}) {
+    return AppColors(
+      pop: pop ?? this.pop,
+      onPop: onPop ?? this.onPop,
+    );
+  }
+
+  @override
+  AppColors lerp(ThemeExtension<AppColors>? other, double t) {
+    if (other is! AppColors) return this;
+    return AppColors(
+      pop: Color.lerp(pop, other.pop, t)!,
+      onPop: Color.lerp(onPop, other.onPop, t)!,
+    );
+  }
+}
+
 class AppTheme {
   // Shrine Pink Material Design Palette
   static const Color shrinePink100 = Color(0xFFFEDBD0);    // Primary Light
@@ -17,6 +42,10 @@ class AppTheme {
   static const Color shrineGrey = Color(0xFF9E9E9E);       // Grey for disabled states
   static const Color shrineBlack = Color(0xFF212121);      // Near black for text
   static const Color white = Colors.white;                   // Pure white
+
+  // Brand palette (neutral/brown-forward) — prefer these going forward
+  static const Color brandPrimaryLight = Color(0xFFAC7456);    // Selected (light) nav & accents
+  static const Color brandNeutralLight = Color(0xFFD5B09C);    // Unselected (light) nav & neutrals
 
   // Backward compatibility aliases (map old names to new Shrine Pink colors)
   static const Color deepCrimson = shrinePink100;           // Old primary -> Shrine Pink
@@ -132,8 +161,8 @@ class AppTheme {
     ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
       backgroundColor: shrineWhite,
-      selectedItemColor: shrinePink100,
-      unselectedItemColor: shrineGrey,
+      selectedItemColor: brandPrimaryLight,
+      unselectedItemColor: brandNeutralLight,
       type: BottomNavigationBarType.fixed,
       elevation: 8,
     ),
@@ -146,6 +175,12 @@ class AppTheme {
       color: shrinePink100,
       circularTrackColor: shrineSecondary50,
     ),
+    extensions: const <ThemeExtension<dynamic>>[
+      AppColors(
+        pop: Color(0xFFD00000),
+        onPop: Colors.white,
+      ),
+    ],
   );
 
   static ThemeData darkTheme = ThemeData(
@@ -198,5 +233,11 @@ class AppTheme {
       type: BottomNavigationBarType.fixed,
       elevation: 0,
     ),
+    extensions: const <ThemeExtension<dynamic>>[
+      AppColors(
+        pop: Color(0xFFD00000),
+        onPop: Colors.white,
+      ),
+    ],
   );
 }

@@ -25,4 +25,9 @@ final recentAdminActivityProvider = StreamProvider((ref) {
   return svc.recentAdminActivity(limit: 10);
 });
 
+final allAdminActivityProvider = StreamProvider((ref) {
+  final svc = ref.watch(adminServiceProvider);
+  return svc.recentAdminActivity(limit: 200); // show more on the full page
+});
+
 

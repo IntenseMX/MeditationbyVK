@@ -11,6 +11,7 @@ import 'screens/admin/dashboard_screen.dart';
 import 'screens/admin/meditations_list_screen.dart';
 import 'screens/admin/meditation_editor_screen.dart';
 import 'screens/admin/categories_screen.dart';
+import 'screens/admin/activity_screen.dart';
 
 /// Custom page transition with fade and slide animation
 Page<dynamic> _buildPageWithTransition({
@@ -161,6 +162,14 @@ final appRouter = GoRouter(
       ),
     ),
     GoRoute(
+      path: '/admin/activity',
+      name: 'admin_activity',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        child: const AdminActivityScreen(),
+        state: state,
+      ),
+    ),
+    GoRoute(
       path: '/meditations',
       name: 'meditations_list',
       pageBuilder: (context, state) => _buildPageWithTransition(
@@ -198,7 +207,31 @@ final appRouter = GoRouter(
       path: '/',
       name: 'home',
       pageBuilder: (context, state) => _buildPageWithTransition(
-        child: const MainScaffold(),
+        child: const MainScaffold(initialIndex: 0),
+        state: state,
+      ),
+    ),
+    GoRoute(
+      path: '/discover',
+      name: 'discover',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        child: const MainScaffold(initialIndex: 1),
+        state: state,
+      ),
+    ),
+    GoRoute(
+      path: '/progress',
+      name: 'progress',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        child: const MainScaffold(initialIndex: 2),
+        state: state,
+      ),
+    ),
+    GoRoute(
+      path: '/profile',
+      name: 'profile',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        child: const MainScaffold(initialIndex: 3),
         state: state,
       ),
     ),

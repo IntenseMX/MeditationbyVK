@@ -75,6 +75,44 @@ final meditationsStreamProvider = StreamProvider<List<MeditationListItem>>((ref)
   });
 });
 
+// Trending: newest 7 published
+final trendingMeditationsProvider = StreamProvider<List<MeditationListItem>>((ref) {
+  final svc = ref.watch(meditationServiceProvider);
+  return svc.streamMeditations().map((items) {
+    final published = items.where((m) => m.status == 'published');
+    return published.take(7).toList(growable: false);
+  });
+});
+
+// Recently Added: newest 4 published
+final recentlyAddedMeditationsProvider = StreamProvider<List<MeditationListItem>>((ref) {
+  final svc = ref.watch(meditationServiceProvider);
+  return svc.streamMeditations().map((items) {
+    final published = items.where((m) => m.status == 'published');
+    return published.take(4).toList(growable: false);
+  });
+});
+
+// Recommended: older 6 published (stable ordering, no shuffle for Phase 2)
+final recommendedMeditationsProvider = StreamProvider<List<MeditationListItem>>((ref) {
+  final svc = ref.watch(meditationServiceProvider);
+  return svc.streamMeditations().map((items) {
+    final published = items.where((m) => m.status == 'published').toList(growable: false);
+    if (published.isEmpty) return const <MeditationListItem>[];
+    final older = published.reversed.toList(growable: false);
+    return older.take(6).toList(growable: false);
+  });
+});
+
+// Fetch a single meditation by id; returns null if not found or not published
+final meditationByIdProvider = FutureProvider.family<Map<String, dynamic>?, String>((ref, id) async {
+  final svc = ref.watch(meditationServiceProvider);
+  final data = await svc.getMeditation(id);
+  final status = (data?['status'] as String?) ?? 'draft';
+  if (data == null || status != 'published') return null;
+  return data;
+});
+
 class MeditationsSelection extends Notifier<Set<String>> {
   @override
   Set<String> build() => <String>{};

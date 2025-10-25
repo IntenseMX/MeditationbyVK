@@ -37,11 +37,12 @@ class MeditationCard extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: gradientColors.map((color) => Color(color)).toList(),
-              ),
+              image: imageUrl.isNotEmpty
+                  ? DecorationImage(
+                      image: NetworkImage(imageUrl),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
               boxShadow: [
                 BoxShadow(
                   color: Color(gradientColors[0]).withOpacity(0.3),
@@ -50,6 +51,16 @@ class MeditationCard extends StatelessWidget {
                 ),
               ],
             ),
+        foregroundDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: gradientColors
+                .map((color) => Color(color).withOpacity(imageUrl.isNotEmpty ? 0.45 : 1.0))
+                .toList(),
+          ),
+        ),
         child: Stack(
           children: [
             // Background pattern

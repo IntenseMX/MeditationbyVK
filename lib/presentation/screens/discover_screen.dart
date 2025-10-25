@@ -75,12 +75,12 @@ class DiscoverScreen extends StatelessWidget {
                           width: 52,
                           height: 52,
                           decoration: BoxDecoration(
-                            color: AppTheme.deepCrimson,
+                            color: AppTheme.brandPrimaryLight,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Icon(
                             Icons.tune,
-                            color: AppTheme.warmSandBeige,
+                            color: Colors.white,
                           ),
                         ),
                       ],

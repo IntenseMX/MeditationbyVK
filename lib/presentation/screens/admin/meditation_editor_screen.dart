@@ -41,6 +41,25 @@ class _MeditationEditorScreenState extends ConsumerState<MeditationEditorScreen>
         if (!mounted) return;
         ref.read(meditationEditorProvider.notifier).load(widget.meditationId!);
       });
+    } else {
+      // Always start with a fresh state when creating a new meditation
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(meditationEditorProvider.notifier).reset();
+        _title.clear();
+        _description.clear();
+        _tagController.clear();
+        setState(() {
+          _imageBytes = null;
+          _imageExt = null;
+          _imageName = null;
+          _audioBytes = null;
+          _audioExt = null;
+          _audioName = null;
+          _imageProgress = null;
+          _audioProgress = null;
+        });
+      });
     }
   }
 
@@ -206,7 +225,7 @@ class _MeditationEditorScreenState extends ConsumerState<MeditationEditorScreen>
                             label: 'Select Cover Image',
                             previewText: _imageName ?? state.imageUrl,
                             progress: _imageProgress,
-                            enabled: !state.isSaving && _hasRequiredFields(),
+                            enabled: !state.isSaving,
                             onPick: () async {
                               final result = await FilePicker.platform.pickFiles(
                                 type: FileType.image,
@@ -229,7 +248,7 @@ class _MeditationEditorScreenState extends ConsumerState<MeditationEditorScreen>
                             label: 'Select Audio',
                             previewText: _audioName ?? state.audioUrl,
                             progress: _audioProgress,
-                            enabled: !state.isSaving && _hasRequiredFields(),
+                            enabled: !state.isSaving,
                             onPick: () async {
                               final result = await FilePicker.platform.pickFiles(
                                 type: FileType.custom,

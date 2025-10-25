@@ -1,35 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/animation_constants.dart';
-import '../../data/datasources/dummy_data.dart';
+import '../../providers/meditations_list_provider.dart';
 import '../widgets/animated_controls.dart';
 import '../widgets/animated_gradient_background.dart';
 import '../widgets/breathing_circle.dart';
 import '../widgets/interactive_particle_background.dart';
 
-class PlayerScreen extends StatefulWidget {
+class PlayerScreen extends ConsumerStatefulWidget {
   const PlayerScreen({super.key, required this.meditationId});
   final String meditationId;
 
   @override
-  State<PlayerScreen> createState() => _PlayerScreenState();
+  ConsumerState<PlayerScreen> createState() => _PlayerScreenState();
 }
 
-class _PlayerScreenState extends State<PlayerScreen>
+class _PlayerScreenState extends ConsumerState<PlayerScreen>
     with SingleTickerProviderStateMixin {
   bool isPlaying = false;
   double positionSeconds = 0;
   late AnimationController _imageAnimationController;
   late Animation<double> _imageScaleAnimation;
-
-  Map<String, dynamic>? get _meditation {
-    try {
-      return DummyData.meditations.firstWhere(
-        (m) => m['id'] == widget.meditationId,
-      );
-    } catch (_) {
-      return null;
-    }
-  }
 
   @override
   void initState() {
@@ -58,22 +49,32 @@ class _PlayerScreenState extends State<PlayerScreen>
 
   @override
   Widget build(BuildContext context) {
-    final meditation = _meditation;
-    if (meditation == null) {
-      return Scaffold(
+    final meditationAsync = ref.watch(meditationByIdProvider(widget.meditationId));
+    return meditationAsync.when(
+      loading: () => Scaffold(
         appBar: AppBar(title: const Text('Player')),
-        body: const Center(child: Text('Meditation not found')),
-      );
-    }
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => Scaffold(
+        appBar: AppBar(title: const Text('Player')),
+        body: const Center(child: Text('Failed to load')),
+      ),
+      data: (data) {
+        if (data == null) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Player')),
+            body: const Center(child: Text('Meditation not found')),
+          );
+        }
 
-    final String title = meditation['title'] as String;
-    final String subtitle = meditation['subtitle'] as String;
-    final int durationMin = meditation['duration'] as int;
-    final String imageUrl = meditation['imageUrl'] as String;
-    final List<dynamic> categories = meditation['categories'] as List<dynamic>? ?? [];
+        final String title = (data['title'] as String?) ?? '';
+        final String subtitle = (data['description'] as String?) ?? '';
+        final int durationSec = (data['durationSec'] as int?) ?? 300;
+        final String imageUrl = (data['imageUrl'] as String?) ?? '';
+        final String? categoryId = data['categoryId'] as String?;
 
-    final double totalSeconds = (durationMin * 60).toDouble().clamp(60, 3600);
-    final progressValue = totalSeconds > 0 ? positionSeconds / totalSeconds : 0.0;
+        final double totalSeconds = durationSec.toDouble().clamp(60, 3600);
+        final progressValue = totalSeconds > 0 ? positionSeconds / totalSeconds : 0.0;
 
     // Get theme colors for gradient
     final colorScheme = Theme.of(context).colorScheme;
@@ -83,10 +84,10 @@ class _PlayerScreenState extends State<PlayerScreen>
       colorScheme.tertiary,
     ];
 
-    final heroTag = 'meditation_$title';
+        final heroTag = 'meditation_$title';
 
-    return Stack(
-      children: [
+        return Stack(
+          children: [
         // Animated gradient background
         Positioned.fill(
           child: AnimatedGradientBackground(
@@ -124,10 +125,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                       borderRadius: BorderRadius.circular(20),
                       child: AspectRatio(
                         aspectRatio: 16 / 9,
-                        child: Image.network(
-                          imageUrl,
-                          fit: BoxFit.cover,
-                        ),
+                        child: imageUrl.isNotEmpty
+                            ? Image.network(imageUrl, fit: BoxFit.cover)
+                            : Container(color: Theme.of(context).colorScheme.secondary.withOpacity(0.3)),
                       ),
                     ),
                   ),
@@ -145,16 +145,11 @@ class _PlayerScreenState extends State<PlayerScreen>
                     ),
               ),
               const SizedBox(height: 12),
-              // Categories
-              if (categories.isNotEmpty)
-                Wrap(
-                  spacing: 8,
-                  children: categories.take(3).map((cat) {
-                    return Chip(
-                      label: Text(cat.toString()),
-                      backgroundColor: colorScheme.primary.withOpacity(0.2),
-                    );
-                  }).toList(),
+              // Category (simple title-cased id for Phase 2)
+              if (categoryId != null && categoryId.isNotEmpty)
+                Chip(
+                  label: Text(_prettyCategory(categoryId)),
+                  backgroundColor: colorScheme.primary.withOpacity(0.2),
                 ),
               const SizedBox(height: 32),
               // Breathing circle visualization
@@ -217,6 +212,8 @@ class _PlayerScreenState extends State<PlayerScreen>
           ),
         ),
       ],
+        );
+      },
     );
   }
 
@@ -225,6 +222,11 @@ class _PlayerScreenState extends State<PlayerScreen>
     final m = (total ~/ 60).toString().padLeft(1, '0');
     final s = (total % 60).toString().padLeft(2, '0');
     return '$m:$s';
+  }
+
+  String _prettyCategory(String input) {
+    final s = input.replaceAll('_', ' ').replaceAll('-', ' ').trim();
+    return s.split(' ').map((w) => w.isEmpty ? '' : (w[0].toUpperCase() + w.substring(1))).join(' ');
   }
 }
 

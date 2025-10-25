@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "93424872011",
+    "project_id": "meditation-by-vk-89927",
+    "storage_bucket": "meditation-by-vk-89927.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:93424872011:android:fd80c9cbb252fce8737bce",
+        "android_client_info": {
+          "package_name": "com.example.meditation_by_vk"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "93424872011-0vsmb5vgbkfrmt68pt0f1oj7u7hbpfg2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC39vVURaV9BYnAqQXOIH0dB1vMudcAaS0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "93424872011-0vsmb5vgbkfrmt68pt0f1oj7u7hbpfg2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

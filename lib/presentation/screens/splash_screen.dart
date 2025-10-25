@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:meditation_by_vk/core/theme.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -62,6 +63,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         child: AnimatedBuilder(
           animation: _animationController,
           builder: (context, child) {
+            final appColors = Theme.of(context).extension<AppColors>();
             return FadeTransition(
               opacity: _fadeAnimation,
               child: ScaleTransition(
@@ -75,14 +77,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       height: 120,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(24),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Theme.of(context).colorScheme.primary,
-                            Theme.of(context).colorScheme.secondary,
-                          ],
-                        ),
+                        color: appColors?.pop ?? Theme.of(context).colorScheme.error,
                         boxShadow: [
                           BoxShadow(
                             color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
@@ -95,7 +90,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         child: Text(
                           'UP',
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onPrimary,
+                            color: appColors?.onPop ?? Theme.of(context).colorScheme.onError,
                             fontSize: 64,
                             fontWeight: FontWeight.bold,
                           ),

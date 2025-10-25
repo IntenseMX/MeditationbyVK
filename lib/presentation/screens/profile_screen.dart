@@ -26,17 +26,22 @@ class ProfileScreen extends ConsumerWidget {
                     // Profile Header
                     Row(
                       children: [
-                        CircleAvatar(
-                          radius: 40,
-                          backgroundColor: AppTheme.deepCrimson,
-                          child: Text(
-                            userProfile['name'].toString().substring(0, 1).toUpperCase(),
-                            style: TextStyle(
-                              color: AppTheme.warmSandBeige,
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                        Builder(
+                          builder: (context) {
+                            final appColors = Theme.of(context).extension<AppColors>();
+                            return CircleAvatar(
+                              radius: 40,
+                              backgroundColor: appColors?.pop ?? AppTheme.deepCrimson,
+                              child: Text(
+                                userProfile['name'].toString().substring(0, 1).toUpperCase(),
+                                style: TextStyle(
+                                  color: appColors?.onPop ?? AppTheme.warmSandBeige,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -61,7 +66,7 @@ class ProfileScreen extends ConsumerWidget {
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.edit, color: AppTheme.deepCrimson),
+                          icon: Icon(Icons.edit, color: AppTheme.brandPrimaryLight),
                           onPressed: () {},
                         ),
                       ],
@@ -315,7 +320,7 @@ class ProfileScreen extends ConsumerWidget {
         children: [
           Icon(
             icon,
-            color: AppTheme.deepCrimson,
+            color: AppTheme.brandPrimaryLight,
             size: 24,
           ),
           const SizedBox(height: 8),
@@ -360,12 +365,12 @@ class ProfileScreen extends ConsumerWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppTheme.deepCrimson.withOpacity(0.1),
+            color: AppTheme.brandPrimaryLight.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             icon,
-            color: AppTheme.deepCrimson,
+            color: AppTheme.brandPrimaryLight,
             size: 20,
           ),
         ),
