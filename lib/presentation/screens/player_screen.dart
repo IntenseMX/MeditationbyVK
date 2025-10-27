@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/animation_constants.dart';
 import '../../providers/meditations_list_provider.dart';
+import '../../providers/audio_player_provider.dart';
 import '../widgets/animated_controls.dart';
 import '../widgets/animated_gradient_background.dart';
 import '../widgets/breathing_circle.dart';
@@ -17,8 +18,7 @@ class PlayerScreen extends ConsumerStatefulWidget {
 
 class _PlayerScreenState extends ConsumerState<PlayerScreen>
     with SingleTickerProviderStateMixin {
-  bool isPlaying = false;
-  double positionSeconds = 0;
+  String? _loadedMeditationId;
   late AnimationController _imageAnimationController;
   late Animation<double> _imageScaleAnimation;
 
@@ -50,6 +50,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   @override
   Widget build(BuildContext context) {
     final meditationAsync = ref.watch(meditationByIdProvider(widget.meditationId));
+    final audioState = ref.watch(audioPlayerProvider);
     return meditationAsync.when(
       loading: () => Scaffold(
         appBar: AppBar(title: const Text('Player')),
@@ -71,10 +72,28 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
         final String subtitle = (data['description'] as String?) ?? '';
         final int durationSec = (data['durationSec'] as int?) ?? 300;
         final String imageUrl = (data['imageUrl'] as String?) ?? '';
+        final String audioUrl = (data['audioUrl'] as String?) ?? '';
         final String? categoryId = data['categoryId'] as String?;
 
-        final double totalSeconds = durationSec.toDouble().clamp(60, 3600);
-        final progressValue = totalSeconds > 0 ? positionSeconds / totalSeconds : 0.0;
+        // Lazy-load audio when data is ready
+        if (_loadedMeditationId != widget.meditationId && audioUrl.isNotEmpty) {
+          _loadedMeditationId = widget.meditationId;
+          // Defer to next frame to avoid setState during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.read(audioPlayerProvider.notifier).load(
+                  meditationId: widget.meditationId,
+                  title: title,
+                  audioUrl: audioUrl,
+                  imageUrl: imageUrl,
+                  durationSec: durationSec,
+                );
+          });
+        }
+
+        final double totalSeconds = (audioState.duration?.inSeconds ?? 0).toDouble();
+        final double positionSeconds = totalSeconds > 0
+            ? audioState.position.inSeconds.toDouble().clamp(0, totalSeconds)
+            : 0.0;
 
     // Get theme colors for gradient
     final colorScheme = Theme.of(context).colorScheme;
@@ -114,6 +133,31 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
           body: ListView(
             padding: const EdgeInsets.all(20),
             children: [
+              if (audioState.error != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Playback error: ${audioState.error}',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.onBackground,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               // Hero animated image
               Hero(
                 tag: heroTag,
@@ -157,16 +201,21 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
                 child: BreathingCircle(
                   size: 150,
                   color: colorScheme.primary,
-                  autoPlay: isPlaying,
+                  autoPlay: audioState.isPlaying,
                 ),
               ),
               const SizedBox(height: 48),
               // Animated play/pause button
               Center(
                 child: AnimatedPlayPauseButton(
-                  isPlaying: isPlaying,
+                  isPlaying: audioState.isPlaying,
                   onPressed: () {
-                    setState(() => isPlaying = !isPlaying);
+                    final ctrl = ref.read(audioPlayerProvider.notifier);
+                    if (audioState.isPlaying) {
+                      ctrl.pause();
+                    } else {
+                      ctrl.play();
+                    }
                   },
                   size: 80,
                 ),
@@ -184,7 +233,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
                           color: colorScheme.onBackground,
                           fontWeight: FontWeight.w500,
                         ),
-                    child: Text(_format(positionSeconds)),
+                  child: Text(_format(positionSeconds)),
                   ),
                   AnimatedDefaultTextStyle(
                     duration: AnimationDurations.fast,
@@ -193,21 +242,33 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
                         .copyWith(
                           color: colorScheme.onBackground.withOpacity(0.6),
                         ),
-                    child: Text(_format(totalSeconds)),
+                    child: Text(totalSeconds > 0 ? _format(totalSeconds) : '--:--'),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               // Animated slider
               AnimatedSlider(
-                value: positionSeconds.clamp(0, totalSeconds),
+                value: positionSeconds,
                 min: 0,
-                max: totalSeconds,
+                max: totalSeconds > 0 ? totalSeconds : 1.0,
                 onChanged: (value) {
-                  setState(() => positionSeconds = value);
+                  if (totalSeconds > 0) {
+                    ref.read(audioPlayerProvider.notifier).seek(Duration(seconds: value.round()));
+                  }
                 },
                 activeColor: colorScheme.primary,
               ),
+              if (audioState.isLoading && totalSeconds == 0) ...[
+                const SizedBox(height: 12),
+                Center(
+                  child: SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.primary),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

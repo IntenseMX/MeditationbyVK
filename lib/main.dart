@@ -4,12 +4,15 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:audio_service/audio_service.dart';
 import 'firebase_options.dart';
 import 'core/environment.dart';
 import 'core/theme.dart';
 import 'presentation/app_router.dart';
 import 'providers/theme_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/audio_player_provider.dart';
+import 'services/audio_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,7 +53,25 @@ void main() async {
     debugPrint('Please configure firebase_options.dart with your project values');
   }
 
-  runApp(const ProviderScope(child: MyApp()));
+  // Initialize a single shared audio handler for background/lock screen controls
+  final audioHandler = await AudioService.init(
+    builder: () => AppAudioHandler(),
+    config: const AudioServiceConfig(
+      androidNotificationChannelId: 'com.meditation_by_vk.audio',
+      androidNotificationChannelName: 'Meditation Playback',
+      androidStopForegroundOnPause: true,
+      androidNotificationIcon: 'mipmap/ic_launcher',
+    ),
+  );
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        audioHandlerProvider.overrideWithValue(audioHandler as AppAudioHandler),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends ConsumerWidget {
