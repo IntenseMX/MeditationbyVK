@@ -4,14 +4,32 @@ import 'package:flutter/material.dart';
 class AppColors extends ThemeExtension<AppColors> {
   final Color pop;
   final Color onPop;
+  final Color textOnGradient; // Text/icon color used over gradient cards
+  final Color statusSuccess;  // Success status/badges
+  final Color statusWarning;  // Warning/Draft status/badges
 
-  const AppColors({required this.pop, required this.onPop});
+  const AppColors({
+    required this.pop,
+    required this.onPop,
+    required this.textOnGradient,
+    required this.statusSuccess,
+    required this.statusWarning,
+  });
 
   @override
-  AppColors copyWith({Color? pop, Color? onPop}) {
+  AppColors copyWith({
+    Color? pop,
+    Color? onPop,
+    Color? textOnGradient,
+    Color? statusSuccess,
+    Color? statusWarning,
+  }) {
     return AppColors(
       pop: pop ?? this.pop,
       onPop: onPop ?? this.onPop,
+      textOnGradient: textOnGradient ?? this.textOnGradient,
+      statusSuccess: statusSuccess ?? this.statusSuccess,
+      statusWarning: statusWarning ?? this.statusWarning,
     );
   }
 
@@ -21,11 +39,18 @@ class AppColors extends ThemeExtension<AppColors> {
     return AppColors(
       pop: Color.lerp(pop, other.pop, t)!,
       onPop: Color.lerp(onPop, other.onPop, t)!,
+      textOnGradient: Color.lerp(textOnGradient, other.textOnGradient, t)!,
+      statusSuccess: Color.lerp(statusSuccess, other.statusSuccess, t)!,
+      statusWarning: Color.lerp(statusWarning, other.statusWarning, t)!,
     );
   }
 }
 
 class AppTheme {
+  // Overlay configuration for thumbnail readability
+  // Centralized to avoid magic numbers scattered across widgets
+  static const double thumbnailBottomFadeOpacity = 0.5;
+
   // Shrine Pink Material Design Palette
   static const Color shrinePink100 = Color(0xFFFEDBD0);    // Primary Light
   static const Color shrinePink300 = Color(0xFFFBB8AC);    // Primary variant
@@ -178,7 +203,10 @@ class AppTheme {
     extensions: const <ThemeExtension<dynamic>>[
       AppColors(
         pop: Color(0xFFD00000),
-        onPop: Colors.white,
+        onPop: white,
+        textOnGradient: white,
+        statusSuccess: Color(0xFF2E7D32),
+        statusWarning: Color(0xFFF57C00),
       ),
     ],
   );
@@ -236,7 +264,10 @@ class AppTheme {
     extensions: const <ThemeExtension<dynamic>>[
       AppColors(
         pop: Color(0xFFD00000),
-        onPop: Colors.white,
+        onPop: white,
+        textOnGradient: white,
+        statusSuccess: Color(0xFF81C784),
+        statusWarning: Color(0xFFFFB74D),
       ),
     ],
   );

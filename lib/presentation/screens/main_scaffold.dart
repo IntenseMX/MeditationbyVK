@@ -5,6 +5,7 @@ import 'discover_screen.dart';
 import 'progress_screen.dart';
 import 'profile_screen.dart';
 import '../widgets/main_nav_bar.dart';
+ 
 
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key, this.initialIndex = 0});

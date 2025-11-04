@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../data/datasources/dummy_data.dart';
 import '../../core/theme.dart';
 
 class ProgressScreen extends StatefulWidget {
@@ -34,7 +33,24 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
-    final progressData = DummyData.progressData;
+    // TODO(Section C - 2025-10-27): Replace with real progress provider from Firestore
+    final Map<String, dynamic> progressData = {
+      'daily': <String, dynamic>{
+        'percentage': 0,
+        'minutesCompleted': 0,
+        'goalMinutes': 10,
+        'sessions': <Map<String, dynamic>>[],
+      },
+      'weekly': <String, dynamic>{
+        'data': <int>[0, 0, 0, 0, 0, 0, 0],
+        'streak': 0,
+        'currentMinutes': 0,
+      },
+      'monthly': <String, dynamic>{
+        'streak': 0,
+        'currentMinutes': 0,
+      },
+    };
 
     return Scaffold(
       body: SafeArea(
@@ -46,11 +62,12 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Progress',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -69,21 +86,21 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 20),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.surfaceVariant,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppTheme.richTaupe.withOpacity(0.2),
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
                 ),
               ),
               child: TabBar(
                 controller: _tabController,
                 indicator: BoxDecoration(
-                  color: AppTheme.brandPrimaryLight,
+                  color: Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 indicatorPadding: const EdgeInsets.all(4),
-                labelColor: Colors.white,
-                unselectedLabelColor: AppTheme.softCharcoal,
+                labelColor: Theme.of(context).colorScheme.onPrimary,
+                unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
                 tabs: const [
                   Tab(text: 'Day'),
                   Tab(text: 'Week'),
@@ -130,11 +147,11 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                 SizedBox(
                   width: 200,
                   height: 200,
-                    child: CircularProgressIndicator(
+                  child: CircularProgressIndicator(
                     value: percentage / 100,
                     strokeWidth: 12,
-                    backgroundColor: AppTheme.richTaupe.withOpacity(0.2),
-                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.brandPrimaryLight),
+                    backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                    valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
                   ),
                 ),
                 Column(
@@ -145,14 +162,14 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                       style: TextStyle(
                         fontSize: 48,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.softCharcoal,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     Text(
                       'of daily goal',
                       style: TextStyle(
                         fontSize: 14,
-                        color: AppTheme.richTaupe,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -169,7 +186,7 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                   'Minutes',
                   '$minutesCompleted',
                   Icons.timer,
-                  AppTheme.amberBrown,
+                  Theme.of(context).colorScheme.tertiary,
                 ),
               ),
               const SizedBox(width: 16),
@@ -178,7 +195,7 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                   'Goal',
                   '$goalMinutes min',
                   Icons.flag,
-                  AppTheme.brandPrimaryLight,
+                  Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
@@ -189,10 +206,10 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.surfaceVariant,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppTheme.richTaupe.withOpacity(0.2),
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.12),
               ),
             ),
             child: Column(
@@ -203,7 +220,7 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.softCharcoal,
+                      color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -213,7 +230,7 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                     children: [
                       Icon(
                         session['isGuided'] ? Icons.headset : Icons.music_note,
-                        color: AppTheme.agedGold,
+                        color: Theme.of(context).colorScheme.tertiary,
                         size: 20,
                       ),
                       const SizedBox(width: 12),
@@ -221,7 +238,7 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                         child: Text(
                           session['name'] as String,
                           style: TextStyle(
-                            color: AppTheme.softCharcoal,
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontSize: 16,
                           ),
                         ),
@@ -229,7 +246,7 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                       Text(
                         '${session['duration']} min',
                         style: TextStyle(
-                          color: AppTheme.richTaupe,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 14,
                         ),
                       ),
@@ -259,35 +276,42 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppTheme.brandPrimaryLight, AppTheme.amberBrown],
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.tertiary,
+                ],
               ),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.local_fire_department,
-                  color: AppTheme.warmSandBeige,
-                  size: 48,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '$streak days',
-                  style: TextStyle(
-                    color: AppTheme.warmSandBeige,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
+            child: Builder(builder: (context) {
+              final gradientText = Theme.of(context).extension<AppColors>()?.textOnGradient
+                  ?? Theme.of(context).colorScheme.onInverseSurface;
+              return Column(
+                children: [
+                  Icon(
+                    Icons.local_fire_department,
+                    color: gradientText,
+                    size: 48,
                   ),
-                ),
-                Text(
-                  'Current streak',
-                  style: TextStyle(
-                    color: AppTheme.warmSandBeige.withOpacity(0.9),
-                    fontSize: 16,
+                  const SizedBox(height: 8),
+                  Text(
+                    '$streak days',
+                    style: TextStyle(
+                      color: gradientText,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                  Text(
+                    'Current streak',
+                    style: TextStyle(
+                      color: gradientText.withOpacity(0.9),
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              );
+            }),
           ),
           const SizedBox(height: 24),
 
@@ -296,10 +320,10 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
             height: 200,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.surfaceVariant,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppTheme.richTaupe.withOpacity(0.2),
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
               ),
             ),
             child: Column(
@@ -310,7 +334,7 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.softCharcoal,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -331,7 +355,9 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                               width: 30,
                               margin: const EdgeInsets.only(bottom: 8),
                               decoration: BoxDecoration(
-                                color: value > 0 ? AppTheme.brandPrimaryLight : AppTheme.richTaupe.withOpacity(0.2),
+                                color: value > 0
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context).colorScheme.outline.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               height: value > 0 ? (value / maxValue) * 100 : 10,
@@ -340,7 +366,7 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                           Text(
                             days[index],
                             style: TextStyle(
-                              color: AppTheme.richTaupe,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 12,
                             ),
                           ),
@@ -362,7 +388,7 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                   'This week',
                   '$currentMinutes min',
                   Icons.calendar_today,
-                  AppTheme.agedGold,
+                  Theme.of(context).colorScheme.tertiary,
                 ),
               ),
               const SizedBox(width: 16),
@@ -371,7 +397,7 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                   'Average',
                   '${(currentMinutes / 7).round()} min/day',
                   Icons.insights,
-                  AppTheme.deepCrimson,
+                  Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
@@ -395,7 +421,10 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppTheme.agedGold, AppTheme.amberBrown],
+                colors: [
+                  Theme.of(context).colorScheme.tertiary,
+                  Theme.of(context).colorScheme.secondary,
+                ],
               ),
               borderRadius: BorderRadius.circular(20),
             ),
@@ -454,10 +483,10 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.surfaceVariant,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppTheme.richTaupe.withOpacity(0.2),
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
               ),
             ),
             child: Column(
@@ -468,7 +497,7 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.softCharcoal,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -492,10 +521,10 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.5),
+        color: Theme.of(context).colorScheme.surfaceVariant,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppTheme.richTaupe.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.12),
         ),
       ),
       child: Row(
@@ -521,14 +550,14 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.softCharcoal,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppTheme.richTaupe,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -545,12 +574,16 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: achieved ? AppTheme.agedGold : AppTheme.richTaupe.withOpacity(0.2),
+            color: achieved
+                ? Theme.of(context).colorScheme.tertiary
+                : Theme.of(context).colorScheme.outline.withOpacity(0.2),
             shape: BoxShape.circle,
           ),
           child: Icon(
             icon,
-            color: achieved ? AppTheme.warmSandBeige : AppTheme.richTaupe,
+            color: achieved
+                ? Theme.of(context).colorScheme.onTertiary
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             size: 28,
           ),
         ),
@@ -559,7 +592,9 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
           label,
           style: TextStyle(
             fontSize: 12,
-            color: achieved ? AppTheme.softCharcoal : AppTheme.richTaupe,
+            color: achieved
+                ? Theme.of(context).colorScheme.onSurface
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             fontWeight: achieved ? FontWeight.bold : FontWeight.normal,
           ),
         ),

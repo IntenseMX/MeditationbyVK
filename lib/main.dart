@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -16,6 +18,22 @@ import 'services/audio_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Global error logging so web console shows details during build frames
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('FlutterError: ${details.exceptionAsString()}');
+    final stack = details.stack;
+    if (stack != null) {
+      debugPrint(stack.toString());
+    }
+  };
+
+  ui.PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('Uncaught platform error: $error');
+    debugPrint(stack.toString());
+    return true; // mark as handled so app doesn't crash silently
+  };
 
   // Initialize Firebase with error handling
   // Will work once firebase_options.dart is configured with real values
@@ -64,14 +82,19 @@ void main() async {
     ),
   );
 
-  runApp(
-    ProviderScope(
-      overrides: [
-        audioHandlerProvider.overrideWithValue(audioHandler as AppAudioHandler),
-      ],
-      child: const MyApp(),
-    ),
-  );
+  runZonedGuarded(() {
+    runApp(
+      ProviderScope(
+        overrides: [
+          audioHandlerProvider.overrideWithValue(audioHandler as AppAudioHandler),
+        ],
+        child: const MyApp(),
+      ),
+    );
+  }, (error, stack) {
+    debugPrint('Uncaught zone error: $error');
+    debugPrint(stack.toString());
+  });
 }
 
 class MyApp extends ConsumerWidget {
@@ -83,10 +106,16 @@ class MyApp extends ConsumerWidget {
     // Trigger auth initialization (anonymous sign-in on launch)
     ref.watch(authProvider);
 
+    // Ensure theme selection is loaded (one-time)
+    ref.read(themeSelectionProvider.notifier).load();
+
+    final lightTheme = ref.watch(currentLightThemeProvider);
+    final darkTheme = ref.watch(currentDarkThemeProvider);
+
     return MaterialApp.router(
       title: 'CLARITY',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      theme: lightTheme,
+      darkTheme: darkTheme,
       themeMode: themeMode,
       routerConfig: appRouter,
       debugShowCheckedModeBanner: false,

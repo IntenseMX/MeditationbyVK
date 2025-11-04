@@ -90,10 +90,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
           });
         }
 
-        final double totalSeconds = (audioState.duration?.inSeconds ?? 0).toDouble();
-        final double positionSeconds = totalSeconds > 0
-            ? audioState.position.inSeconds.toDouble().clamp(0, totalSeconds)
-            : 0.0;
+        final double totalSeconds =
+            (audioState.duration ?? Duration(seconds: durationSec)).inSeconds.toDouble();
+        final double positionSeconds = audioState.position.inSeconds.toDouble().clamp(0, totalSeconds);
 
     // Get theme colors for gradient
     final colorScheme = Theme.of(context).colorScheme;
@@ -133,31 +132,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
           body: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              if (audioState.error != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.error.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Playback error: ${audioState.error}',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onBackground,
-                              ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
               // Hero animated image
               Hero(
                 tag: heroTag,
@@ -242,33 +216,21 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
                         .copyWith(
                           color: colorScheme.onBackground.withOpacity(0.6),
                         ),
-                    child: Text(totalSeconds > 0 ? _format(totalSeconds) : '--:--'),
+                  child: Text(_format(totalSeconds)),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               // Animated slider
               AnimatedSlider(
-                value: positionSeconds,
+                value: positionSeconds.clamp(0, totalSeconds),
                 min: 0,
-                max: totalSeconds > 0 ? totalSeconds : 1.0,
+                max: totalSeconds,
                 onChanged: (value) {
-                  if (totalSeconds > 0) {
-                    ref.read(audioPlayerProvider.notifier).seek(Duration(seconds: value.round()));
-                  }
+                  ref.read(audioPlayerProvider.notifier).seek(Duration(seconds: value.round()));
                 },
                 activeColor: colorScheme.primary,
               ),
-              if (audioState.isLoading && totalSeconds == 0) ...[
-                const SizedBox(height: 12),
-                Center(
-                  child: SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.primary),
-                  ),
-                ),
-              ],
             ],
           ),
         ),

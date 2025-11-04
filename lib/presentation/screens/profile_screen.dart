@@ -10,8 +10,19 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDarkMode = ref.watch(isDarkModeProvider);
-    final userProfile = DummyData.userProfile;
+    final themeMode = ref.watch(themeModeProvider);
+    final effectiveDark = themeMode == ThemeMode.dark ||
+        (themeMode == ThemeMode.system && MediaQuery.of(context).platformBrightness == Brightness.dark);
+    // TODO(Section C - 2025-10-27): Replace with real Firestore-backed profile provider
+    final userProfile = {
+      'name': 'Guest',
+      'email': '',
+      'isPremium': false,
+      'totalSessions': 0,
+      'totalMinutes': 0,
+      'currentStreak': 0,
+      'streak': 0,
+    };
 
     return Scaffold(
       body: SafeArea(
@@ -56,17 +67,17 @@ class ProfileScreen extends ConsumerWidget {
                                 ),
                               ),
                               Text(
-                                userProfile['email'] as String,
+                                (userProfile['email'] as String?) ?? '',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: AppTheme.richTaupe,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ],
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.edit, color: AppTheme.brandPrimaryLight),
+                          icon: Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
                           onPressed: () {},
                         ),
                       ],
@@ -74,58 +85,57 @@ class ProfileScreen extends ConsumerWidget {
                     const SizedBox(height: 24),
 
                     // Premium Banner
-                    if (!(userProfile['isPremium'] as bool))
+                    if (!((userProfile['isPremium'] as bool?) ?? false))
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [AppTheme.agedGold, AppTheme.amberBrown],
+                            colors: [
+                              Theme.of(context).colorScheme.tertiary,
+                              Theme.of(context).colorScheme.secondary,
+                            ],
                           ),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.stars,
-                              color: AppTheme.warmSandBeige,
-                              size: 48,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Upgrade to Premium',
-                              style: TextStyle(
-                                color: AppTheme.warmSandBeige,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                        child: Builder(builder: (context) {
+                          final gradientText = Theme.of(context).extension<AppColors>()?.textOnGradient
+                              ?? Theme.of(context).colorScheme.onInverseSurface;
+                          return Column(
+                            children: [
+                              Icon(
+                                Icons.stars,
+                                color: gradientText,
+                                size: 48,
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Unlock all meditations & features',
-                              style: TextStyle(
-                                color: AppTheme.warmSandBeige.withOpacity(0.9),
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: () {},
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.warmSandBeige,
-                                foregroundColor: AppTheme.amberBrown,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 32,
-                                  vertical: 12,
+                              const SizedBox(height: 12),
+                              Text(
+                                'Upgrade to Premium',
+                                style: TextStyle(
+                                  color: gradientText,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              child: const Text(
-                                'Learn More',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Unlock all meditations & features',
+                                style: TextStyle(
+                                  color: gradientText.withOpacity(0.9),
+                                  fontSize: 14,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: () {},
+                                child: const Text(
+                                  'Learn More',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          );
+                        }),
                       ),
 
                     const SizedBox(height: 24),
@@ -178,7 +188,7 @@ class ProfileScreen extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.softCharcoal,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -197,12 +207,21 @@ class ProfileScreen extends ConsumerWidget {
                     icon: Icons.dark_mode,
                     title: 'Dark Mode',
                     trailing: Switch(
-                      value: isDarkMode,
+                      value: effectiveDark,
                       onChanged: (value) {
-                        ref.read(themeModeProvider.notifier).toggleTheme();
+                        ref
+                            .read(themeModeProvider.notifier)
+                            .setTheme(value ? ThemeMode.dark : ThemeMode.light);
                       },
-                      activeColor: AppTheme.deepCrimson,
+                      activeColor: Theme.of(context).colorScheme.primary,
                     ),
+                  ),
+                  _buildSettingItem(
+                    context,
+                    icon: Icons.palette,
+                    title: 'Themes',
+                    subtitle: 'Choose from 12 luxury presets',
+                    onTap: () => context.go('/themes'),
                   ),
                   // TEMP (2025-10-21): Admin button is always visible until login/auth is integrated.
                   // TODO: Re-enable admin gating by checking authProvider.isAdmin here.
@@ -284,13 +303,13 @@ class ProfileScreen extends ConsumerWidget {
                     child: OutlinedButton(
                       onPressed: () {},
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: AppTheme.deepCrimson),
+                        side: BorderSide(color: Theme.of(context).colorScheme.primary),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: Text(
                         'Sign Out',
                         style: TextStyle(
-                          color: AppTheme.deepCrimson,
+                          color: Theme.of(context).colorScheme.primary,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -310,17 +329,17 @@ class ProfileScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
-        color: AppTheme.warmSandBeige.withOpacity(0.5),
+        color: Theme.of(context).colorScheme.surfaceVariant,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.richTaupe.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.12),
         ),
       ),
       child: Column(
         children: [
           Icon(
             icon,
-            color: AppTheme.brandPrimaryLight,
+            color: Theme.of(context).colorScheme.primary,
             size: 24,
           ),
           const SizedBox(height: 8),
@@ -329,14 +348,14 @@ class ProfileScreen extends ConsumerWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppTheme.softCharcoal,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           Text(
             label,
             style: TextStyle(
               fontSize: 12,
-              color: AppTheme.richTaupe,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -355,22 +374,22 @@ class ProfileScreen extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppTheme.warmSandBeige.withOpacity(0.5),
+        color: Theme.of(context).colorScheme.surfaceVariant,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.richTaupe.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.12),
         ),
       ),
       child: ListTile(
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppTheme.brandPrimaryLight.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             icon,
-            color: AppTheme.brandPrimaryLight,
+            color: Theme.of(context).colorScheme.primary,
             size: 20,
           ),
         ),
@@ -379,7 +398,7 @@ class ProfileScreen extends ConsumerWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: AppTheme.softCharcoal,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         subtitle: subtitle != null
@@ -387,7 +406,7 @@ class ProfileScreen extends ConsumerWidget {
                 subtitle,
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppTheme.richTaupe,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               )
             : null,
@@ -396,7 +415,7 @@ class ProfileScreen extends ConsumerWidget {
                 ? Icon(
                     Icons.arrow_forward_ios,
                     size: 16,
-                    color: AppTheme.richTaupe,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   )
                 : null),
         onTap: onTap,

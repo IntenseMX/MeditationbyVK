@@ -23,11 +23,12 @@ class AnimationDurations {
   static const Duration fast = short4;          // 300ms
   static const Duration normal = medium2;       // 450ms
   static const Duration slow = long2;           // 750ms
-  static const Duration screenTransition = medium4; // 600ms
+  static const Duration screenTransition = long4; // 900ms (calm pacing)
 
   // Custom meditation-specific durations
   static const Duration verySlow = Duration(milliseconds: 800);
   static const Duration extraSlow = Duration(milliseconds: 1200);
+  static const Duration ctaReveal = Duration(milliseconds: 1350);
 
   // Breathing animations (kept custom for meditation UX)
   static const Duration breatheIn = Duration(milliseconds: 4000);
@@ -75,4 +76,53 @@ class AnimationConfig {
 
   // Stagger delay between items
   static const Duration staggerDelay = Duration(milliseconds: 50);
+}
+
+/// Splash-specific animation configuration to avoid magic numbers
+class SplashAnimationConfig {
+  // Background motion
+  static const Duration gradientCycle = Duration(milliseconds: 12000);
+  static const Duration parallaxPeriod = Duration(milliseconds: 18000);
+
+  // Glow pulse
+  static const Duration glowPulse = Duration(milliseconds: 5000);
+
+  // Particles
+  static const int particleCount = 12;
+  static const double particleMinSize = 1.5;
+  static const double particleMaxSize = 3.0;
+  static const double particleMaxOffset = 0.04; // as fraction of screen
+  static const double particleBaseOpacity = 0.10;
+  static const Duration particleDriftPeriod = Duration(milliseconds: 16000);
+
+  // Shimmer
+  static const Duration shimmerSweep = Duration(milliseconds: 3500);
+  static const double shimmerWidth = 0.25; // fraction of text width
+
+  // CTA stagger
+  static const Duration ctaStagger = Duration(milliseconds: 120);
+  static const Duration ctaItemDuration = Duration(milliseconds: 450);
+}
+
+/// Coordinated exit for Splash → Home (no magic numbers in widgets)
+class SplashExitConfig {
+  // Master timeline
+  static const Duration exit = Duration(milliseconds: 1200);
+
+  // Logo
+  static const double logoPopScale = 1.08; // quick pop before shrink
+  static const double logoEndScale = 0.84;
+  static const double logoLiftY = -8.0; // subtle lift
+
+  // Glow
+  static const double glowEndScale = 1.2;
+  static const double glowEndOpacity = 0.0;
+
+  // Title/tagline
+  static const double titleEndOpacity = 0.0;
+  static const double subtitleEndOpacity = 0.0;
+  static const double textExitDy = 0.06; // fraction of screen height
+
+  // CTAs
+  static const Duration ctaExit = Duration(milliseconds: 225);
 }

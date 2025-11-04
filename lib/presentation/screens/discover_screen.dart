@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import '../../data/datasources/dummy_data.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/category_provider.dart';
+import '../../services/category_service.dart';
 import '../../core/theme.dart';
 
-class DiscoverScreen extends StatelessWidget {
+class DiscoverScreen extends ConsumerWidget {
   const DiscoverScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final appColors = Theme.of(context).extension<AppColors>();
     return Scaffold(
       body: SafeArea(
         child: CustomScrollView(
@@ -42,17 +46,17 @@ class DiscoverScreen extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             height: 52,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                              color: Theme.of(context).colorScheme.surfaceVariant,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: AppTheme.richTaupe.withOpacity(0.2),
+                                color: Theme.of(context).colorScheme.outline.withOpacity(0.12),
                               ),
                             ),
                             child: Row(
                               children: [
                                 Icon(
                                   Icons.search,
-                                  color: AppTheme.richTaupe,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -60,7 +64,7 @@ class DiscoverScreen extends StatelessWidget {
                                     decoration: InputDecoration(
                                       hintText: 'Search...',
                                       hintStyle: TextStyle(
-                                        color: AppTheme.richTaupe.withOpacity(0.6),
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
                                       ),
                                       border: InputBorder.none,
                                     ),
@@ -75,12 +79,12 @@ class DiscoverScreen extends StatelessWidget {
                           width: 52,
                           height: 52,
                           decoration: BoxDecoration(
-                            color: AppTheme.brandPrimaryLight,
+                            color: Theme.of(context).colorScheme.primary,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Icon(
                             Icons.tune,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onPrimary,
                           ),
                         ),
                       ],
@@ -90,23 +94,51 @@ class DiscoverScreen extends StatelessWidget {
               ),
             ),
 
-            // Categories Grid
+            // Categories Grid (live from Firestore)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Categories',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ),
             SliverPadding(
               padding: const EdgeInsets.all(20),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.85,
+              sliver: categoriesAsync.when(
+                loading: () => const SliverToBoxAdapter(
+                  child: Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())),
                 ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final category = DummyData.categories[index];
-                    return _buildCategoryCard(context, category);
-                  },
-                  childCount: DummyData.categories.length,
+                error: (e, _) => const SliverToBoxAdapter(
+                  child: Padding(padding: EdgeInsets.all(20), child: Text('Failed to load categories')),
                 ),
+                data: (categories) {
+                  if (categories.isEmpty) {
+                    return const SliverToBoxAdapter(
+                      child: Padding(padding: EdgeInsets.all(20), child: Text('No categories yet')),
+                    );
+                  }
+                  return SliverGrid(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.85,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final category = categories[index];
+                        return _buildCategoryCard(context, category);
+                      },
+                      childCount: categories.length,
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -115,10 +147,15 @@ class DiscoverScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryCard(BuildContext context, Map<String, dynamic> category) {
-    final List<int> gradientColors = category['gradientColors'] as List<int>;
-    final String name = category['name'] as String;
-    final int sessionCount = category['sessionCount'] as int;
+  Widget _buildCategoryCard(BuildContext context, CategoryItem category) {
+    final appColors = Theme.of(context).extension<AppColors>();
+    final gradientText = appColors?.textOnGradient ?? Theme.of(context).colorScheme.onInverseSurface;
+    final String name = category.name;
+    final List<int> gradientColors = [
+      Theme.of(context).colorScheme.primary.value,
+      Theme.of(context).colorScheme.tertiary.value,
+    ];
+    final int sessionCount = 0;
 
     return GestureDetector(
       onTap: () {
@@ -151,7 +188,7 @@ class DiscoverScreen extends StatelessWidget {
                 height: 100,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.1),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                 ),
               ),
             ),
@@ -163,7 +200,7 @@ class DiscoverScreen extends StatelessWidget {
                 height: 80,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.08),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
                 ),
               ),
             ),
@@ -177,20 +214,20 @@ class DiscoverScreen extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: gradientText.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       _getCategoryIcon(name),
-                      color: Colors.white,
+                      color: gradientText,
                       size: 28,
                     ),
                   ),
                   const Spacer(),
                   Text(
                     name,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: gradientText,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -199,7 +236,7 @@ class DiscoverScreen extends StatelessWidget {
                   Text(
                     '$sessionCount sessions',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: gradientText.withOpacity(0.8),
                       fontSize: 14,
                     ),
                   ),

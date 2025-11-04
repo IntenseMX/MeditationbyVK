@@ -1,6 +1,6 @@
 # TASK.md
 
-Last Updated: 2025-10-27
+Last Updated: 2025-10-28
 
 ## Completed Fixes (2025-01-25)
 
@@ -9,6 +9,17 @@ Last Updated: 2025-10-27
 - Added AudioService declaration to AndroidManifest.xml with `foregroundServiceType="mediaPlayback"`
 
 ## Phase 3 – Section A Completion (2025-10-27)
+## Phase 3 – Section B Progress (2025-10-28)
+- Home/Discover wired to Firestore: trending, recent, recommended, categories (live streams)
+- Pagination helpers added in `MeditationService.fetchPublishedPage`
+- Composite indexes added: (status, playCount desc), (status, publishedAt desc/asc)
+- Discover screen replaced `DummyData` with `categoriesStreamProvider`
+- Progress/Profile placeholders made null-safe for guest mode (local-only)
+
+Next
+- Guest profile provider (local storage) for name/stats placeholders
+- Hook session writes to increment `playCount` and drive trending
+- Router guards finalized with splash CTA and guest/auth flows
 - Audio session configured via audio_session (music category) and Android audio attributes set.
 - Interruption handling: pauses on calls/interruptions, ducks and restores volume, pauses on becoming noisy (headphones unplug).
 - Background playback validated: iOS Info.plist `UIBackgroundModes: audio` present; Android foreground service and permissions present.

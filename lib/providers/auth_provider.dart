@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import 'dart:async';
 
-enum AuthStatus { loading, authenticated, unauthenticated, error }
+enum AuthStatus { initial, guest, authenticated, error }
 
 class AuthState {
   final AuthStatus status;
@@ -13,10 +13,10 @@ class AuthState {
 
   const AuthState({required this.status, this.user, this.errorMessage, this.isAdmin = false});
 
-  const AuthState.loading() : this(status: AuthStatus.loading);
+  const AuthState.initial() : this(status: AuthStatus.initial);
+  const AuthState.guest(User u) : this(status: AuthStatus.guest, user: u);
   const AuthState.authenticated(User u, {bool isAdmin = false})
       : this(status: AuthStatus.authenticated, user: u, isAdmin: isAdmin);
-  const AuthState.unauthenticated() : this(status: AuthStatus.unauthenticated);
   const AuthState.error(String msg) : this(status: AuthStatus.error, errorMessage: msg);
 }
 
@@ -35,7 +35,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
     // Defer initialization to avoid modifying state during widget tree build
     Future<void>(() => _init());
-    return const AuthState.loading();
+    return const AuthState.initial();
   }
 
   Future<void> _init() async {
@@ -46,29 +46,77 @@ class AuthNotifier extends Notifier<AuthState> {
           try {
             final token = await user.getIdTokenResult(true);
             final isAdmin = (token.claims?["admin"] == true);
-            state = AuthState.authenticated(user, isAdmin: isAdmin);
+            if (user.isAnonymous) {
+              state = AuthState.guest(user);
+            } else {
+              state = AuthState.authenticated(user, isAdmin: isAdmin);
+            }
           } catch (_) {
-            state = AuthState.authenticated(user);
+            if (user.isAnonymous) {
+              state = AuthState.guest(user);
+            } else {
+              state = AuthState.authenticated(user);
+            }
           }
         } else {
-          state = const AuthState.unauthenticated();
+          state = const AuthState.initial();
         }
       });
 
-      // Do not auto sign-in anonymously; preserve existing admin/user session
-      final existing = _authService.currentUser;
-      if (existing != null) {
-        state = AuthState.authenticated(existing);
-      } else {
-        state = const AuthState.unauthenticated();
-      }
+      // Initial check without creating sessions
+      await checkAuthState();
+    } catch (e) {
+      state = AuthState.error(e.toString());
+    }
+  }
 
-      // Refresh token to read admin claim
-      final user = _authService.currentUser;
+  Future<void> checkAuthState() async {
+    final existing = _authService.currentUser;
+    if (existing == null) {
+      state = const AuthState.initial();
+      return;
+    }
+    if (existing.isAnonymous) {
+      state = AuthState.guest(existing);
+      return;
+    }
+    try {
+      final token = await existing.getIdTokenResult(true);
+      final isAdmin = (token.claims?["admin"] == true);
+      state = AuthState.authenticated(existing, isAdmin: isAdmin);
+    } catch (_) {
+      state = AuthState.authenticated(existing);
+    }
+  }
+
+  Future<void> signInAnonymously() async {
+    try {
+      final cred = await _authService.signInAnonymously();
+      final user = cred.user;
       if (user != null) {
-        final token = await user.getIdTokenResult(true);
-        final isAdmin = (token.claims?["admin"] == true);
-        state = AuthState.authenticated(user, isAdmin: isAdmin);
+        state = AuthState.guest(user);
+      } else {
+        state = const AuthState.initial();
+      }
+    } catch (e) {
+      state = AuthState.error(e.toString());
+    }
+  }
+
+  Future<void> signInWithEmail(String email, String password) async {
+    try {
+      final cred = await _authService.signInWithEmailAndPassword(email: email, password: password);
+      final user = cred.user;
+      if (user != null) {
+        try {
+          final token = await user.getIdTokenResult(true);
+          final isAdmin = (token.claims?["admin"] == true);
+          state = AuthState.authenticated(user, isAdmin: isAdmin);
+        } catch (_) {
+          state = AuthState.authenticated(user);
+        }
+      } else {
+        state = const AuthState.initial();
       }
     } catch (e) {
       state = AuthState.error(e.toString());
@@ -78,7 +126,7 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> signOut() async {
     try {
       await _authService.signOut();
-      state = const AuthState.unauthenticated();
+      state = const AuthState.initial();
     } catch (e) {
       state = AuthState.error(e.toString());
     }

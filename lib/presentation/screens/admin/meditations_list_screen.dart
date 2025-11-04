@@ -401,7 +401,10 @@ class _StatusIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPub = status == 'published';
-    final color = isPub ? Colors.green : Colors.orange;
+    final appColors = Theme.of(context).extension<AppColors>();
+    final color = isPub
+        ? (appColors?.statusSuccess ?? AppTheme.brandPrimaryLight)
+        : (appColors?.statusWarning ?? AppTheme.amberBrown);
     final icon = isPub ? Icons.check_circle : Icons.schedule;
     return Icon(icon, color: color, size: 18);
   }

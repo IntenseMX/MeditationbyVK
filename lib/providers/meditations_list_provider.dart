@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/meditation_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MeditationsQuery {
   final String? status; // draft | published | null (all)
@@ -48,29 +49,25 @@ final meditationsQueryProvider = NotifierProvider<MeditationsQueryNotifier, Medi
   () => MeditationsQueryNotifier(),
 );
 
+// Base stream; prefer server-side filters when possible. Kept for admin list or generic lists.
 final meditationsStreamProvider = StreamProvider<List<MeditationListItem>>((ref) {
   final svc = ref.watch(meditationServiceProvider);
   final query = ref.watch(meditationsQueryProvider);
   return svc.streamMeditations(status: query.status).map((items) {
-    // Client-side filters for search, category, difficulty, premium
     Iterable<MeditationListItem> filtered = items;
-
     if (query.categoryId != null && query.categoryId!.isNotEmpty) {
       filtered = filtered.where((m) => m.categoryId == query.categoryId);
     }
     if (query.difficulty != null && query.difficulty!.isNotEmpty) {
       filtered = filtered.where((m) => (m.difficulty ?? '').isNotEmpty && m.difficulty == query.difficulty);
     }
-
     if (query.isPremium != null) {
       filtered = filtered.where((m) => m.isPremium == query.isPremium);
     }
-
     final s = query.search.trim().toLowerCase();
     if (s.isNotEmpty) {
       filtered = filtered.where((m) => m.title.toLowerCase().contains(s));
     }
-
     return filtered.toList(growable: false);
   });
 });
@@ -78,30 +75,19 @@ final meditationsStreamProvider = StreamProvider<List<MeditationListItem>>((ref)
 // Trending: newest 7 published
 final trendingMeditationsProvider = StreamProvider<List<MeditationListItem>>((ref) {
   final svc = ref.watch(meditationServiceProvider);
-  return svc.streamMeditations().map((items) {
-    final published = items.where((m) => m.status == 'published');
-    return published.take(7).toList(growable: false);
-  });
+  return svc.streamTrending(limit: 10);
 });
 
 // Recently Added: newest 4 published
 final recentlyAddedMeditationsProvider = StreamProvider<List<MeditationListItem>>((ref) {
   final svc = ref.watch(meditationServiceProvider);
-  return svc.streamMeditations().map((items) {
-    final published = items.where((m) => m.status == 'published');
-    return published.take(4).toList(growable: false);
-  });
+  return svc.streamRecentlyPublished(limit: 4);
 });
 
 // Recommended: older 6 published (stable ordering, no shuffle for Phase 2)
 final recommendedMeditationsProvider = StreamProvider<List<MeditationListItem>>((ref) {
   final svc = ref.watch(meditationServiceProvider);
-  return svc.streamMeditations().map((items) {
-    final published = items.where((m) => m.status == 'published').toList(growable: false);
-    if (published.isEmpty) return const <MeditationListItem>[];
-    final older = published.reversed.toList(growable: false);
-    return older.take(6).toList(growable: false);
-  });
+  return svc.streamRecommended(limit: 6);
 });
 
 // Fetch a single meditation by id; returns null if not found or not published
@@ -112,6 +98,71 @@ final meditationByIdProvider = FutureProvider.family<Map<String, dynamic>?, Stri
   if (data == null || status != 'published') return null;
   return data;
 });
+
+// Cursor-paginated published list (for future scaling)
+class PublishedPaginationState {
+  const PublishedPaginationState({
+    required this.items,
+    required this.lastDoc,
+    required this.isLoading,
+    required this.canLoadMore,
+  });
+  final List<MeditationListItem> items;
+  final DocumentSnapshot<Map<String, dynamic>>? lastDoc;
+  final bool isLoading;
+  final bool canLoadMore;
+
+  PublishedPaginationState copyWith({
+    List<MeditationListItem>? items,
+    DocumentSnapshot<Map<String, dynamic>>? lastDoc,
+    bool? isLoading,
+    bool? canLoadMore,
+  }) => PublishedPaginationState(
+        items: items ?? this.items,
+        lastDoc: lastDoc ?? this.lastDoc,
+        isLoading: isLoading ?? this.isLoading,
+        canLoadMore: canLoadMore ?? this.canLoadMore,
+      );
+}
+
+final publishedPaginationProvider = NotifierProvider<PublishedPaginationNotifier, PublishedPaginationState>(
+  () => PublishedPaginationNotifier(),
+);
+
+class PublishedPaginationNotifier extends Notifier<PublishedPaginationState> {
+  static const int pageSize = 20;
+
+  @override
+  PublishedPaginationState build() {
+    return const PublishedPaginationState(items: <MeditationListItem>[], lastDoc: null, isLoading: false, canLoadMore: true);
+  }
+
+  Future<void> loadFirstPage() async {
+    if (state.isLoading) return;
+    state = state.copyWith(isLoading: true);
+    final svc = ref.read(meditationServiceProvider);
+    final page = await svc.fetchPublishedPage(limit: pageSize);
+    state = PublishedPaginationState(
+      items: page.items,
+      lastDoc: page.lastDoc,
+      isLoading: false,
+      canLoadMore: page.lastDoc != null,
+    );
+  }
+
+  Future<void> loadNextPage() async {
+    if (state.isLoading || !state.canLoadMore) return;
+    state = state.copyWith(isLoading: true);
+    final svc = ref.read(meditationServiceProvider);
+    final page = await svc.fetchPublishedPage(limit: pageSize, startAfter: state.lastDoc);
+    state = PublishedPaginationState(
+      items: [...state.items, ...page.items],
+      lastDoc: page.lastDoc,
+      isLoading: false,
+      canLoadMore: page.lastDoc != null,
+    );
+  }
+}
 
 class MeditationsSelection extends Notifier<Set<String>> {
   @override

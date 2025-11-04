@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../core/theme.dart';
 
 /// Interactive floating particle/bubble background with parallax effect
 class InteractiveParticleBackground extends StatefulWidget {
@@ -11,7 +12,7 @@ class InteractiveParticleBackground extends StatefulWidget {
 
   const InteractiveParticleBackground({
     this.particleCount = 30,
-    this.particleColor = Colors.white,
+    this.particleColor = AppTheme.white,
     this.minSize = 4.0,
     this.maxSize = 20.0,
     this.speed = 1.0,
@@ -334,7 +335,7 @@ class BubblePainter extends CustomPainter {
 
       // Highlight for 3D effect
       final highlightPaint = Paint()
-        ..color = Colors.white.withOpacity(0.3);
+        ..color = bubble.color.withOpacity(0.3);
 
       canvas.drawCircle(
         Offset(bubble.x - bubble.radius * 0.3, bubble.y - bubble.radius * 0.3),

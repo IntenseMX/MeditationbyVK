@@ -42,11 +42,12 @@ class HomeScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            const Text(
+                            Text(
                               'Let\'s meditate',
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ],
@@ -54,15 +55,31 @@ class HomeScreen extends ConsumerWidget {
                         Builder(
                           builder: (context) {
                             final appColors = Theme.of(context).extension<AppColors>();
-                            return CircleAvatar(
-                              radius: 24,
-                              backgroundColor: appColors?.pop ?? AppTheme.deepCrimson,
-                              child: Text(
-                                'G',
-                                style: TextStyle(
-                                  color: appColors?.onPop ?? AppTheme.warmSandBeige,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+                            return Hero(
+                              tag: 'brand',
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  color: appColors?.pop ?? AppTheme.deepCrimson,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'UP',
+                                    style: TextStyle(
+                                      color: appColors?.onPop ?? AppTheme.warmSandBeige,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ),
                             );
@@ -84,7 +101,7 @@ class HomeScreen extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.softCharcoal,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -143,7 +160,7 @@ class HomeScreen extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.softCharcoal,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     TextButton(
@@ -151,7 +168,7 @@ class HomeScreen extends ConsumerWidget {
                       child: Text(
                         'See all',
                         style: TextStyle(
-                          color: AppTheme.deepCrimson,
+                          color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -182,7 +199,7 @@ class HomeScreen extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.softCharcoal,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -207,6 +224,8 @@ class HomeScreen extends ConsumerWidget {
                         final m = items[index];
                         final label = _formatDuration(m.durationSec);
                         final category = _prettyCategory(m.categoryId);
+                        final appColors = Theme.of(context).extension<AppColors>();
+                        final gradientText = appColors?.textOnGradient ?? Theme.of(context).colorScheme.onInverseSurface;
                         return Container(
                           width: 200,
                           margin: const EdgeInsets.only(right: 16),
@@ -219,9 +238,17 @@ class HomeScreen extends ConsumerWidget {
                           foregroundDecoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
                             gradient: LinearGradient(
-                              colors: gradient
-                                  .map((c) => Color(c).withOpacity(m.imageUrl != null && m.imageUrl!.isNotEmpty ? 0.45 : 1.0))
-                                  .toList(),
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: (m.imageUrl != null && m.imageUrl!.isNotEmpty)
+                                  ? [
+                                      Colors.transparent,
+                                      Color(gradient.last).withOpacity(AppTheme.thumbnailBottomFadeOpacity),
+                                    ]
+                                  : [
+                                      Color(gradient.first),
+                                      Color(gradient.last),
+                                    ],
                             ),
                           ),
                           padding: const EdgeInsets.all(16),
@@ -235,8 +262,8 @@ class HomeScreen extends ConsumerWidget {
                                   m.title,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: gradientText,
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -247,17 +274,17 @@ class HomeScreen extends ConsumerWidget {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
+                                        color: gradientText.withOpacity(0.2),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
                                         category,
-                                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                                        style: TextStyle(color: gradientText, fontSize: 12),
                                       ),
                                     ),
                                     Text(
                                       label,
-                                      style: TextStyle(color: Colors.white.withOpacity(0.9)),
+                                      style: TextStyle(color: gradientText.withOpacity(0.9)),
                                     ),
                                   ],
                                 ),
@@ -346,6 +373,8 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
     if (_source.isEmpty) {
       return const SizedBox.shrink();
     }
+    final appColors = Theme.of(context).extension<AppColors>();
+    final gradientText = appColors?.textOnGradient ?? Theme.of(context).colorScheme.onInverseSurface;
     return NotificationListener<UserScrollNotification>(
       onNotification: (n) {
         final interacting = n.direction != ScrollDirection.idle;
@@ -377,10 +406,17 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
             foregroundDecoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               gradient: LinearGradient(
-                colors: [
-                  gradient[0].withOpacity(meditation.imageUrl != null && meditation.imageUrl!.isNotEmpty ? 0.45 : 1.0),
-                  gradient[1].withOpacity(meditation.imageUrl != null && meditation.imageUrl!.isNotEmpty ? 0.45 : 1.0),
-                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: (meditation.imageUrl != null && meditation.imageUrl!.isNotEmpty)
+                    ? [
+                        Colors.transparent,
+                        gradient[1].withOpacity(AppTheme.thumbnailBottomFadeOpacity),
+                      ]
+                    : [
+                        gradient[0],
+                        gradient[1],
+                      ],
               ),
             ),
             padding: const EdgeInsets.all(16),
@@ -393,8 +429,8 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
                   children: [
                     Text(
                       meditation.title,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: gradientText,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -403,7 +439,7 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
                     Text(
                       durationLabel,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: gradientText.withOpacity(0.8),
                         fontSize: 14,
                       ),
                     ),
@@ -418,20 +454,20 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: gradientText.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         category,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: gradientText,
                           fontSize: 12,
                         ),
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.play_circle_fill,
-                      color: Colors.white,
+                      color: gradientText,
                       size: 32,
                     ),
                   ],

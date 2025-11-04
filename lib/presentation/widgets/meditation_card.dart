@@ -25,6 +25,8 @@ class MeditationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // Create unique hero tag from title
     final heroTag = 'meditation_$title';
+    final appColors = Theme.of(context).extension<AppColors>();
+    final gradientText = appColors?.textOnGradient ?? Theme.of(context).colorScheme.onInverseSurface;
 
     return GestureDetector(
       onTap: onTap,
@@ -54,11 +56,14 @@ class MeditationCard extends StatelessWidget {
         foregroundDecoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: gradientColors
-                .map((color) => Color(color).withOpacity(imageUrl.isNotEmpty ? 0.45 : 1.0))
-                .toList(),
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: imageUrl.isNotEmpty
+                ? [
+                    Colors.transparent,
+                    Color(gradientColors.last).withOpacity(AppTheme.thumbnailBottomFadeOpacity),
+                  ]
+                : gradientColors.map((c) => Color(c)).toList(),
           ),
         ),
         child: Stack(
@@ -72,7 +77,7 @@ class MeditationCard extends StatelessWidget {
                 height: 150,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                 ),
               ),
             ),
@@ -111,8 +116,8 @@ class MeditationCard extends StatelessWidget {
                         title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: gradientText,
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                         ),
@@ -123,7 +128,7 @@ class MeditationCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: gradientText.withOpacity(0.9),
                           fontSize: 14,
                         ),
                       ),
@@ -137,21 +142,21 @@ class MeditationCard extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: gradientText.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.timer_outlined,
-                              color: Colors.white,
+                              color: gradientText,
                               size: 16,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               '$duration min',
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: gradientText,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -164,12 +169,12 @@ class MeditationCard extends StatelessWidget {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.3),
+                          color: gradientText.withOpacity(0.3),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.play_arrow,
-                          color: Colors.white,
+                          color: gradientText,
                           size: 24,
                         ),
                       ),

@@ -43,10 +43,11 @@ dependencies:
   cloud_firestore: ^6.0.3
   firebase_storage: ^13.0.3
   riverpod_annotation: ^3.0.3
-  just_audio: ^0.9.42
+  just_audio: ^0.10.5
   audio_service: ^0.18.13
-  audio_session: ^0.1.21
-  file_picker: ^8.0.5
+  audio_session: ^0.2.2
+  file_picker: ^10.3.3
+  shared_preferences: ^2.2.3
 
 dev_dependencies:
   flutter_test:

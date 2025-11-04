@@ -168,7 +168,7 @@ class _BreathingCircleState extends State<BreathingCircle>
                 height: widget.size * 0.5,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.3),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
                 ),
               ),
             ),

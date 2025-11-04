@@ -12,6 +12,7 @@ import 'screens/admin/meditations_list_screen.dart';
 import 'screens/admin/meditation_editor_screen.dart';
 import 'screens/admin/categories_screen.dart';
 import 'screens/admin/activity_screen.dart';
+import 'screens/themes_screen.dart';
 
 /// Custom page transition with fade and slide animation
 Page<dynamic> _buildPageWithTransition({
@@ -120,18 +121,46 @@ Page<dynamic> _buildPlayerTransition({
   );
 }
 
+/// Fade-through style transition (good for context change like splash → home)
+Page<dynamic> _buildFadeThroughPage({
+  required Widget child,
+  required GoRouterState state,
+}) {
+  return CustomTransitionPage(
+    key: state.pageKey,
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final fadeIn = CurvedAnimation(parent: animation, curve: AnimationCurves.standardEasing);
+      final scaleIn = Tween<double>(begin: 0.92, end: 1.0).animate(fadeIn);
+
+      return FadeTransition(
+        opacity: fadeIn,
+        child: ScaleTransition(scale: scaleIn, child: child),
+      );
+    },
+    transitionDuration: AnimationDurations.screenTransition,
+  );
+}
+
 final appRouter = GoRouter(
   initialLocation: '/splash',
   redirect: (context, state) {
-    // Admin gate for admin and admin-related routes
+    // Admin gate for admin and admin-related routes + basic auth guard for main tabs
     final path = state.matchedLocation;
     final isProtectedAdminRoute =
         path.startsWith('/admin') || path.startsWith('/meditations') || path.startsWith('/categories');
-    if (!isProtectedAdminRoute) return null;
     final container = ProviderScope.containerOf(context, listen: false);
     final authState = container.read(authProvider);
-    if (authState.status != AuthStatus.authenticated || authState.isAdmin == false) {
-      return '/login';
+    // Guard main app tabs if no user session present
+    final isMainTab = path == '/' || path == '/discover' || path == '/progress' || path == '/profile';
+    if (isMainTab && authState.user == null) {
+      return '/splash';
+    }
+    // Admin-only routes
+    if (isProtectedAdminRoute) {
+      if (authState.status != AuthStatus.authenticated || authState.isAdmin == false) {
+        return '/login';
+      }
     }
     return null;
   },
@@ -206,8 +235,16 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/',
       name: 'home',
-      pageBuilder: (context, state) => _buildPageWithTransition(
+      pageBuilder: (context, state) => _buildFadeThroughPage(
         child: const MainScaffold(initialIndex: 0),
+        state: state,
+      ),
+    ),
+    GoRoute(
+      path: '/themes',
+      name: 'themes',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        child: const ThemesScreen(),
         state: state,
       ),
     ),
