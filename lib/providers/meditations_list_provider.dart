@@ -217,6 +217,93 @@ class MeditationsActions {
   }
 }
 
+// Category-specific pagination (cursor-based)
+class CategoryPaginationState {
+  const CategoryPaginationState({
+    required this.items,
+    required this.lastDoc,
+    required this.isLoading,
+    required this.canLoadMore,
+  });
+  final List<MeditationListItem> items;
+  final DocumentSnapshot<Map<String, dynamic>>? lastDoc;
+  final bool isLoading;
+  final bool canLoadMore;
+
+  CategoryPaginationState copyWith({
+    List<MeditationListItem>? items,
+    DocumentSnapshot<Map<String, dynamic>>? lastDoc,
+    bool? isLoading,
+    bool? canLoadMore,
+  }) => CategoryPaginationState(
+        items: items ?? this.items,
+        lastDoc: lastDoc ?? this.lastDoc,
+        isLoading: isLoading ?? this.isLoading,
+        canLoadMore: canLoadMore ?? this.canLoadMore,
+      );
+}
+
+final categoryPaginationProvider = NotifierProvider.family<
+    CategoryPaginationNotifier, CategoryPaginationState, String>(
+  (categoryId) => CategoryPaginationNotifier(categoryId),
+);
+
+class CategoryPaginationNotifier extends Notifier<CategoryPaginationState> {
+  CategoryPaginationNotifier(this.categoryId);
+  static const int pageSize = 20;
+  final String categoryId;
+
+  @override
+  CategoryPaginationState build() {
+    return const CategoryPaginationState(
+      items: <MeditationListItem>[],
+      lastDoc: null,
+      isLoading: false,
+      canLoadMore: true,
+    );
+  }
+
+  Future<void> loadFirstPage() async {
+    try {
+      state = state.copyWith(isLoading: true);
+      final svc = ref.read(meditationServiceProvider);
+      final page = await svc.fetchPublishedByCategory(
+        categoryId: categoryId,
+        limit: pageSize,
+      );
+      state = CategoryPaginationState(
+        items: page.items,
+        lastDoc: page.lastDoc,
+        isLoading: false,
+        canLoadMore: page.lastDoc != null,
+      );
+    } catch (_) {
+      state = state.copyWith(isLoading: false, canLoadMore: false);
+    }
+  }
+
+  Future<void> loadMore() async {
+    if (state.isLoading || !state.canLoadMore) return;
+    try {
+      state = state.copyWith(isLoading: true);
+      final svc = ref.read(meditationServiceProvider);
+      final page = await svc.fetchPublishedByCategory(
+        categoryId: categoryId,
+        limit: pageSize,
+        startAfter: state.lastDoc,
+      );
+      state = CategoryPaginationState(
+        items: [...state.items, ...page.items],
+        lastDoc: page.lastDoc,
+        isLoading: false,
+        canLoadMore: page.lastDoc != null,
+      );
+    } catch (_) {
+      state = state.copyWith(isLoading: false, canLoadMore: false);
+    }
+  }
+}
+
 final meditationsActionsProvider = Provider<MeditationsActions>((ref) {
   return MeditationsActions(ref);
 });

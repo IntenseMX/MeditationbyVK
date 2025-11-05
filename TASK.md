@@ -1,6 +1,6 @@
 # TASK.md
 
-Last Updated: 2025-10-28
+Last Updated: 2025-11-05
 
 ## Completed Fixes (2025-10-25)
 
@@ -28,3 +28,11 @@ Next
 
 Follow-ups
 - Consider optional auto-resume policy after transient interruptions.
+ 
+## Phase 3 – Section D (2025-11-05)
+- Discover → Category tap navigates to `/category/:id` (non-admin route)
+- Added `CategoryMeditationsScreen` with header name and filtered list
+- Category pagination: `fetchPublishedByCategory()` + `categoryPaginationProvider(categoryId)`
+- Reused `MeditationCard` for rendering with Load More button
+- Search functionality: TextField in Discover filters meditations by title (inline results)
+- Added composite indexes: (status ASC, createdAt DESC) + (status ASC, categoryId ASC, publishedAt DESC)

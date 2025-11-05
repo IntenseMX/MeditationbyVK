@@ -25,6 +25,14 @@
       ]
     },
     {
+      "collectionGroup": "meditations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "categories",
       "queryScope": "COLLECTION",
       "fields": [

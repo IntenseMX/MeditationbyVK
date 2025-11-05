@@ -231,6 +231,27 @@ class MeditationService {
     return PagedResult(items: items, lastDoc: lastDoc);
   }
 
+  // Pagination utilities for published list filtered by category (ordered by publishedAt desc)
+  Future<PagedResult> fetchPublishedByCategory({
+    required String categoryId,
+    int limit = 20,
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+  }) async {
+    Query<Map<String, dynamic>> q = _firestore
+        .collection('meditations')
+        .where('status', isEqualTo: 'published')
+        .where('categoryId', isEqualTo: categoryId)
+        .orderBy('publishedAt', descending: true)
+        .limit(limit);
+    if (startAfter != null) {
+      q = q.startAfterDocument(startAfter);
+    }
+    final snap = await q.get();
+    final items = snap.docs.map(MeditationListItem.fromDoc).toList(growable: false);
+    final lastDoc = snap.docs.isNotEmpty ? snap.docs.last : null;
+    return PagedResult(items: items, lastDoc: lastDoc);
+  }
+
   // Container for page results
   // Holds the last document cursor for subsequent pagination calls
   PagedResult emptyPage() => const PagedResult(items: <MeditationListItem>[], lastDoc: null);
