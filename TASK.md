@@ -36,3 +36,9 @@ Follow-ups
 - Reused `MeditationCard` for rendering with Load More button
 - Search functionality: TextField in Discover filters meditations by title (inline results)
 - Added composite indexes: (status ASC, createdAt DESC) + (status ASC, categoryId ASC, publishedAt DESC)
+
+## Phase 3 – Section E (2025-11-05)
+- Home → Recommended is now personalized: top 2 categories from user's recent completed sessions
+- Distribution: 4 items from top category + 2 from second category (total 6)
+- Fallback: Trending when user has no history or no resolvable categories
+- Caching: In-memory cache of meditationId → categoryId to avoid redundant doc reads per update

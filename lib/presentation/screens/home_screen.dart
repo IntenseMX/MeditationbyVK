@@ -7,6 +7,7 @@ import '../widgets/meditation_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/meditations_list_provider.dart';
 import '../../services/meditation_service.dart';
+import '../../providers/category_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -16,6 +17,15 @@ class HomeScreen extends ConsumerWidget {
     final trendingAsync = ref.watch(trendingMeditationsProvider);
     final recentAsync = ref.watch(recentlyAddedMeditationsProvider);
     final recommendedAsync = ref.watch(recommendedMeditationsProvider);
+    final categoriesAsync = ref.watch(categoriesStreamProvider);
+
+    // Build a quick lookup from categoryId -> category name (fallback handled later)
+    final catList = categoriesAsync.asData?.value;
+    final Map<String, String> categoryIdToName = {
+      if (catList != null) ...{
+        for (final c in catList) c.id: c.name,
+      }
+    };
 
     return Scaffold(
       body: SafeArea(
@@ -181,21 +191,21 @@ class HomeScreen extends ConsumerWidget {
             // Horizontal auto-scroll belt for trending
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 108,
+                height: 140,
                 child: trendingAsync.when(
                   loading: () => const Center(child: CircularProgressIndicator()),
                   error: (e, _) => const Center(child: Text('Failed to load')),
-                  data: (items) => TrendingBelt(items: items),
+                  data: (items) => TrendingBelt(items: items, categoryNames: categoryIdToName),
                 ),
               ),
             ),
 
-            // Section: Recommended
+            // Section: Recommended For You
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
                 child: Text(
-                  'Recommended',
+                  'Recommended For You',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -223,7 +233,7 @@ class HomeScreen extends ConsumerWidget {
                       itemBuilder: (context, index) {
                         final m = items[index];
                         final label = _formatDuration(m.durationSec);
-                        final category = _prettyCategory(m.categoryId);
+                        final category = _resolveCategoryName(m.categoryId, categoryIdToName);
                         final appColors = Theme.of(context).extension<AppColors>();
                         final gradientText = appColors?.textOnGradient ?? Theme.of(context).colorScheme.onInverseSurface;
                         return Container(
@@ -279,6 +289,8 @@ class HomeScreen extends ConsumerWidget {
                                       ),
                                       child: Text(
                                         category,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                         style: TextStyle(color: gradientText, fontSize: 12),
                                       ),
                                     ),
@@ -316,8 +328,9 @@ class HomeScreen extends ConsumerWidget {
 }
 
 class TrendingBelt extends StatefulWidget {
-  const TrendingBelt({super.key, required this.items});
+  const TrendingBelt({super.key, required this.items, required this.categoryNames});
   final List<MeditationListItem> items;
+  final Map<String, String> categoryNames;
 
   @override
   State<TrendingBelt> createState() => _TrendingBeltState();
@@ -392,7 +405,7 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
           final meditation = _loopedItems[index];
           final colors = Theme.of(context).colorScheme;
           final gradient = [colors.primary, colors.tertiary];
-          final category = _prettyCategory(meditation.categoryId);
+          final category = _resolveCategoryName(meditation.categoryId, widget.categoryNames);
           final durationLabel = _formatDuration(meditation.durationSec);
           return Container(
             width: _itemWidth,
@@ -429,18 +442,12 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
                   children: [
                     Text(
                       meditation.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: gradientText,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      durationLabel,
-                      style: TextStyle(
-                        color: gradientText.withOpacity(0.8),
-                        fontSize: 14,
                       ),
                     ),
                   ],
@@ -459,16 +466,21 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
                       ),
                       child: Text(
                         category,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: gradientText,
                           fontSize: 12,
                         ),
                       ),
                     ),
-                    Icon(
-                      Icons.play_circle_fill,
-                      color: gradientText,
-                      size: 32,
+                    Text(
+                      durationLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: gradientText.withOpacity(0.9),
+                      ),
                     ),
                   ],
                 ),
@@ -497,6 +509,13 @@ String _formatDuration(int? sec) {
   }
   final minutes = (sec / 60).ceil();
   return '$minutes min';
+}
+
+String _resolveCategoryName(String? categoryId, Map<String, String> idToName) {
+  if (categoryId == null || categoryId.trim().isEmpty) return 'General';
+  final byName = idToName[categoryId];
+  if (byName != null && byName.trim().isNotEmpty) return byName;
+  return _prettyCategory(categoryId);
 }
 
 String _prettyCategory(String? categoryId) {

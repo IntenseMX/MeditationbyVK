@@ -47,6 +47,15 @@ class MeditationService {
 
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
+  // In-memory cache to avoid re-fetching meditation docs just to read categoryId
+  final Map<String, String?> _meditationCategoryCache = <String, String?>{};
+
+  // Recommendation tuning constants (avoid magic numbers)
+  static const int _recTotalLimit = 6;
+  static const int _recTop1Count = 4;
+  static const int _recTop2Count = 2;
+  static const int _recLookbackDays = 60;
+  static const int _recSessionFetchLimit = 200;
 
   // Generate a new document ID without writing any data
   String newId() {
@@ -213,6 +222,99 @@ class MeditationService {
         .orderBy('publishedAt', descending: false)
         .limit(limit);
     return q.snapshots().map((snap) => snap.docs.map(MeditationListItem.fromDoc).toList());
+  }
+
+  // Recommended for a specific user, based on top listened categories from recent sessions
+  Stream<List<MeditationListItem>> streamRecommendedForUser(String uid) {
+    final from = DateTime.now().toUtc().subtract(const Duration(days: _recLookbackDays));
+    final q = _firestore
+        .collection('userProgress')
+        .doc(uid)
+        .collection('sessions')
+        .where('completed', isEqualTo: true)
+        .where('completedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(from))
+        .orderBy('completedAt', descending: true)
+        .limit(_recSessionFetchLimit);
+
+    return q.snapshots().asyncMap((snap) async {
+      // Collect meditationIds from recent completed sessions
+      final meditationIds = snap.docs
+          .map((d) => (d.data()['meditationId'] as String?) ?? '')
+          .where((id) => id.isNotEmpty)
+          .toList(growable: false);
+
+      // Fallback to trending if no history
+      if (meditationIds.isEmpty) {
+        final trending = await _firestore
+            .collection('meditations')
+            .where('status', isEqualTo: 'published')
+            .orderBy('playCount', descending: true)
+            .limit(_recTotalLimit)
+            .get();
+        return trending.docs.map(MeditationListItem.fromDoc).toList(growable: false);
+      }
+
+      // Prime cache for uncached meditationIds → categoryId
+      final Set<String> uniqueIds = meditationIds.toSet();
+      final List<String> missing = uniqueIds.where((id) => !_meditationCategoryCache.containsKey(id)).toList(growable: false);
+      if (missing.isNotEmpty) {
+        final snaps = await Future.wait(missing.map((id) => _firestore.collection('meditations').doc(id).get()));
+        for (final s in snaps) {
+          _meditationCategoryCache[s.id] = s.data()?['categoryId'] as String?;
+        }
+      }
+
+      // Count categories by frequency in session history
+      final counts = <String, int>{};
+      for (final id in meditationIds) {
+        final cat = _meditationCategoryCache[id];
+        if (cat == null || cat.isEmpty) continue;
+        counts[cat] = (counts[cat] ?? 0) + 1;
+      }
+
+      // Fallback to trending if no categories could be resolved
+      if (counts.isEmpty) {
+        final trending = await _firestore
+            .collection('meditations')
+            .where('status', isEqualTo: 'published')
+            .orderBy('playCount', descending: true)
+            .limit(_recTotalLimit)
+            .get();
+        return trending.docs.map(MeditationListItem.fromDoc).toList(growable: false);
+      }
+
+      // Pick top 1-2 categories
+      final sortedCats = counts.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      final String top1 = sortedCats.first.key;
+      final String? top2 = sortedCats.length > 1 ? sortedCats[1].key : null;
+
+      // Query newest published from top categories
+      final out = <MeditationListItem>[];
+
+      final top1Snap = await _firestore
+          .collection('meditations')
+          .where('status', isEqualTo: 'published')
+          .where('categoryId', isEqualTo: top1)
+          .orderBy('publishedAt', descending: true)
+          .limit(_recTop1Count)
+          .get();
+      out.addAll(top1Snap.docs.map(MeditationListItem.fromDoc));
+
+      if (top2 != null && out.length < _recTotalLimit) {
+        final remaining = _recTotalLimit - out.length;
+        final top2Snap = await _firestore
+            .collection('meditations')
+            .where('status', isEqualTo: 'published')
+            .where('categoryId', isEqualTo: top2)
+            .orderBy('publishedAt', descending: true)
+            .limit(remaining > _recTop2Count ? _recTop2Count : remaining)
+            .get();
+        out.addAll(top2Snap.docs.map(MeditationListItem.fromDoc));
+      }
+
+      return out.take(_recTotalLimit).toList(growable: false);
+    });
   }
 
   // Pagination utilities for published list (ordered by publishedAt desc)

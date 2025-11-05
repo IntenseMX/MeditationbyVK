@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/meditation_service.dart';
+import './auth_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MeditationsQuery {
@@ -84,10 +85,15 @@ final recentlyAddedMeditationsProvider = StreamProvider<List<MeditationListItem>
   return svc.streamRecentlyPublished(limit: 4);
 });
 
-// Recommended: older 6 published (stable ordering, no shuffle for Phase 2)
+// Recommended For You: personalized by top categories from recent sessions (fallback to trending)
 final recommendedMeditationsProvider = StreamProvider<List<MeditationListItem>>((ref) {
   final svc = ref.watch(meditationServiceProvider);
-  return svc.streamRecommended(limit: 6);
+  final auth = ref.watch(authProvider);
+  final uid = auth.user?.uid;
+  if (uid == null || uid.isEmpty) {
+    return svc.streamTrending(limit: 6);
+  }
+  return svc.streamRecommendedForUser(uid);
 });
 
 // Fetch a single meditation by id; returns null if not found or not published
