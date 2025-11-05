@@ -67,6 +67,7 @@ class MeditationService {
       'imageUrl': data['imageUrl'],
       'audioUrl': data['audioUrl'],
       'durationSec': data['durationSec'],
+      'playCount': 0,
       'version': 1,
       'createdAt': now,
       'updatedAt': now,

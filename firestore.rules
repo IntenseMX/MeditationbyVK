@@ -34,6 +34,15 @@ service cloud.firestore {
         docId.indexOf('_') == request.auth.uid.size();
     }
 
+    // User sessions as subcollection: userProgress/{uid}/sessions/{sessionId}
+    match /userProgress/{uid} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+
+      match /sessions/{sessionId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
+    }
+
     // Admin audit: append-only by admins; no updates/deletes
     match /adminAudit/{auditId} {
       allow create: if isAdmin();

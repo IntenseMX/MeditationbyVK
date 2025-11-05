@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/progress_provider.dart';
 import '../../core/theme.dart';
 
-class ProgressScreen extends StatefulWidget {
+class ProgressScreen extends ConsumerStatefulWidget {
   const ProgressScreen({super.key});
 
   @override
-  State<ProgressScreen> createState() => _ProgressScreenState();
+  ConsumerState<ProgressScreen> createState() => _ProgressScreenState();
 }
 
-class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProviderStateMixin {
+class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _selectedIndex = 0;
 
@@ -33,24 +35,54 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
-    // TODO(Section C - 2025-10-27): Replace with real progress provider from Firestore
-    final Map<String, dynamic> progressData = {
-      'daily': <String, dynamic>{
-        'percentage': 0,
-        'minutesCompleted': 0,
-        'goalMinutes': 10,
-        'sessions': <Map<String, dynamic>>[],
+    final dtoAsync = ref.watch(progressDtoProvider);
+    final Map<String, dynamic> progressData = dtoAsync.when(
+      data: (m) {
+        print('[Progress] DATA RECEIVED: $m');
+        return m;
       },
-      'weekly': <String, dynamic>{
-        'data': <int>[0, 0, 0, 0, 0, 0, 0],
-        'streak': 0,
-        'currentMinutes': 0,
+      loading: () {
+        print('[Progress] LOADING...');
+        return {
+          'daily': <String, dynamic>{
+            'percentage': 0,
+            'minutesCompleted': 0,
+            'goalMinutes': 10,
+            'sessions': <Map<String, dynamic>>[],
+          },
+          'weekly': <String, dynamic>{
+            'data': <int>[0, 0, 0, 0, 0, 0, 0],
+            'streak': 0,
+            'currentMinutes': 0,
+          },
+          'monthly': <String, dynamic>{
+            'streak': 0,
+            'currentMinutes': 0,
+          },
+        };
       },
-      'monthly': <String, dynamic>{
-        'streak': 0,
-        'currentMinutes': 0,
+      error: (e, st) {
+        print('[Progress] ERROR: $e');
+        print('[Progress] STACK: $st');
+        return {
+          'daily': <String, dynamic>{
+            'percentage': 0,
+            'minutesCompleted': 0,
+            'goalMinutes': 10,
+            'sessions': <Map<String, dynamic>>[],
+          },
+          'weekly': <String, dynamic>{
+            'data': <int>[0, 0, 0, 0, 0, 0, 0],
+            'streak': 0,
+            'currentMinutes': 0,
+          },
+          'monthly': <String, dynamic>{
+            'streak': 0,
+            'currentMinutes': 0,
+          },
+        };
       },
-    };
+    );
 
     return Scaffold(
       body: SafeArea(
@@ -229,7 +261,7 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
                   child: Row(
                     children: [
                       Icon(
-                        session['isGuided'] ? Icons.headset : Icons.music_note,
+                        Icons.music_note,
                         color: Theme.of(context).colorScheme.tertiary,
                         size: 20,
                       ),

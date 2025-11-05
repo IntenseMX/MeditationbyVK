@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'progress_service.dart';
 
 /// AppAudioHandler bridges just_audio with audio_service and Firestore resume.
 class AppAudioHandler extends BaseAudioHandler with SeekHandler {
@@ -24,14 +25,20 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
   final AudioPlayer _player;
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
+  final ProgressService _progress = ProgressService();
 
   String? _currentMeditationId;
+  String? _currentMeditationTitle;
   int _lastResumeWriteMs = 0;
   static const int _resumeWriteThrottleMs = 15000; // 15s
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<PlayerState>? _completionSub;
   StreamSubscription<AudioInterruptionEvent>? _interruptionSub;
   StreamSubscription<void>? _becomingNoisySub;
+  int? _playStartMsUtc; // when playback first started for current item
+  bool _sessionRecorded = false; // guard to avoid duplicate writes per item
+  int? _lastWrittenMinute; // last whole minute written for progressive updates
+  int? _lastLoggedSecond; // last second we logged (to avoid spam)
 
   void _initStreams() {
     // Map just_audio state to audio_service PlaybackState
@@ -67,19 +74,60 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
       final id = _currentMeditationId;
       if (id == null) return;
       if (!_player.playing) return;
+
+      // Only log when second changes (avoid spam from multiple updates per second)
+      final currentSecond = pos.inSeconds;
+      if (_lastLoggedSecond == null || currentSecond != _lastLoggedSecond) {
+        _lastLoggedSecond = currentSecond;
+        debugPrint('[AudioService] ${pos.inSeconds}s');
+      }
+
+      // Progressive minute upsert
+      final dur = _player.duration;
+      if (dur != null && dur.inSeconds > 0) {
+        final startedMs = _playStartMsUtc;
+        if (startedMs != null && !_sessionRecorded) {
+          final minute = pos.inSeconds ~/ 60;
+          if (_lastWrittenMinute == null || minute > _lastWrittenMinute!) {
+            _lastWrittenMinute = minute;
+            debugPrint('[AudioService] 📊 Minute $minute rollover - writing session update...');
+            try {
+              await _progress.upsertSession(
+                meditationId: id,
+                meditationTitle: _currentMeditationTitle,
+                startedAtUtc: DateTime.fromMillisecondsSinceEpoch(startedMs, isUtc: true),
+                durationSec: pos.inSeconds,
+                completed: false,
+              );
+              debugPrint('[AudioService] ✅ Minute $minute write SUCCESS');
+            } catch (e, st) {
+              debugPrint('[AudioService] ❌ Minute write FAILED: $e');
+              debugPrint('[AudioService] Stack: $st');
+            }
+          }
+        }
+      }
       final now = DateTime.now().millisecondsSinceEpoch;
       if (now - _lastResumeWriteMs < _resumeWriteThrottleMs) return;
       _lastResumeWriteMs = now;
       await _writeResumePosition(id, pos);
+      // 80% completion threshold check while playing
+      _maybeRecordSession(forceComplete: false);
     });
 
-    // Finalize on complete
+    // Track first playing transition and finalize on complete
     _completionSub = _player.playerStateStream.listen((state) async {
+      // Capture start time on first transition to playing for current item
+      if (state.playing && _playStartMsUtc == null && !_sessionRecorded) {
+        _playStartMsUtc = DateTime.now().toUtc().millisecondsSinceEpoch;
+      }
       if (state.processingState == ProcessingState.completed) {
         final id = _currentMeditationId;
         if (id != null) {
           await _writeResumePosition(id, _player.duration ?? Duration.zero);
         }
+        // Record as completed when playback naturally completes
+        _maybeRecordSession(forceComplete: true);
       }
     });
   }
@@ -145,6 +193,11 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
       return; // Already loaded
     }
     _currentMeditationId = meditationId;
+    _currentMeditationTitle = title;
+    _playStartMsUtc = null;
+    _sessionRecorded = false;
+    _lastWrittenMinute = null;
+    _lastLoggedSecond = null;
 
     final item = MediaItem(
       id: meditationId,
@@ -220,7 +273,14 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   @override
-  Future<void> play() => _player.play();
+  Future<void> play() async {
+    debugPrint('[AudioService] play() called');
+    await _player.play();
+    // Capture first start timestamp (UTC) for current item
+    final timestamp = DateTime.now().toUtc().millisecondsSinceEpoch;
+    _playStartMsUtc ??= timestamp;
+    debugPrint('[AudioService] play() set _playStartMsUtc = $_playStartMsUtc (timestamp=$timestamp)');
+  }
 
   @override
   Future<void> pause() async {
@@ -240,6 +300,8 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
     if (id != null) {
       await _writeResumePosition(id, _player.position);
     }
+    // If user stops after crossing threshold, record completion
+    _maybeRecordSession(forceComplete: false);
     await _player.stop();
     await super.stop();
   }
@@ -292,6 +354,41 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
       }, SetOptions(merge: true));
     } catch (_) {
       // Intentionally swallow errors for resume writes; not user-critical
+    }
+  }
+
+  void _maybeRecordSession({required bool forceComplete}) async {
+    if (_sessionRecorded) return;
+    final id = _currentMeditationId;
+    if (id == null) return;
+    final duration = _player.duration;
+    if (duration == null || duration.inSeconds <= 0) return;
+    final position = _player.position;
+    final crossedThreshold = position.inSeconds >= (duration.inSeconds * 0.9).floor();
+    final shouldComplete = forceComplete || crossedThreshold;
+    if (!shouldComplete) return;
+
+    DateTime startedAtUtc;
+    if (_playStartMsUtc != null) {
+      startedAtUtc = DateTime.fromMillisecondsSinceEpoch(_playStartMsUtc!, isUtc: true);
+    } else {
+      // Fallback: approximate by subtracting listened duration
+      startedAtUtc = DateTime.now().toUtc().subtract(position);
+    }
+    // On completion, give full credit (use full track duration)
+    final fullSec = duration.inSeconds;
+    try {
+      await _progress.upsertSession(
+        meditationId: id,
+        meditationTitle: _currentMeditationTitle,
+        startedAtUtc: startedAtUtc,
+        durationSec: fullSec,
+        completed: true,
+      );
+    } catch (_) {
+      // Swallow to keep audio thread safe
+    } finally {
+      _sessionRecorded = true;
     }
   }
 
