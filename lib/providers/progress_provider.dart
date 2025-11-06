@@ -3,7 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/progress_service.dart';
 
 final progressServiceProvider = Provider<ProgressService>((ref) {
-  return ProgressService();
+  final svc = ProgressService();
+  // Start auto-sync on provider creation; ignore returned Future intentionally
+  svc.start();
+  ref.onDispose(() => svc.dispose());
+  return svc;
 });
 
 // Emits a map compatible with current ProgressScreen expectations

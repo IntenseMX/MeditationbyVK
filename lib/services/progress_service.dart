@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 
 class SessionRecord {
   SessionRecord({
@@ -53,6 +56,7 @@ class ProgressService {
 
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
+  StreamSubscription<List<ConnectivityResult>>? _connSub;
 
   static const String _pendingKey = 'pending_sessions_v1';
 
@@ -66,6 +70,28 @@ class ProgressService {
 
   String buildSessionId({required String uid, required String meditationId, required DateTime startedAtUtc}) {
     return '${uid}_${meditationId}_${startedAtUtc.millisecondsSinceEpoch}';
+  }
+
+  // Begin listening for connectivity changes and attempt an initial flush.
+  Future<void> start() async {
+    try {
+      _connSub = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) async {
+        if (results.any((r) => r != ConnectivityResult.none)) {
+          await flushPending();
+        }
+      });
+      // Try to flush once on start in case we were previously offline.
+      await flushPending();
+    } catch (e) {
+      // Log to aid diagnostics; non-fatal
+      // ignore: avoid_print
+      // Use debugPrint for consistency with rest of app
+      debugPrint('Failed to start connectivity listener: $e');
+    }
+  }
+
+  Future<void> dispose() async {
+    await _connSub?.cancel();
   }
 
   Future<void> writeSession({

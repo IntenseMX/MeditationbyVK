@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,6 +16,8 @@ import 'providers/theme_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/audio_player_provider.dart';
 import 'services/audio_service.dart';
+import 'providers/connectivity_provider.dart';
+import 'presentation/widgets/offline_banner.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +45,17 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     debugPrint('Firebase initialized successfully');
+
+    // Enable Firestore offline persistence (explicit across platforms)
+    try {
+      FirebaseFirestore.instance.settings = const Settings(
+        persistenceEnabled: true,
+        // cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED, // optional
+      );
+      debugPrint('Firestore persistence configured');
+    } catch (e) {
+      debugPrint('Firestore persistence setup skipped: $e');
+    }
 
     // Connect to Firebase Emulators when in dev mode
     if (EnvConfig.useEmulator) {
@@ -120,6 +134,22 @@ class MyApp extends ConsumerWidget {
       routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
       debugShowMaterialGrid: false,
+      builder: (context, child) {
+        final offline = ref.watch(isOfflineProvider);
+        return offline.when(
+          data: (isOffline) {
+            if (!isOffline) return child ?? const SizedBox.shrink();
+            return Column(
+              children: [
+                const OfflineBanner(),
+                Expanded(child: child ?? const SizedBox.shrink()),
+              ],
+            );
+          },
+          loading: () => child ?? const SizedBox.shrink(),
+          error: (_, __) => child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }

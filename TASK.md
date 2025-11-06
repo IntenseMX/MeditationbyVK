@@ -42,3 +42,11 @@ Follow-ups
 - Distribution: 4 items from top category + 2 from second category (total 6)
 - Fallback: Trending when user has no history or no resolvable categories
 - Caching: In-memory cache of meditationId → categoryId to avoid redundant doc reads per update
+
+## Phase 3 – Section F (2025-11-05)
+- Firestore offline persistence enabled in `lib/main.dart` (mobile explicit; web via `enablePersistence`) 
+- Progress auto-sync: connectivity listener in `ProgressService.start()` flushes queued sessions on reconnect 
+- Lifecycle wiring: `progressServiceProvider` starts service and disposes subscription to prevent leaks
+- Dependency added: `connectivity_plus` in `pubspec.yaml`
+  - Fixes (2025-11-05): handle `List<ConnectivityResult>` for v6; enable persistence before emulator; add debug logging in start()
+ - Offline UI (2025-11-05): Added `OfflineBanner` and `isOfflineProvider`; banner shows when offline (persistent)
