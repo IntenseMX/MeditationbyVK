@@ -130,13 +130,23 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
                   color: Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                indicatorPadding: const EdgeInsets.all(4),
+                indicatorPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
                 labelColor: Theme.of(context).colorScheme.onPrimary,
                 unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                labelPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 tabs: const [
-                  Tab(text: 'Day'),
-                  Tab(text: 'Week'),
-                  Tab(text: 'Month'),
+                  Tab(
+                    height: 48,
+                    child: Text('Day', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  ),
+                  Tab(
+                    height: 48,
+                    child: Text('Week', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  ),
+                  Tab(
+                    height: 48,
+                    child: Text('Month', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  ),
                 ],
               ),
             ),
@@ -191,17 +201,17 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
                   children: [
                     Text(
                       '$percentage%',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 48,
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onSurface,
+                        color: Colors.white,
                       ),
                     ),
-                    Text(
+                    const Text(
                       'of daily goal',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: Colors.white,
                       ),
                     ),
                   ],
@@ -247,12 +257,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Today\'s Sessions',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -269,16 +279,16 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
                       Expanded(
                         child: Text(
                           session['name'] as String,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
+                          style: const TextStyle(
+                            color: Colors.white,
                             fontSize: 16,
                           ),
                         ),
                       ),
                       Text(
                         '${session['duration']} min',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        style: const TextStyle(
+                          color: Colors.white,
                           fontSize: 14,
                         ),
                       ),
@@ -579,17 +589,17 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
             children: [
               Text(
                 value,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: Colors.white,
                 ),
               ),
               Text(
                 label,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: Colors.white,
                 ),
               ),
             ],
