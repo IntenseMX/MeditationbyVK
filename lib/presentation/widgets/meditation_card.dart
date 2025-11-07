@@ -12,6 +12,8 @@ class MeditationCard extends StatelessWidget {
   final List<int> gradientColors;
   final bool isPremium;
   final VoidCallback? onTap;
+  final bool compact;
+  final String? category;
 
   const MeditationCard({
     super.key,
@@ -22,6 +24,8 @@ class MeditationCard extends StatelessWidget {
     required this.gradientColors,
     this.isPremium = false,
     this.onTap,
+    this.compact = false,
+    this.category,
   });
 
   @override
@@ -30,6 +34,12 @@ class MeditationCard extends StatelessWidget {
     final heroTag = 'meditation_$title';
     final appColors = Theme.of(context).extension<AppColors>();
     final gradientText = appColors?.textOnGradient ?? Theme.of(context).colorScheme.onInverseSurface;
+    const double _defaultTitleFontSize = 22.0;
+    const double _compactTitleFontSize = 18.0;
+    const double _defaultCardHeight = 180.0;
+    const double _compactCardHeight = 140.0;
+    final double cardHeight = compact ? _compactCardHeight : _defaultCardHeight;
+    final double titleFontSize = compact ? _compactTitleFontSize : _defaultTitleFontSize;
 
     return Consumer(
       builder: (context, ref, _) {
@@ -48,7 +58,7 @@ class MeditationCard extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: Container(
-            height: 180,
+            height: cardHeight,
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
@@ -150,7 +160,7 @@ class MeditationCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: gradientText,
-                          fontSize: 22,
+                              fontSize: titleFontSize,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -166,52 +176,81 @@ class MeditationCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: gradientText.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
+                      if (!compact)
+                        Row(
                           children: [
-                            Icon(
-                              Icons.timer_outlined,
-                              color: gradientText,
-                              size: 16,
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: gradientText.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.timer_outlined,
+                                    color: gradientText,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '$duration min',
+                                    style: TextStyle(
+                                      color: gradientText,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '$duration min',
-                              style: TextStyle(
+                            const Spacer(),
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: gradientText.withOpacity(0.3),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.play_arrow,
                                 color: gradientText,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                                size: 24,
                               ),
                             ),
                           ],
+                        )
+                      else
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            if (category != null && category!.trim().isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: gradientText.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  category!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: gradientText, fontSize: 12),
+                                ),
+                              )
+                            else
+                              const SizedBox.shrink(),
+                            Text(
+                              '$duration min',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: gradientText.withOpacity(0.9)),
+                            ),
+                          ],
                         ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: gradientText.withOpacity(0.3),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.play_arrow,
-                          color: gradientText,
-                          size: 24,
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),

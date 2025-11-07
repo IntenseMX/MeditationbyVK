@@ -14,6 +14,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
   late TabController _tabController;
   int _selectedIndex = 0;
 
+  // Tab UI configuration (avoid magic numbers)
+  static const double _tabHeight = 48;
+  static const EdgeInsets _tabLabelPadding = EdgeInsets.symmetric(horizontal: 18, vertical: 12);
+  static const EdgeInsets _tabIndicatorPadding = EdgeInsets.all(4);
+  static const double _tabIndicatorRadius = 12;
+
   @override
   void initState() {
     super.initState();
@@ -128,23 +134,24 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
                 controller: _tabController,
                 indicator: BoxDecoration(
                   color: Theme.of(context).colorScheme.primary,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(_tabIndicatorRadius),
                 ),
-                indicatorPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicatorPadding: _tabIndicatorPadding,
                 labelColor: Theme.of(context).colorScheme.onPrimary,
                 unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                labelPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                labelPadding: _tabLabelPadding,
                 tabs: const [
                   Tab(
-                    height: 48,
+                    height: _tabHeight,
                     child: Text('Day', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   ),
                   Tab(
-                    height: 48,
+                    height: _tabHeight,
                     child: Text('Week', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   ),
                   Tab(
-                    height: 48,
+                    height: _tabHeight,
                     child: Text('Month', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   ),
                 ],

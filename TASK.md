@@ -1,6 +1,6 @@
 # TASK.md
 
-Last Updated: 2025-11-05
+Last Updated: 2025-11-07
 
 ## Completed Fixes (2025-10-25)
 
@@ -50,3 +50,7 @@ Follow-ups
 - Dependency added: `connectivity_plus` in `pubspec.yaml`
   - Fixes (2025-11-05): handle `List<ConnectivityResult>` for v6; enable persistence before emulator; add debug logging in start()
  - Offline UI (2025-11-05): Added `OfflineBanner` and `isOfflineProvider`; banner shows when offline (persistent)
+
+## Phase 3 – UI Polish (2025-11-07)
+- Home premium consistency: Trending and Recommended now reuse `MeditationCard(compact)` so PREMIUM tag + lock + gated tap match Recently Added.
+- Android URL launching: Added browser visibility `<queries>` in `AndroidManifest.xml` for ACTION_VIEW http/https so paywall legal links open on Android 11+.

@@ -191,7 +191,7 @@ class HomeScreen extends ConsumerWidget {
             // Horizontal auto-scroll belt for trending
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 140,
+                height: 160,
                 child: trendingAsync.when(
                   loading: () => const Center(child: CircularProgressIndicator()),
                   error: (e, _) => const Center(child: Text('Failed to load')),
@@ -218,7 +218,7 @@ class HomeScreen extends ConsumerWidget {
             // Horizontal scroll for recommended
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 140,
+                height: 160,
                 child: recommendedAsync.when(
                   loading: () => const Center(child: CircularProgressIndicator()),
                   error: (e, _) => const Center(child: Text('Failed to load')),
@@ -232,76 +232,21 @@ class HomeScreen extends ConsumerWidget {
                       itemCount: items.length,
                       itemBuilder: (context, index) {
                         final m = items[index];
-                        final label = _formatDuration(m.durationSec);
+                        final minutes = _minutesFromSeconds(m.durationSec);
                         final category = _resolveCategoryName(m.categoryId, categoryIdToName);
-                        final appColors = Theme.of(context).extension<AppColors>();
-                        final gradientText = appColors?.textOnGradient ?? Theme.of(context).colorScheme.onInverseSurface;
                         return Container(
                           width: 200,
                           margin: const EdgeInsets.only(right: 16),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            image: (m.imageUrl != null && m.imageUrl!.isNotEmpty)
-                                ? DecorationImage(image: NetworkImage(m.imageUrl!), fit: BoxFit.cover)
-                                : null,
-                          ),
-                          foregroundDecoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: (m.imageUrl != null && m.imageUrl!.isNotEmpty)
-                                  ? [
-                                      Colors.transparent,
-                                      Color(gradient.last).withOpacity(AppTheme.thumbnailBottomFadeOpacity),
-                                    ]
-                                  : [
-                                      Color(gradient.first),
-                                      Color(gradient.last),
-                                    ],
-                            ),
-                          ),
-                          padding: const EdgeInsets.all(16),
-                          child: InkWell(
+                          child: MeditationCard(
+                            title: m.title,
+                            subtitle: '',
+                            duration: minutes,
+                            imageUrl: m.imageUrl ?? '',
+                            gradientColors: gradient,
+                            isPremium: m.isPremium ?? false,
                             onTap: () => context.push('/player/${m.id}'),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  m.title,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: gradientText,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: gradientText.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        category,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(color: gradientText, fontSize: 12),
-                                      ),
-                                    ),
-                                    Text(
-                                      label,
-                                      style: TextStyle(color: gradientText.withOpacity(0.9)),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                            compact: true,
+                            category: category,
                           ),
                         );
                       },
@@ -386,8 +331,6 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
     if (_source.isEmpty) {
       return const SizedBox.shrink();
     }
-    final appColors = Theme.of(context).extension<AppColors>();
-    final gradientText = appColors?.textOnGradient ?? Theme.of(context).colorScheme.onInverseSurface;
     return NotificationListener<UserScrollNotification>(
       onNotification: (n) {
         final interacting = n.direction != ScrollDirection.idle;
@@ -404,87 +347,22 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
         itemBuilder: (context, index) {
           final meditation = _loopedItems[index];
           final colors = Theme.of(context).colorScheme;
-          final gradient = [colors.primary, colors.tertiary];
+          final gradient = [colors.primary.value, colors.tertiary.value];
           final category = _resolveCategoryName(meditation.categoryId, widget.categoryNames);
-          final durationLabel = _formatDuration(meditation.durationSec);
+          final minutes = _minutesFromSeconds(meditation.durationSec);
           return Container(
             width: _itemWidth,
             margin: const EdgeInsets.only(right: _spacing),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              image: (meditation.imageUrl != null && meditation.imageUrl!.isNotEmpty)
-                  ? DecorationImage(image: NetworkImage(meditation.imageUrl!), fit: BoxFit.cover)
-                  : null,
-            ),
-            foregroundDecoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: (meditation.imageUrl != null && meditation.imageUrl!.isNotEmpty)
-                    ? [
-                        Colors.transparent,
-                        gradient[1].withOpacity(AppTheme.thumbnailBottomFadeOpacity),
-                      ]
-                    : [
-                        gradient[0],
-                        gradient[1],
-                      ],
-              ),
-            ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      meditation.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: gradientText,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: gradientText.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        category,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: gradientText,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      durationLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: gradientText.withOpacity(0.9),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            child: MeditationCard(
+              title: meditation.title,
+              subtitle: '',
+              duration: minutes,
+              imageUrl: meditation.imageUrl ?? '',
+              gradientColors: gradient,
+              isPremium: meditation.isPremium ?? false,
+              onTap: () => context.push('/player/${meditation.id}'),
+              compact: true,
+              category: category,
             ),
           );
         },
