@@ -54,3 +54,12 @@ Follow-ups
 ## Phase 3 – UI Polish (2025-11-07)
 - Home premium consistency: Trending and Recommended now reuse `MeditationCard(compact)` so PREMIUM tag + lock + gated tap match Recently Added.
 - Android URL launching: Added browser visibility `<queries>` in `AndroidManifest.xml` for ACTION_VIEW http/https so paywall legal links open on Android 11+.
+
+## Domain Entities (2025-11-07)
+- Added `AppUser` domain entity at `lib/domain/entities/app_user.dart` (clean, Firestore-agnostic).
+- Added Firestore mapper `AppUserModel` at `lib/data/models/app_user_model.dart` for serialization.
+
+## Auth - Email Sign Up (2025-11-07)
+- Service: `AuthService.signUpWithEmailAndPassword()` creates Firebase user and upserts `users/{uid}`.
+- Provider: `AuthNotifier.signUpWithEmail()` updates state with refreshed claims.
+- UI: `_SignUpDialog` now supports email/password sign-up alongside Google/Apple buttons.

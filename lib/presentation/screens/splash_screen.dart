@@ -8,6 +8,7 @@ import '../../core/constants.dart';
 import 'package:meditation_by_vk/core/animation_constants.dart';
 import 'package:meditation_by_vk/presentation/widgets/zen_background.dart';
 import 'package:meditation_by_vk/presentation/widgets/breathing_glow.dart';
+import 'package:meditation_by_vk/services/auth_service.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -301,72 +302,135 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  AnimatedOpacity(
-                                    duration: SplashAnimationConfig.ctaItemDuration,
-                                    opacity: _ctaStage >= 1 ? 1 : 0,
-                                    curve: AnimationCurves.standardEasing,
-                                    child: AnimatedSlide(
+                                  // If user is authenticated (not anonymous), show Continue + Sign Out
+                                  if (hasUser && !isGuest) ...[
+                                    AnimatedOpacity(
                                       duration: SplashAnimationConfig.ctaItemDuration,
-                                      offset: _ctaStage >= 1 ? Offset.zero : const Offset(0, 0.02),
+                                      opacity: _ctaStage >= 1 ? 1 : 0,
                                       curve: AnimationCurves.standardEasing,
-                                      child: SizedBox(
-                                        width: double.infinity,
-                                        child: ElevatedButton(
-                                      onPressed: () async {
-                                        if (!hasUser) {
-                                          await ref.read(authProvider.notifier).signInAnonymously();
-                                          final postState = ref.read(authProvider);
-                                          if (postState.user == null) {
-                                            if (!mounted) return;
-                                            final msg = postState.errorMessage ??
-                                                'Guest sign-in failed. Enable Anonymous Sign-In in Firebase Console → Authentication → Sign-in method.';
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text(msg)),
-                                            );
-                                            return;
-                                          }
-                                        }
-                                        if (!mounted) return;
-                                        await _playExitAndNavigate(context);
-                                      },
-                                          child: Text(hasUser ? 'Continue' : 'Continue as Guest'),
+                                      child: AnimatedSlide(
+                                        duration: SplashAnimationConfig.ctaItemDuration,
+                                        offset: _ctaStage >= 1 ? Offset.zero : const Offset(0, 0.02),
+                                        curve: AnimationCurves.standardEasing,
+                                        child: SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton(
+                                            onPressed: () async => await _playExitAndNavigate(context),
+                                            child: const Text('Continue'),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  AnimatedOpacity(
-                                    duration: SplashAnimationConfig.ctaItemDuration,
-                                    opacity: _ctaStage >= 2 ? 1 : 0,
-                                    curve: AnimationCurves.standardEasing,
-                                    child: AnimatedSlide(
+                                    const SizedBox(height: 12),
+                                    AnimatedOpacity(
                                       duration: SplashAnimationConfig.ctaItemDuration,
-                                      offset: _ctaStage >= 2 ? Offset.zero : const Offset(0, 0.02),
+                                      opacity: _ctaStage >= 2 ? 1 : 0,
                                       curve: AnimationCurves.standardEasing,
-                                      child: SizedBox(
-                                        width: double.infinity,
-                                        child: OutlinedButton(
-                                          onPressed: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) => const _LoginDialog(),
-                                            );
-                                          },
-                                          child: const Text('Sign In'),
+                                      child: AnimatedSlide(
+                                        duration: SplashAnimationConfig.ctaItemDuration,
+                                        offset: _ctaStage >= 2 ? Offset.zero : const Offset(0, 0.02),
+                                        curve: AnimationCurves.standardEasing,
+                                        child: SizedBox(
+                                          width: double.infinity,
+                                          child: OutlinedButton(
+                                            onPressed: () async {
+                                              await ref.read(authProvider.notifier).signOut();
+                                            },
+                                            child: const Text('Sign Out'),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  if (isGuest)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 8),
-                                      child: Text(
-                                        'Currently in guest mode',
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                          color: theme.colorScheme.onBackground.withOpacity(0.6),
+                                  ]
+                                  // If not authenticated or guest, show Continue as Guest + Sign In + Sign Up
+                                  else ...[
+                                    AnimatedOpacity(
+                                      duration: SplashAnimationConfig.ctaItemDuration,
+                                      opacity: _ctaStage >= 1 ? 1 : 0,
+                                      curve: AnimationCurves.standardEasing,
+                                      child: AnimatedSlide(
+                                        duration: SplashAnimationConfig.ctaItemDuration,
+                                        offset: _ctaStage >= 1 ? Offset.zero : const Offset(0, 0.02),
+                                        curve: AnimationCurves.standardEasing,
+                                        child: SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton(
+                                            onPressed: () async {
+                                              if (!hasUser) {
+                                                await ref.read(authProvider.notifier).signInAnonymously();
+                                                final postState = ref.read(authProvider);
+                                                if (postState.user == null) {
+                                                  if (!mounted) return;
+                                                  final msg = postState.errorMessage ?? 'Guest sign-in failed.';
+                                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                                                  return;
+                                                }
+                                              }
+                                              if (!mounted) return;
+                                              await _playExitAndNavigate(context);
+                                            },
+                                            child: const Text('Continue as Guest'),
+                                          ),
                                         ),
                                       ),
                                     ),
+                                    const SizedBox(height: 12),
+                                    AnimatedOpacity(
+                                      duration: SplashAnimationConfig.ctaItemDuration,
+                                      opacity: _ctaStage >= 2 ? 1 : 0,
+                                      curve: AnimationCurves.standardEasing,
+                                      child: AnimatedSlide(
+                                        duration: SplashAnimationConfig.ctaItemDuration,
+                                        offset: _ctaStage >= 2 ? Offset.zero : const Offset(0, 0.02),
+                                        curve: AnimationCurves.standardEasing,
+                                        child: SizedBox(
+                                          width: double.infinity,
+                                          child: OutlinedButton(
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => const _SignInDialog(),
+                                              );
+                                            },
+                                            child: const Text('Sign In'),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    AnimatedOpacity(
+                                      duration: SplashAnimationConfig.ctaItemDuration,
+                                      opacity: _ctaStage >= 2 ? 1 : 0,
+                                      curve: AnimationCurves.standardEasing,
+                                      child: AnimatedSlide(
+                                        duration: SplashAnimationConfig.ctaItemDuration,
+                                        offset: _ctaStage >= 2 ? Offset.zero : const Offset(0, 0.02),
+                                        curve: AnimationCurves.standardEasing,
+                                        child: SizedBox(
+                                          width: double.infinity,
+                                          child: OutlinedButton(
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => const _SignUpDialog(),
+                                              );
+                                            },
+                                            child: const Text('Sign Up'),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    if (isGuest)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 8),
+                                        child: Text(
+                                          'Currently in guest mode',
+                                          style: theme.textTheme.bodySmall?.copyWith(
+                                            color: theme.colorScheme.onBackground.withOpacity(0.6),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ],
                               ),
                             )
@@ -395,14 +459,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
   }
 }
 
-class _LoginDialog extends ConsumerStatefulWidget {
-  const _LoginDialog();
+class _SignInDialog extends ConsumerStatefulWidget {
+  const _SignInDialog();
 
   @override
-  ConsumerState<_LoginDialog> createState() => _LoginDialogState();
+  ConsumerState<_SignInDialog> createState() => _SignInDialogState();
 }
 
-class _LoginDialogState extends ConsumerState<_LoginDialog> {
+class _SignInDialogState extends ConsumerState<_SignInDialog> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
@@ -486,6 +550,157 @@ class _LoginDialogState extends ConsumerState<_LoginDialog> {
           child: _isLoading
               ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
               : const Text('Continue'),
+        ),
+      ],
+    );
+  }
+}
+
+class _SignUpDialog extends ConsumerStatefulWidget {
+  const _SignUpDialog();
+
+  @override
+  ConsumerState<_SignUpDialog> createState() => _SignUpDialogState();
+}
+
+class _SignUpDialogState extends ConsumerState<_SignUpDialog> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+  String? _errorText;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleEmailSignUp() async {
+    setState(() {
+      _isLoading = true;
+      _errorText = null;
+    });
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    if (email.isEmpty || password.isEmpty) {
+      setState(() {
+        _errorText = 'Please enter email and password.';
+        _isLoading = false;
+      });
+      return;
+    }
+    try {
+      await ref.read(authProvider.notifier).signUpWithEmail(email, password);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      context.go('/');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _errorText = 'Sign-up failed');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleGoogle() async {
+    setState(() {
+      _isLoading = true;
+      _errorText = null;
+    });
+    try {
+      await AuthService().signInWithGoogle();
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      context.go('/');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _errorText = 'Google sign-in failed');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleApple() async {
+    setState(() {
+      _isLoading = true;
+      _errorText = null;
+    });
+    try {
+      await AuthService().signInWithApple();
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      context.go('/');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _errorText = 'Apple sign-in failed');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Sign Up'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            autofillHints: const [AutofillHints.username, AutofillHints.email],
+            decoration: const InputDecoration(labelText: 'Email'),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _passwordController,
+            obscureText: true,
+            autofillHints: const [AutofillHints.password],
+            decoration: const InputDecoration(labelText: 'Password'),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: _isLoading ? null : _handleEmailSignUp,
+              child: _isLoading
+                  ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Sign Up'),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _isLoading ? null : _handleGoogle,
+              icon: const Icon(Icons.login),
+              label: const Text('Continue with Google'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _isLoading ? null : _handleApple,
+              icon: const Icon(Icons.apple),
+              label: const Text('Continue with Apple'),
+            ),
+          ),
+          if (_errorText != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                _errorText!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
         ),
       ],
     );

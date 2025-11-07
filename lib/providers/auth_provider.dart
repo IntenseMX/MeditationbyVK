@@ -123,6 +123,66 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  Future<void> signInWithGoogle() async {
+    try {
+      final cred = await _authService.signInWithGoogle();
+      final user = cred.user;
+      if (user != null) {
+        try {
+          final token = await user.getIdTokenResult(true);
+          final isAdmin = (token.claims?["admin"] == true);
+          state = AuthState.authenticated(user, isAdmin: isAdmin);
+        } catch (_) {
+          state = AuthState.authenticated(user);
+        }
+      } else {
+        state = const AuthState.initial();
+      }
+    } catch (e) {
+      state = AuthState.error(e.toString());
+    }
+  }
+
+  Future<void> signInWithApple() async {
+    try {
+      final cred = await _authService.signInWithApple();
+      final user = cred.user;
+      if (user != null) {
+        try {
+          final token = await user.getIdTokenResult(true);
+          final isAdmin = (token.claims?["admin"] == true);
+          state = AuthState.authenticated(user, isAdmin: isAdmin);
+        } catch (_) {
+          state = AuthState.authenticated(user);
+        }
+      } else {
+        state = const AuthState.initial();
+      }
+    } catch (e) {
+      state = AuthState.error(e.toString());
+    }
+  }
+
+  Future<void> signUpWithEmail(String email, String password) async {
+    try {
+      final cred = await _authService.signUpWithEmailAndPassword(email: email, password: password);
+      final user = cred.user;
+      if (user != null) {
+        try {
+          final token = await user.getIdTokenResult(true);
+          final isAdmin = (token.claims?["admin"] == true);
+          state = AuthState.authenticated(user, isAdmin: isAdmin);
+        } catch (_) {
+          state = AuthState.authenticated(user);
+        }
+      } else {
+        state = const AuthState.initial();
+      }
+    } catch (e) {
+      state = AuthState.error(e.toString());
+    }
+  }
+
   Future<void> signOut() async {
     try {
       await _authService.signOut();
