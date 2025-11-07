@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/animation_constants.dart';
 import '../../providers/meditations_list_provider.dart';
 import '../../providers/audio_player_provider.dart';
+import '../../providers/subscription_provider.dart';
 import '../widgets/animated_controls.dart';
 import '../widgets/animated_gradient_background.dart';
 import '../widgets/breathing_circle.dart';
@@ -74,6 +76,26 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
         final String imageUrl = (data['imageUrl'] as String?) ?? '';
         final String audioUrl = (data['audioUrl'] as String?) ?? '';
         final String? categoryId = data['categoryId'] as String?;
+        final bool isPremium = (data['isPremium'] == true);
+
+        // Subscription gate: prevent loading/playing premium if user not subscribed
+        final sub = ref.watch(subscriptionProvider);
+        if (isPremium && !sub.isPremium) {
+          // Defer navigation to avoid setState during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Premium content. Upgrade to continue.')),
+              );
+              context.push('/paywall');
+            }
+          });
+          return Scaffold(
+            appBar: AppBar(title: const Text('Player')),
+            body: const Center(child: Text('Premium content locked')),
+            backgroundColor: Colors.transparent,
+          );
+        }
 
         // Lazy-load audio when data is ready
         if (_loadedMeditationId != widget.meditationId && audioUrl.isNotEmpty) {

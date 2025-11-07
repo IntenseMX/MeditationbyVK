@@ -196,7 +196,7 @@ class _MeditationEditorScreenState extends ConsumerState<MeditationEditorScreen>
                             onChanged: notifier.setCategory,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: DropdownButtonFormField<String>(
                             value: state.difficulty,
@@ -369,7 +369,7 @@ class _CategoryDropdown extends ConsumerWidget {
           value: selectedId != null && items.any((c) => c.id == selectedId) ? selectedId : null,
           decoration: const InputDecoration(labelText: 'Category'),
           items: [
-            const DropdownMenuItem<String>(value: null, child: Text('Select a category')),
+            const DropdownMenuItem<String>(value: null, child: Text('Select')),
             ...items.map((c) => DropdownMenuItem<String>(value: c.id, child: Text(c.name))),
           ],
           onChanged: onChanged,

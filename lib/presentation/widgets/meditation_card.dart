@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/theme.dart';
+import '../../providers/subscription_provider.dart';
 
 class MeditationCard extends StatelessWidget {
   final String title;
@@ -28,9 +31,19 @@ class MeditationCard extends StatelessWidget {
     final appColors = Theme.of(context).extension<AppColors>();
     final gradientText = appColors?.textOnGradient ?? Theme.of(context).colorScheme.onInverseSurface;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Hero(
+    return Consumer(
+      builder: (context, ref, _) {
+        final sub = ref.watch(subscriptionProvider);
+        final isLocked = isPremium && !sub.isPremium;
+        return GestureDetector(
+          onTap: () {
+            if (isLocked) {
+              context.push('/paywall');
+              return;
+            }
+            onTap?.call();
+          },
+          child: Hero(
         tag: heroTag,
         child: Material(
           color: Colors.transparent,
@@ -81,6 +94,25 @@ class MeditationCard extends StatelessWidget {
                 ),
               ),
             ),
+            // Optional lock overlay for non-subscribers
+            if (isLocked)
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Container(
+                  height: 28,
+                  width: 28,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface.withOpacity(0.85),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.lock,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ),
             // Content
             Padding(
               padding: const EdgeInsets.all(16),
@@ -187,7 +219,9 @@ class MeditationCard extends StatelessWidget {
         ),
           ),
         ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

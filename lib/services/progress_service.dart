@@ -199,6 +199,20 @@ class ProgressService {
     }
   }
 
+  // Upsert the premium entitlement flag on the user's document.
+  // Keeps source of truth in Firestore for cross-device access.
+  Future<void> upsertUserPremium({required bool isPremium}) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null || uid.isEmpty) return;
+    await _firestore.collection('users').doc(uid).set(
+      {
+        'isPremium': isPremium,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+  }
+
   Future<void> _enqueuePending(SessionRecord session) async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_pendingKey);

@@ -126,7 +126,7 @@ class ProfileScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 16),
                               ElevatedButton(
-                                onPressed: () {},
+                                onPressed: () => context.push('/paywall'),
                                 child: const Text(
                                   'Learn More',
                                   style: TextStyle(fontWeight: FontWeight.bold),

@@ -5,6 +5,7 @@ import 'screens/splash_screen.dart';
 import 'screens/main_scaffold.dart';
 import 'screens/player_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/paywall_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import 'screens/admin/dashboard_screen.dart';
@@ -183,6 +184,14 @@ final appRouter = GoRouter(
       ),
     ),
     // Minimal admin landing (guarded by redirect)
+    GoRoute(
+      path: '/paywall',
+      name: 'paywall',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        child: const PaywallScreen(),
+        state: state,
+      ),
+    ),
     GoRoute(
       path: '/admin',
       name: 'admin',
