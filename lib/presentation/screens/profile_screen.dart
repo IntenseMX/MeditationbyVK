@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:io' show Platform;
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme.dart';
 import '../../providers/theme_provider.dart';
+import '../../providers/subscription_provider.dart';
 import 'package:go_router/go_router.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -259,6 +262,25 @@ class ProfileScreen extends ConsumerWidget {
                     subtitle: 'Manage offline content',
                     onTap: () {},
                   ),
+                  // Manage Subscription (visible for premium users)
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final sub = ref.watch(subscriptionProvider);
+                      if (!sub.isPremium) return const SizedBox.shrink();
+
+                      return ListTile(
+                        leading: const Icon(Icons.manage_accounts),
+                        title: const Text('Manage Subscription'),
+                        trailing: const Icon(Icons.open_in_new, size: 16),
+                        onTap: () => _launchUrl(
+                          context,
+                          Platform.isIOS
+                              ? 'https://apps.apple.com/account/subscriptions'
+                              : 'https://play.google.com/store/account/subscriptions',
+                        ),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 20),
                   Text(
                     'About',
@@ -279,13 +301,13 @@ class ProfileScreen extends ConsumerWidget {
                     context,
                     icon: Icons.privacy_tip,
                     title: 'Privacy Policy',
-                    onTap: () {},
+                    onTap: () => _launchUrl(context, 'https://meditation-by-vk-89927.web.app/legal/privacy.html'),
                   ),
                   _buildSettingItem(
                     context,
                     icon: Icons.description,
                     title: 'Terms of Service',
-                    onTap: () {},
+                    onTap: () => _launchUrl(context, 'https://meditation-by-vk-89927.web.app/legal/terms.html'),
                   ),
                   _buildSettingItem(
                     context,
@@ -420,5 +442,18 @@ class ProfileScreen extends ConsumerWidget {
         onTap: onTap,
       ),
     );
+  }
+}
+
+Future<void> _launchUrl(BuildContext context, String urlString) async {
+  final uri = Uri.parse(urlString);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } else {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open $urlString')),
+      );
+    }
   }
 }

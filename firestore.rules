@@ -2,6 +2,7 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
     function isSignedIn() {
       return request.auth != null;
     }
@@ -10,37 +11,53 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.admin == true;
     }
 
-    // Public content: published meditations, active categories
-    match /meditations/{id} {
-      // Allow public reads for published, and full reads for admins (drafts included)
-      allow read: if resource.data.status == 'published' || isAdmin();
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /categories/{id} {
-      allow read: if resource.data.active == true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    // Users manage only their own profile
+    // Users
     match /users/{uid} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      // Owner can read their own profile
+      allow read: if isSignedIn() && request.auth.uid == uid;
+
+      // Allow owner to create/update own doc (includes isPremium for now)
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update: if isSignedIn() && request.auth.uid == uid;
+
+      // Optional nested collections used by UI (owner-only)
+      match /sessions/{sessionId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
+
+      match /favorites/{favoriteId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
     }
 
-    // User progress keyed as {uid}_{meditationId}
-    match /userProgress/{docId} {
-      allow read, write: if isSignedIn() &&
-        docId.split('_')[0] == request.auth.uid &&
-        docId.indexOf('_') == request.auth.uid.size();
-    }
-
-    // User sessions as subcollection: userProgress/{uid}/sessions/{sessionId}
+    // Session history stored at userProgress/{uid}/sessions/*
     match /userProgress/{uid} {
       allow read, write: if isSignedIn() && request.auth.uid == uid;
 
       match /sessions/{sessionId} {
         allow read, write: if isSignedIn() && request.auth.uid == uid;
       }
+    }
+
+    // Meditations
+    match /meditations/{meditationId} {
+      // Public reads for published; admins may read all
+      allow read: if resource.data.status == 'published' || isAdmin();
+
+      // Admins manage content
+      allow create, update, delete: if isAdmin();
+
+      // Additionally allow signed-in users to increment playCount by exactly +1
+      allow update: if isSignedIn()
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['playCount'])
+        && request.resource.data.playCount == resource.data.playCount + 1;
+    }
+
+    // Categories
+    match /categories/{categoryId} {
+      // Permit reading categories; UI filters active client-side
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
     // Admin audit: append-only by admins; no updates/deletes
@@ -50,7 +67,7 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Deny everything else by default
+    // Default deny
     match /{document=**} {
       allow read, write: if false;
     }
