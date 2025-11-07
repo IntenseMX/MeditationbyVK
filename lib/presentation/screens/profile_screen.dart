@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/subscription_provider.dart';
+import '../../providers/auth_provider.dart';
 import 'package:go_router/go_router.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -322,7 +323,12 @@ class ProfileScreen extends ConsumerWidget {
                     width: double.infinity,
                     margin: const EdgeInsets.only(bottom: 20),
                     child: OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () async {
+                        await ref.read(authProvider.notifier).signOut();
+                        if (context.mounted) {
+                          context.go('/splash');
+                        }
+                      },
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: Theme.of(context).colorScheme.primary),
                         padding: const EdgeInsets.symmetric(vertical: 16),

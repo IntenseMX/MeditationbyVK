@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "93424872011-610gunrp5ho8jsbl63suspj04oeqqkdk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.meditation_by_vk",
+            "certificate_hash": "03e25ea78d4dbf0bac3572b8a289bdad50c606a3"
+          }
+        },
+        {
           "client_id": "93424872011-0vsmb5vgbkfrmt68pt0f1oj7u7hbpfg2.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,6 +37,13 @@
             {
               "client_id": "93424872011-0vsmb5vgbkfrmt68pt0f1oj7u7hbpfg2.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "93424872011-59afe8jmu8ucs7d261t9q5vv5cjtecvm.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.romaninc.upmeditation"
+              }
             }
           ]
         }

@@ -191,6 +191,15 @@ class AuthNotifier extends Notifier<AuthState> {
       state = AuthState.error(e.toString());
     }
   }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _authService.sendPasswordResetEmail(email);
+    } catch (e) {
+      state = AuthState.error(e.toString());
+      rethrow;
+    }
+  }
 }
 
 final authProvider = NotifierProvider<AuthNotifier, AuthState>(

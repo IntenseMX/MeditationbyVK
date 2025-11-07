@@ -9,6 +9,7 @@ import 'package:meditation_by_vk/core/animation_constants.dart';
 import 'package:meditation_by_vk/presentation/widgets/zen_background.dart';
 import 'package:meditation_by_vk/presentation/widgets/breathing_glow.dart';
 import 'package:meditation_by_vk/services/auth_service.dart';
+import 'package:meditation_by_vk/presentation/widgets/auth/auth_dialog.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -389,33 +390,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
                                             onPressed: () {
                                               showDialog(
                                                 context: context,
-                                                builder: (context) => const _SignInDialog(),
+                                                builder: (context) => const AuthDialog(),
                                               );
                                             },
                                             child: const Text('Sign In'),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    AnimatedOpacity(
-                                      duration: SplashAnimationConfig.ctaItemDuration,
-                                      opacity: _ctaStage >= 2 ? 1 : 0,
-                                      curve: AnimationCurves.standardEasing,
-                                      child: AnimatedSlide(
-                                        duration: SplashAnimationConfig.ctaItemDuration,
-                                        offset: _ctaStage >= 2 ? Offset.zero : const Offset(0, 0.02),
-                                        curve: AnimationCurves.standardEasing,
-                                        child: SizedBox(
-                                          width: double.infinity,
-                                          child: OutlinedButton(
-                                            onPressed: () {
-                                              showDialog(
-                                                context: context,
-                                                builder: (context) => const _SignUpDialog(),
-                                              );
-                                            },
-                                            child: const Text('Sign Up'),
                                           ),
                                         ),
                                       ),
