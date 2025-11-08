@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(npm run build:*)",
+      "Read(**)",
+      "Bash(chmod:*)",
+      "Read(//c/Users/inten/Desktop/CURSOR WORLD/Raid Reaper Game Main 2D 2D 2D 2D/ui/pages/landing/**)",
+      "Read(//c/Users/inten/Desktop/CURSOR WORLD/Raid Reaper Game Main 2D 2D 2D 2D/network/data/**)",
+      "Read(//c/Users/inten/Desktop/CURSOR WORLD/Raid Reaper Game Main 2D 2D 2D 2D/ui/**)",
+      "Read(//c/Users/inten/Desktop/CURSOR WORLD/Raid Reaper Game Main 2D 2D 2D 2D/Z Documentation/**)",
+      "Read(//c/Users/inten/Desktop/CURSOR WORLD/Raid Reaper Game Main 2D 2D 2D 2D/engine/ui/core/**)",
+      "Bash(gltf-pipeline:*)",
+      "Bash(test:*)",
+      "Bash(powershell:*)",
+      "Bash(flutter pub add:*)",
+      "Bash(flutter pub get:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

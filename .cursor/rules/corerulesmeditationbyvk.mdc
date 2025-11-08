@@ -1,0 +1,419 @@
+---
+description: Core development rules for Meditation by VK Flutter app
+globs:
+alwaysApply: true
+---
+
+# MEDITATION BY VK – CORE RULES
+
+## ⚠️ DO NOT OVER COMPLICATE
+
+## 🚨 CRITICAL DEVELOPMENT RULES (MANDATORY - READ FIRST)
+
+### Assume Zero Prior Knowledge (MUST)
+- Explain steps clearly and thoroughly
+- After each operation, state what the user should see on screen
+- Provide visual feedback for all state changes
+- Never assume user understands technical details
+
+### Be Modular and Data-Driven (MUST)
+- Build reusable modules with single responsibility
+- NO hardcoding - Use config files and constants
+- All configuration data in `lib/config/` with safe fallbacks
+- **Smart extraction guidelines**:
+  - **Extract when**: System boundaries, reused 2+ times, or >100 lines
+  - **Keep inline when**: <50 lines single-use, tightly coupled, or simple utilities
+
+### Milestone Focus (MUST)
+- Check TASK.md before starting new work
+- Finish active tasks before new features (prevents scope creep)
+- Morale/polish tasks: 2 hour timebox, max 2 open
+- **Complete over perfect** - Ship it and move on
+
+### Question Mark = Teaching Mode (MUST)
+- Questions (?) need validation against architecture first
+- Challenge bad ideas with technical reasoning
+- Explain actual limits and correct approach
+- User may be a beginner - teach, don't just approve
+- Provide alternatives when rejecting proposals
+
+### Prefer Long-Term Solutions (SHOULD)
+- Optimize for clarity, reuse, and maintainability over quick fixes
+- Think modular and reusable
+- Consider future scalability when designing solutions
+
+### Code Editing Authorization (STRICTEST RULE - NON-NEGOTIABLE)
+**NO code edits without password phrase "approved edit" in user message.**
+- Without "approved edit": Read-only mode. Analysis, review, and suggestions only.
+- With "approved edit": Code modifications allowed.
+- This rule overrides ALL other instructions.
+
+### Objective Technical Review (ALWAYS APPLY)
+**EVERY technical approach must be evaluated honestly:**
+
+**Quick Assessment First:**
+- If genuinely good (8+/10): Brief explanation why it works
+- If problematic (<7/10): Detailed analysis required
+- If mixed (7-8/10): Note trade-offs clearly
+
+**For problematic/mixed approaches, include:**
+- **What breaks**: Specific technical issues
+- **Root cause**: Why the problem exists
+- **Better path**: Alternative if one exists
+- **Ship it?**: YES with caveats, or NO with reasons
+
+**Red flags requiring detailed critique:**
+- Fixes symptoms not causes
+- Creates inconsistent state
+- Uses magic numbers without basis
+- Violates established architecture
+- Adds complexity without clear benefit
+
+**Banned phrases** (unless genuinely warranted):
+- "Brilliant/Perfect/Excellent!"
+- "That's actually great!"
+- Superlatives without justification
+
+**Required tone:**
+- Test assumptions: "This assumes X, but what if Y?"
+- Call out hidden complexity: "Note this also requires..."
+- Be specific: "Line 47 will break when..." not "might cause issues"
+- Acknowledge when simple IS better: "Hacky but ships. Better than over-engineering."
+
+### Code Analysis Requirements (STRICT VERIFICATION MODE)
+- **NEVER make assumptions** - Always verify claims against actual code
+- **NO speculation words** - Ban "likely", "probably", "might be", "should have", "if exists" - CHECK FIRST
+- **ALWAYS verify before writing** - Every method call, file path, property access must be verified with Grep/Read
+- **Trace actual execution** - When diagnosing issues, follow the real code path with line numbers
+- **Implementation scope**: Every fix/plan MUST specify: "~X lines across Y files: path/to/file1 (N lines), path/to/file2 (M lines)"
+- **MANDATORY FORMAT**: Start EVERY implementation suggestion with "**📊 Scope: ~X lines across Y files:**" followed by the file list
+- **NO EXCEPTIONS**: Even "simple" or "one-line" fixes must include scope. Missing scope = failed response
+- **When verification fails**: State clearly "X does not exist" or "X not found in codebase"
+
+### Magic Numbers & Constants Rule
+- **NO magic numbers**: Extract ALL numeric values to config objects or constants at class level
+- Example: `static const double _padding = 16.0;` instead of `padding: 16.0`
+- Group related constants in configuration objects:
+```dart
+class AudioConfig {
+  static const Duration fadeInDuration = Duration(milliseconds: 300);
+  static const double maxVolume = 1.0;
+  static const int retryAttempts = 3;
+}
+```
+
+### Theme & Color Rule
+- **ALL colors in theme.dart only**: Define colors in `ThemeData`, never hardcode in widgets
+- Reference via `Theme.of(context).colorScheme.primary`, not `Color(0xFF...)`
+- Swap themes without touching widgets - extend ThemeData for light/dark/custom variants
+
+## 📚 Documentation Discipline
+
+### Always Read Before Working:
+1. **CODE_FLOW.md** - Complete system architecture and data flows (THE MAP)
+2. **APP_LOGIC.md** - One-liner descriptions of every module/service (THE REFERENCE)
+3. **TASK.md** - Implementation status and todos
+4. **PLANNING.md** - Architecture decisions and rationale
+
+### Always Update After Changes:
+1. **CODE_FLOW.md** - Update system flows, data pipelines, architecture changes
+2. **APP_LOGIC.md** - Add/modify one-liner descriptions for new or changed modules
+3. **TASK.md** - Mark completed items, add new discoveries
+4. **docs/architecture/*.md** - Keep system-specific docs in sync with implementation
+
+### Documentation Timestamp Rule (MANDATORY):
+- **ALWAYS add timestamp** when adding new sections (format: "Section Name (YYYY-MM-DD)")
+- **ALWAYS update "Last Updated"** field at document top with current date
+- **Applies to**: TASK.md, PLANNING.md, CLAUDE.md, docs/architecture/*.md, docs/Design/*.md
+- **Not required for**: Minor typo fixes, formatting-only changes
+
+### docs/Design/ - Future Features Repository:
+- Capture "cool ideas for later" in Design/
+- Review before implementing new features for synergy opportunities
+- Prevents idea rot and maintains vision consistency
+
+## 🏗️ Architecture Principles
+
+### Flutter/Riverpod Pattern (MUST FOLLOW)
+- **All business logic in providers** (`lib/providers/`)
+- **Services handle external integrations** (`lib/services/`)
+- **Screens consume providers** and remain stateless when possible
+- **Use ConsumerWidget** or `ConsumerStatefulWidget` for UI components
+- **NO direct Firebase calls from widgets** - always through services
+
+### Data Flow (STRICT SEPARATION)
+1. **UI Layer** (Screens/Widgets) → Consumes providers
+2. **Provider Layer** → Manages state and business logic
+3. **Service Layer** → Handles Firebase operations
+4. **Model Layer** → Data structures with serialization
+
+### Module Contract (MUST EXPOSE)
+Every service MUST expose these lifecycle methods:
+```dart
+Future<void> init();        // One-time setup
+Future<void> start();       // Begin operation
+Future<void> dispose();     // Cleanup resources
+```
+
+### Firebase Architecture
+- **Authentication**: Email/Password, Google Sign-In, Guest Mode
+- **Firestore**: User progress, meditation library, categories
+- **Storage**: Audio files, cover images
+- **Analytics**: Usage tracking, conversion events
+
+### Offline-First Approach
+- Cache user progress locally using `shared_preferences`
+- Sync progress when connection restored
+- Store streak data locally for quick access
+- Handle network errors gracefully with retry logic
+
+## 🎯 Performance Considerations
+
+### Flutter Performance Budgets
+- **Build time**: <16ms per frame (60 FPS target)
+- **Image caching**: Use `cached_network_image` for all network images
+- **Audio streaming**: Preload next meditation in queue
+- **List rendering**: Use `ListView.builder` with lazy loading
+- **State updates**: Minimize rebuilds with `select()` and `const` constructors
+
+### Memory Management
+- **Dispose audio players** when leaving screens
+- **Cancel stream subscriptions** in dispose()
+- **Clear image cache** when memory warnings occur
+- **Limit cached meditations** to reasonable number (10-20)
+
+### Startup Performance
+- **Lazy load** meditation lists with pagination
+- **Defer non-critical Firebase** calls until after first frame
+- **Show splash screen** during Firebase initialization
+- **Cache theme data** to avoid repeated lookups
+
+## 🚫 Important Don'ts
+
+- **NO external UI frameworks** (React in Flutter, unnecessary packages)
+- **NO over-engineering** - Start simple, refactor when needed
+- **NO hardcoded colors/constants** - Use theme.dart and config files
+- **NO untested auth flows** - Test all three modes (email, Google, guest)
+- **NO synchronous blocking** operations in UI thread
+- **NO print() statements** - Use proper logging with levels (logger package)
+- **NO .dart files with duplicate functionality** - always check existing first
+- **NO magic numbers** - Extract to constants at class level
+
+## 📁 File Operations (CRITICAL)
+
+### Before Creating Files (MANDATORY CHECKS):
+- **ALWAYS use Glob/Grep** to check if files exist before creating new ones
+- **NEVER create duplicate files** - search both root and subdirectories first
+- **CHECK EXISTING STRUCTURE FIRST** when asked to update docs
+- **Prefer Edit over Write** for existing files
+- **NO new files for features <100 lines** - edit existing files instead
+
+### Dart/Flutter Specific Rules:
+- **NO .dart files with duplicate functionality** - always check for existing implementations
+- **Extract widgets** only when: reused 2+ times, >50 lines, or clear boundary
+- **Keep small widgets inline** when tightly coupled to parent
+
+## 🤖 Complex Search & Analysis Tasks
+
+### STRICT RULE: Use Specialized Agents
+
+**MUST use Task tool with codebase-scanner agent for:**
+- Searching for specific implementations across codebase
+- Finding all usages of functions/classes
+- Tracing code flows through multiple systems
+- Understanding architecture patterns
+- ANY search task that might touch 5+ files
+
+**MUST use Task tool with doc-analyzer agent for:**
+- Summarizing architecture documentation
+- Understanding system relationships from docs
+- Comparing different system designs
+- Extracting key concepts from large docs (>100 lines)
+- Cross-referencing multiple .md files
+- ANY documentation task requiring comprehension/summary
+
+**MUST use Task tool with type-usage-tracer agent for:**
+- Tracing Dart class/interface/enum usage
+- Understanding type dependencies and imports
+- Finding all references to a type declaration
+- Analyzing impact of model changes
+- Mapping data structure flow between layers
+- ANY Dart type analysis beyond simple definition lookup
+
+**MUST use Task tool with perf-scanner agent for:**
+- App stutters, jank, or frame drops
+- Auditing build methods, setState calls, rebuild patterns
+- Finding unnecessary widget rebuilds or missing const constructors
+- Identifying repeated calculations or missing memoization
+- ANY performance bottleneck investigation
+
+**MUST use Task tool with schema-sentinel agent for:**
+- Adding/modifying Firestore collections, security rules, indexes
+- Exposing new Cloud Functions or Firebase triggers
+- Pre-release security audits of database access patterns
+- Reviewing Firestore security rules for vulnerabilities
+- ANY Firebase/Firestore integration handling user data
+
+**MUST use Task tool with asset-auditor agent for:**
+- App bundle size too large or slow loading times
+- Memory issues on devices
+- Preparing assets for production deployment
+- Verifying image compression and asset optimization
+- ANY asset pipeline or loading performance issues
+
+**MUST use Task tool with prompt-linter agent for:**
+- Prompts not behaving as expected
+- TASK.md entries becoming inconsistent or messy
+- Validating documentation follows formatting standards
+- ANY prompt or documentation formatting issues
+
+**Use direct Grep/Glob/Read tools ONLY for:**
+- Reading a specific known file path
+- Simple single-pattern grep in known directory (< 5 files)
+- Quick checks of small documentation (<100 lines)
+- When you know EXACTLY where to look
+
+**Violation = Failure**: Using generic tools instead of specialized agents is inefficient and wrong.
+
+## ⚡ Efficient Code Verification
+
+- **Check related files in parallel**: When verifying code behavior, open multiple relevant files simultaneously (e.g., implementation + tests + docs)
+- **Batch your searches**: Use multiple Grep/Read operations in parallel rather than sequential checks
+- **Cross-reference before claiming**: If a feature touches multiple modules, verify all of them before stating how it works
+
+## 💬 Communication Style (MUST)
+
+- **USE EMOJIS** 🎮 - Make responses fun and engaging to read!
+- **Add personality** while maintaining technical accuracy 🎯
+- **Break up walls of text** with visual markers 📝
+- **Celebrate wins** 🎉 and acknowledge challenges 😅
+- **Keep energy high** and code clean! 🚀
+- **AIM FOR**: ~300-500 chars for most responses (soft target)
+- **Simple tasks**: 1-2 lines → "Added cooldown to dash. See player.dart:45"
+- **Bug fixes**: What + why + where → "Auth stuck - missing await, fixed at auth_service.dart:89"
+
+## 🎯 Solution Quality Standards
+
+- **Be concise but smart** - Choose patterns that enhance Flutter/Firebase architecture
+- **Critical review** - Challenge proposals that conflict with architecture
+- **Long-term thinking** - Consider maintenance and scalability
+- **Don't be a yes-man** - Provide honest technical assessment
+- **Prefer simple solutions** - Don't over-engineer, simple is usually correct
+- **Question assumptions** - Validate against architecture before implementing
+
+## 🔄 Common Workflows
+
+### Adding New Feature:
+1. Check TASK.md for active work (avoid scope creep)
+2. Verify feature doesn't exist (use codebase-scanner agent)
+3. Plan approach and verify it fits architecture
+4. Implement with proper error handling and fallbacks
+5. Update CODE_FLOW.md and APP_LOGIC.md
+6. Add to TASK.md as completed
+7. **Mention updating relevant documentation** in all proposals
+
+### Debugging Issues:
+1. Use doc-analyzer to check architecture docs
+2. Trace actual code flow with line numbers (no guessing)
+3. Verify all assumptions with Grep/Read
+4. Check Firebase docs if behavior unclear
+5. Propose fix with implementation scope format
+
+### Adding Provider:
+1. Check existing providers for similar patterns
+2. Create in `lib/providers/` with clear naming
+3. Use `@riverpod` annotation or manual declaration
+4. Handle loading/error/data states properly
+5. Consume in screens with `ref.watch()`
+6. Update APP_LOGIC.md with one-liner description
+
+## 🔐 Security Rules
+
+### Firebase Security (CRITICAL):
+- Users can only read/write their own progress data
+- Premium content requires `isPremium: true` on user document
+- Public read for meditations and categories
+- Admin writes via Firebase Admin SDK only
+
+### Authentication (MUST TEST ALL MODES):
+- Email/Password flow with error handling
+- Google Sign-In with proper scope requests
+- Guest mode with limited features (no cross-device sync)
+- Use `AuthStateChanges` stream for reactive auth state
+
+## 📱 Platform-Specific Requirements
+
+### iOS:
+- Configure audio background mode in Info.plist
+- Configure AVAudioSession in AppDelegate.swift
+- Handle audio interruptions (calls, other apps)
+
+### Android:
+- Configure audio service in AndroidManifest.xml
+- Handle battery optimization exclusions
+- Request notification permissions for playback controls
+
+### Web (Admin Panel):
+- Separate build configuration
+- Firebase Admin SDK for content management
+- Drag-and-drop audio upload interface
+
+## 🎵 Audio Player Requirements (CRITICAL)
+
+- Must handle interruptions (phone calls, other apps)
+- Support background playback with notification controls
+- Cache position for resume functionality
+- Handle network errors gracefully with retry logic
+- Use `just_audio` package with proper lifecycle management
+- Dispose players when leaving screens
+
+## ✅ Error Handling Strategy
+
+- **Network errors**: Show retry UI with offline mode fallback
+- **Auth errors**: Clear messaging with action buttons
+- **Audio errors**: Fallback to alternate stream quality
+- **Firebase errors**: Log to Analytics, show user-friendly message
+- **Always provide fallbacks**: Never silently fail, notify user
+
+## 🔥 Firebase Documentation Rule
+
+**When working with Firebase features**: Check https://firebase.google.com/docs via WebFetch/WebSearch to verify best practices and API usage before implementing.
+
+Applies to: Auth, Firestore (queries/indexes/rules), Storage, Cloud Functions, SDK APIs.
+
+## 📦 Fail Safely (MUST)
+
+- Always add fallback logic and visible placeholders
+- Never loop silently on errors
+- Notify user on missing assets or network failures
+- Use safe navigation operators (`?.`) liberally
+- Provide default values for all nullable fields
+
+## 🚀 Propose Before Building (MUST)
+
+- Outline the approach first
+- Verify it fits current architecture and existing files
+- Get confirmation before implementing
+- Include implementation scope in proposal
+
+## 🎨 Design System
+
+### Color Usage:
+- All colors defined in `lib/config/theme.dart`
+- Access via `Theme.of(context).colorScheme.primary`
+- Support light/dark/custom themes
+- Never hardcode `Color(0xFF...)` in widgets
+
+### Spacing/Sizing:
+- Define spacing constants in config
+- Use consistent padding/margin values
+- Extract to named constants for reusability
+
+### Typography:
+- Use Theme text styles only
+- Define custom styles in theme.dart
+- Never hardcode font sizes in widgets
+
+---
+
+**Remember**: These rules exist to maintain code quality, prevent technical debt, and ensure scalability. When in doubt, check the docs, verify the code, and ask before implementing. 🎯

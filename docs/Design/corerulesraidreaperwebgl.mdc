@@ -1,0 +1,7 @@
+# Meditation by VK – Core Rules (Cursor)
+
+Last Updated: 2025-10-23
+
+Import Check Rule (2025-10-23)
+- First check: missing import. If you reference a type/ThemeExtension and see "isn't a type" or InvalidType, add the import of its defining file before anything else.
+

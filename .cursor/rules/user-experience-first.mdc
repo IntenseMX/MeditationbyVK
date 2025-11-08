@@ -1,0 +1,6 @@
+---
+alwaysApply: true
+---
+
+Always cross-check APIs against the exact Flutter version before committing UI refactors.
+Always try to prioritize user experience to be as smooth as possible. no hard refreshes, no jumps. take full advantage of built in animations, fading and smooth transitions when possible.
