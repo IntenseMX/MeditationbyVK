@@ -49,5 +49,20 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.93424872011-59afe8jmu8ucs7d261t9q5vv5cjtecvm</string>
+			</array>
+		</dict>
+	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Select a photo from your library to use as your profile picture.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Take a photo to use as your profile picture.</string>
 </dict>
 </plist>
