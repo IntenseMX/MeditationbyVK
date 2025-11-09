@@ -20,83 +20,83 @@ import 'providers/connectivity_provider.dart';
 import 'presentation/widgets/offline_banner.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  // Global error logging so web console shows details during build frames
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
-    debugPrint('FlutterError: ${details.exceptionAsString()}');
-    final stack = details.stack;
-    if (stack != null) {
-      debugPrint(stack.toString());
-    }
-  };
-
-  ui.PlatformDispatcher.instance.onError = (error, stack) {
-    debugPrint('Uncaught platform error: $error');
-    debugPrint(stack.toString());
-    return true; // mark as handled so app doesn't crash silently
-  };
-
-  // Initialize Firebase with error handling
-  // Will work once firebase_options.dart is configured with real values
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    debugPrint('Firebase initialized successfully');
-
-    // Enable Firestore offline persistence (explicit across platforms)
-    try {
-      FirebaseFirestore.instance.settings = const Settings(
-        persistenceEnabled: true,
-        // cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED, // optional
-      );
-      debugPrint('Firestore persistence configured');
-    } catch (e) {
-      debugPrint('Firestore persistence setup skipped: $e');
-    }
-
-    // Connect to Firebase Emulators when in dev mode
-    if (EnvConfig.useEmulator) {
-      try {
-        FirebaseFirestore.instance.useFirestoreEmulator(
-          EnvConfig.host,
-          EnvConfig.firestorePort,
-        );
-
-        await FirebaseAuth.instance.useAuthEmulator(
-          EnvConfig.host,
-          EnvConfig.authPort,
-        );
-
-        await FirebaseStorage.instance.useStorageEmulator(
-          EnvConfig.host,
-          EnvConfig.storagePort,
-        );
-
-        debugPrint('Connected to Firebase Emulators');
-      } catch (e) {
-        debugPrint('Error connecting to emulators: $e');
+    // Global error logging so web console shows details during build frames
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.presentError(details);
+      debugPrint('FlutterError: ${details.exceptionAsString()}');
+      final stack = details.stack;
+      if (stack != null) {
+        debugPrint(stack.toString());
       }
+    };
+
+    ui.PlatformDispatcher.instance.onError = (error, stack) {
+      debugPrint('Uncaught platform error: $error');
+      debugPrint(stack.toString());
+      return true; // mark as handled so app doesn't crash silently
+    };
+
+    // Initialize Firebase with error handling
+    // Will work once firebase_options.dart is configured with real values
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      debugPrint('Firebase initialized successfully');
+
+      // Enable Firestore offline persistence (explicit across platforms)
+      try {
+        FirebaseFirestore.instance.settings = const Settings(
+          persistenceEnabled: true,
+          // cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED, // optional
+        );
+        debugPrint('Firestore persistence configured');
+      } catch (e) {
+        debugPrint('Firestore persistence setup skipped: $e');
+      }
+
+      // Connect to Firebase Emulators when in dev mode
+      if (EnvConfig.useEmulator) {
+        try {
+          FirebaseFirestore.instance.useFirestoreEmulator(
+            EnvConfig.host,
+            EnvConfig.firestorePort,
+          );
+
+          await FirebaseAuth.instance.useAuthEmulator(
+            EnvConfig.host,
+            EnvConfig.authPort,
+          );
+
+          await FirebaseStorage.instance.useStorageEmulator(
+            EnvConfig.host,
+            EnvConfig.storagePort,
+          );
+
+          debugPrint('Connected to Firebase Emulators');
+        } catch (e) {
+          debugPrint('Error connecting to emulators: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('Firebase initialization skipped: $e');
+      debugPrint('Please configure firebase_options.dart with your project values');
     }
-  } catch (e) {
-    debugPrint('Firebase initialization skipped: $e');
-    debugPrint('Please configure firebase_options.dart with your project values');
-  }
 
-  // Initialize a single shared audio handler for background/lock screen controls
-  final audioHandler = await AudioService.init(
-    builder: () => AppAudioHandler(),
-    config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.meditation_by_vk.audio',
-      androidNotificationChannelName: 'Meditation Playback',
-      androidStopForegroundOnPause: true,
-      androidNotificationIcon: 'mipmap/ic_launcher',
-    ),
-  );
+    // Initialize a single shared audio handler for background/lock screen controls
+    final audioHandler = await AudioService.init(
+      builder: () => AppAudioHandler(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.meditation_by_vk.audio',
+        androidNotificationChannelName: 'Meditation Playback',
+        androidStopForegroundOnPause: true,
+        androidNotificationIcon: 'mipmap/ic_launcher',
+      ),
+    );
 
-  runZonedGuarded(() {
     runApp(
       ProviderScope(
         overrides: [

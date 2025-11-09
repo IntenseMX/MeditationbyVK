@@ -39,6 +39,7 @@ class _AuthDialogState extends ConsumerState<AuthDialog> {
       if (email.isEmpty || password.isEmpty) {
         setState(() {
           errorText = 'Please enter email and password.';
+          isLoading = false;
         });
         return;
       }
@@ -49,8 +50,9 @@ class _AuthDialogState extends ConsumerState<AuthDialog> {
         await ref.read(authProvider.notifier).signUpWithEmail(email, password);
       }
       if (!mounted) return;
-      Navigator.of(context).pop();
-      context.go('/');
+      final router = GoRouter.of(context);
+      Navigator.of(context, rootNavigator: true).pop();
+      router.go('/');
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -71,8 +73,9 @@ class _AuthDialogState extends ConsumerState<AuthDialog> {
     try {
       await ref.read(authProvider.notifier).signInWithGoogle();
       if (!mounted) return;
-      Navigator.of(context).pop();
-      context.go('/');
+      final router = GoRouter.of(context);
+      Navigator.of(context, rootNavigator: true).pop();
+      router.go('/');
     } catch (e) {
       if (!mounted) return;
       setState(() => errorText = 'Google sign-in failed');
@@ -89,8 +92,9 @@ class _AuthDialogState extends ConsumerState<AuthDialog> {
     try {
       await ref.read(authProvider.notifier).signInWithApple();
       if (!mounted) return;
-      Navigator.of(context).pop();
-      context.go('/');
+      final router = GoRouter.of(context);
+      Navigator.of(context, rootNavigator: true).pop();
+      router.go('/');
     } catch (e) {
       if (!mounted) return;
       setState(() => errorText = 'Apple sign-in failed');
@@ -103,6 +107,7 @@ class _AuthDialogState extends ConsumerState<AuthDialog> {
     final TextEditingController resetEmailController = TextEditingController(text: emailController.text.trim());
     final result = await showDialog<String>(
       context: context,
+      useRootNavigator: true,
       builder: (context) {
         return AlertDialog(
           title: const Text('Reset password'),
@@ -213,34 +218,40 @@ class _AuthDialogState extends ConsumerState<AuthDialog> {
       ),
       actionsPadding: const EdgeInsets.symmetric(horizontal: AppConstants.defaultPadding, vertical: 12),
       actions: [
-        if (isSignInMode)
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (isSignInMode)
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                onPressed: isLoading ? null : _promptPasswordReset,
+                child: const Text('Forgot password?'),
+              ),
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              onPressed: isLoading
+                  ? null
+                  : () {
+                      setState(() {
+                        isSignInMode = !isSignInMode;
+                        errorText = null;
+                      });
+                    },
+              child: Text(isSignInMode ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'),
             ),
-            onPressed: isLoading ? null : _promptPasswordReset,
-            child: const Text('Forgot password?'),
-          ),
-        const Spacer(),
-        TextButton(
-          style: TextButton.styleFrom(
-            foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          onPressed: isLoading
-              ? null
-              : () {
-                  setState(() {
-                    isSignInMode = !isSignInMode;
-                    errorText = null;
-                  });
-                },
-          child: Text(isSignInMode ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'),
-        ),
-        FilledButton(
-          onPressed: isLoading ? null : _handlePrimaryAction,
-          child: isLoading
-              ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
-              : Text(primaryCta),
+            const SizedBox(height: 8),
+            FilledButton(
+              onPressed: isLoading ? null : _handlePrimaryAction,
+              child: isLoading
+                  ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text(primaryCta),
+            ),
+          ],
         ),
       ],
     );

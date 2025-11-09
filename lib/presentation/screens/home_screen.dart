@@ -9,11 +9,29 @@ import '../../providers/meditations_list_provider.dart';
 import '../../services/meditation_service.dart';
 import '../../providers/category_provider.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _showLogo = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Delay logo reveal to allow overlay animation to complete
+    Future.delayed(const Duration(milliseconds: 1250), () {
+      if (mounted) {
+        setState(() => _showLogo = true);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final trendingAsync = ref.watch(trendingMeditationsProvider);
     final recentAsync = ref.watch(recentlyAddedMeditationsProvider);
     final recommendedAsync = ref.watch(recommendedMeditationsProvider);
@@ -65,29 +83,33 @@ class HomeScreen extends ConsumerWidget {
                         Builder(
                           builder: (context) {
                             final appColors = Theme.of(context).extension<AppColors>();
-                            return Hero(
-                              tag: 'brand',
-                              child: Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  color: appColors?.pop ?? AppTheme.deepCrimson,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'UP',
-                                    style: TextStyle(
-                                      color: appColors?.onPop ?? AppTheme.warmSandBeige,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                            return RepaintBoundary(
+                              child: AnimatedOpacity(
+                                opacity: _showLogo ? 1.0 : 0.0,
+                                duration: const Duration(milliseconds: 150),
+                                curve: Curves.easeIn,
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    color: appColors?.pop ?? AppTheme.deepCrimson,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'UP',
+                                      style: TextStyle(
+                                        color: appColors?.onPop ?? AppTheme.warmSandBeige,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),

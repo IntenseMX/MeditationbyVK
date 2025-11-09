@@ -108,14 +108,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const [AutofillHints.username, AutofillHints.email],
-                decoration: const InputDecoration(labelText: 'Email'),
+                style: const TextStyle(color: Colors.black),
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: passwordController,
                 obscureText: true,
                 autofillHints: const [AutofillHints.password],
-                decoration: const InputDecoration(labelText: 'Password'),
+                style: const TextStyle(color: Colors.black),
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               if (errorText != null)

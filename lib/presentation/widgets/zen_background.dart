@@ -45,40 +45,42 @@ class _ZenBackgroundState extends State<ZenBackground> with TickerProviderStateM
     final primary = appColors?.pop ?? colorScheme.primary;
     final secondary = colorScheme.secondary;
 
-    return RepaintBoundary(
-      child: AnimatedBuilder(
-        animation: Listenable.merge([
-          _gradientController,
-          _parallaxController,
-          _particleController,
-        ]),
-        builder: (context, _) {
-          final t = _gradientController.value;
+    return IgnorePointer(
+      child: RepaintBoundary(
+        child: AnimatedBuilder(
+          animation: Listenable.merge([
+            _gradientController,
+            _parallaxController,
+            _particleController,
+          ]),
+          builder: (context, _) {
+            final t = _gradientController.value;
 
-          // Create two softly shifted colors derived from theme
-          Color shift(Color base, double hueDelta, double lightnessDelta) {
-            final hsl = HSLColor.fromColor(base);
-            final shifted = hsl.withHue((hsl.hue + hueDelta) % 360).withLightness(
-              (hsl.lightness + lightnessDelta).clamp(0.0, 1.0),
+            // Create two softly shifted colors derived from theme
+            Color shift(Color base, double hueDelta, double lightnessDelta) {
+              final hsl = HSLColor.fromColor(base);
+              final shifted = hsl.withHue((hsl.hue + hueDelta) % 360).withLightness(
+                (hsl.lightness + lightnessDelta).clamp(0.0, 1.0),
+              );
+              return shifted.toColor();
+            }
+
+            final c1 = Color.lerp(primary, shift(primary, 12, 0.05), math.sin(t * 2 * math.pi) * 0.5 + 0.5)!;
+            final c2 = Color.lerp(secondary, shift(secondary, -8, -0.03), math.cos(t * 2 * math.pi) * 0.5 + 0.5)!;
+
+            return CustomPaint(
+              painter: _ZenPainter(
+                gradientColors: [
+                  c1.withOpacity(0.9),
+                  c2.withOpacity(0.9),
+                ],
+                parallaxT: _parallaxController.value,
+                particleT: _particleController.value,
+              ),
+              size: Size.infinite,
             );
-            return shifted.toColor();
-          }
-
-          final c1 = Color.lerp(primary, shift(primary, 12, 0.05), math.sin(t * 2 * math.pi) * 0.5 + 0.5)!;
-          final c2 = Color.lerp(secondary, shift(secondary, -8, -0.03), math.cos(t * 2 * math.pi) * 0.5 + 0.5)!;
-
-          return CustomPaint(
-            painter: _ZenPainter(
-              gradientColors: [
-                c1.withOpacity(0.9),
-                c2.withOpacity(0.9),
-              ],
-              parallaxT: _parallaxController.value,
-              particleT: _particleController.value,
-            ),
-            size: Size.infinite,
-          );
-        },
+          },
+        ),
       ),
     );
   }

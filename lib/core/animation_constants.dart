@@ -17,7 +17,7 @@ class AnimationDurations {
   static const Duration long1 = Duration(milliseconds: 675);   // Complex transitions
   static const Duration long2 = Duration(milliseconds: 750);   // Extended emphasis
   static const Duration long3 = Duration(milliseconds: 825);   // Very emphasized
-  static const Duration long4 = Duration(milliseconds: 900);   // Maximum emphasis
+  static const Duration long4 = Duration(milliseconds: 1200);   // Maximum emphasis
 
   // Legacy durations (remapped to Material 3, slowed 50%)
   static const Duration fast = short4;          // 300ms
@@ -84,6 +84,9 @@ class SplashAnimationConfig {
   static const Duration gradientCycle = Duration(milliseconds: 12000);
   static const Duration parallaxPeriod = Duration(milliseconds: 18000);
 
+  // CTA fallback (show after delay regardless of data readiness)
+  static const Duration ctaFallbackDelay = Duration(milliseconds: 4000);
+
   // Glow pulse
   static const Duration glowPulse = Duration(milliseconds: 5000);
 
@@ -107,7 +110,7 @@ class SplashAnimationConfig {
 /// Coordinated exit for Splash → Home (no magic numbers in widgets)
 class SplashExitConfig {
   // Master timeline
-  static const Duration exit = Duration(milliseconds: 1200);
+  static const Duration exit = Duration(milliseconds: 900);
 
   // Logo
   static const double logoPopScale = 1.08; // quick pop before shrink
