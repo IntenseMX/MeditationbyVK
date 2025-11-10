@@ -165,6 +165,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       children: list.map((m) {
                         final minutes = _minutesFromSeconds(m.durationSec);
                         return MeditationCard(
+                          id: m.id,
                           title: m.title,
                           subtitle: '',
                           duration: minutes,
@@ -260,6 +261,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           width: 200,
                           margin: const EdgeInsets.only(right: 16),
                           child: MeditationCard(
+                            id: m.id,
                             title: m.title,
                             subtitle: '',
                             duration: minutes,
@@ -269,6 +271,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             onTap: () => context.push('/player/${m.id}'),
                             compact: true,
                             category: category,
+                            enableHero: false,
                           ),
                         );
                       },
@@ -376,6 +379,7 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
             width: _itemWidth,
             margin: const EdgeInsets.only(right: _spacing),
             child: MeditationCard(
+              id: meditation.id,
               title: meditation.title,
               subtitle: '',
               duration: minutes,
@@ -385,6 +389,7 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
               onTap: () => context.push('/player/${meditation.id}'),
               compact: true,
               category: category,
+              enableHero: false,
             ),
           );
         },

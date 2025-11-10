@@ -146,6 +146,7 @@ class DiscoverScreen extends ConsumerWidget {
                           final m = items[index];
                           final minutes = ((m.durationSec ?? 0) + 59) ~/ 60;
                           return MeditationCard(
+                            id: m.id,
                             title: m.title,
                             subtitle: '',
                             duration: minutes,

@@ -69,6 +69,7 @@ class _CategoryMeditationsScreenState extends ConsumerState<CategoryMeditationsS
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               children: [
                 ...state.items.map((m) => MeditationCard(
+                      id: m.id,
                       title: m.title,
                       subtitle: '',
                       duration: _minutesFromSeconds(m.durationSec),

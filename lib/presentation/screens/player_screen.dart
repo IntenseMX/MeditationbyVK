@@ -137,7 +137,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
       colorScheme.tertiary,
     ];
 
-        final heroTag = 'meditation_$title';
+        final heroTag = 'meditation_${widget.meditationId}';
 
         return WillPopScope(
           onWillPop: () async {
