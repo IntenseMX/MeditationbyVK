@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme.dart';
 import '../../providers/subscription_provider.dart';
 
@@ -45,6 +46,16 @@ class MeditationCard extends StatelessWidget {
     final double cardHeight = compact ? _compactCardHeight : _defaultCardHeight;
     final double titleFontSize = compact ? _compactTitleFontSize : _defaultTitleFontSize;
 
+    // Downscaled cached image (approximate width by screen width)
+    final double _dpr = MediaQuery.of(context).devicePixelRatio;
+    final int? _approxCacheWidth = imageUrl.isEmpty ? null : (MediaQuery.of(context).size.width * _dpr).round();
+    final ImageProvider? _cachedImage = imageUrl.isEmpty
+        ? null
+        : CachedNetworkImageProvider(
+            imageUrl,
+            maxWidth: _approxCacheWidth,
+          );
+
     return Consumer(
       builder: (context, ref, _) {
         final sub = ref.watch(subscriptionProvider);
@@ -68,11 +79,8 @@ class MeditationCard extends StatelessWidget {
                       margin: const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        image: imageUrl.isNotEmpty
-                            ? DecorationImage(
-                                image: NetworkImage(imageUrl),
-                                fit: BoxFit.cover,
-                              )
+                        image: _cachedImage != null
+                            ? DecorationImage(image: _cachedImage, fit: BoxFit.cover)
                             : null,
                         boxShadow: [
                           BoxShadow(
@@ -272,11 +280,8 @@ class MeditationCard extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      image: imageUrl.isNotEmpty
-                          ? DecorationImage(
-                              image: NetworkImage(imageUrl),
-                              fit: BoxFit.cover,
-                            )
+                      image: _cachedImage != null
+                          ? DecorationImage(image: _cachedImage, fit: BoxFit.cover)
                           : null,
                       boxShadow: [
                         BoxShadow(

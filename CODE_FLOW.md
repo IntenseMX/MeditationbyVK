@@ -1380,3 +1380,39 @@ ref.watch(futureProvider).when(
 - Screen shows “Load More” when `canLoadMore` is true
 
 **Last Updated**: 2025-11-10
+
+### Splash UX/Data Gating (2025-11-10)
+
+- CTAs are now gated until BOTH intro animation completes and initial data is ready.
+- A 4s fallback reveals a “Skip (loading in background)” button to proceed with Home skeletons active.
+- Removed offscreen Home warmup overlay to avoid duplicate tree builds; image precache remains.
+- Files: `presentation/screens/splash_screen.dart`
+
+### Home Loading Skeletons (2025-11-10)
+
+- Added shimmer skeletons for “Recently Added”, “Trending Now”, and “Recommended”.
+- Smooth `AnimatedSwitcher` transitions replace spinners during first load.
+- Files: `presentation/screens/home_screen.dart` (shimmer)
+
+### Trending Belt Virtualization & Auto-Scroll (2025-11-10)
+
+- Removed per-build 100× list allocation; now virtualized with modulo indexing.
+- Replaced per-frame `jumpTo` with timer-throttled (~32ms) incremental scrolling, pausing on user interaction.
+- Files: `presentation/screens/home_screen.dart` (TrendingBelt)
+
+### Category Map Memoization (2025-11-10)
+
+- Introduced `categoryMapProvider` to compute `categoryId -> name` only when category stream changes.
+- Files: `providers/category_map_provider.dart`; consumed by `home_screen.dart`.
+
+### Image Caching & Downscaling (2025-11-10)
+
+- `MeditationCard` now uses `CachedNetworkImageProvider(maxWidth: …)` for downscaled decode and caching.
+- Reduces memory and decode time for card thumbnails.
+- Files: `presentation/widgets/meditation_card.dart`, `pubspec.yaml` (dependency)
+
+### Perf Metrics Hook (2025-11-10)
+
+- In debug, `WidgetsBinding.instance.addTimingsCallback` logs frame avg/p95 and jank count.
+- Use profile mode + DevTools for authoritative measurements; debug logs are indicative.
+- Files: `lib/main.dart`

@@ -85,6 +85,18 @@ lib/
   - Subtle shimmer on title, staggered CTA entrance
   - All timings centralized in `SplashAnimationConfig` (`core/animation_constants.dart`)
 
+## ✨ Recent Update (2025-11-10)
+
+- UX-first improvements:
+  - Splash CTAs gated until intro animation completes AND initial data loads
+  - 4s fallback “Skip (loading in background)” navigates with Home skeletons active
+  - Offscreen Home warmup overlay removed (kept image precache)
+- Performance:
+  - Shimmer skeletons for Home sections replace spinners
+  - Trending belt virtualized (no 100× allocations) and auto-scroll throttled (~32ms)
+  - Card images downscaled/cached via `cached_network_image`
+  - Debug frame timing logs (avg/p95/jank) in `main.dart` (use profile for authoritative)
+
 ---
 
 ## 🔁 Phase Roadmap

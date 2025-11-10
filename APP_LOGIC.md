@@ -54,6 +54,15 @@ This document provides concise descriptions of all systems, services, and featur
 
 **Last Updated**: 2025-11-10
 
+### Performance & UX Updates (2025-11-10)
+
+- SplashScreen: CTAs gated until intro animation completes AND initial data loads; 4s fallback shows “Skip (loading in background)”. Offscreen Home warmup overlay removed; image precache kept.
+- HomeScreen: Added shimmer skeletons for Recently Added, Trending, Recommended; smooth transitions replace spinners.
+- TrendingBelt: Virtualized list via modulo; auto-scroll now timer-throttled (~32ms), pauses on user interaction.
+- Category Map: Added `categoryMapProvider` to memoize `categoryId → name`; Home consumes this provider.
+- MeditationCard: Uses `CachedNetworkImageProvider(maxWidth: …)` to downscale/cache images, reducing memory/decodes.
+- Perf Metrics: Debug-only frame timing logs (avg/p95/jank) via `addTimingsCallback` in `main.dart` (use profile for accurate).
+
 ## 📚 Documentation Context
 
 **Primary Companion:**

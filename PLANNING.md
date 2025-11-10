@@ -1,6 +1,6 @@
 # PLANNING.md - Meditation by VK
 
-Last Updated: 2025-11-03
+Last Updated: 2025-11-10
 
 ## 📚 Related Documentation
 
@@ -177,6 +177,14 @@ Guest Mode → Optional Sign Up → Full Features
 - Show skeleton screens immediately
 - Preload next likely screen
 - Cache images aggressively
+
+#### Perceived vs Actual Performance (2025-11-10)
+- Prioritized perceived performance: gate Splash CTAs until data-ready + intro complete, with a 4s “Skip” fallback to skeletons.
+- Removed offscreen Home warmup overlay (duplicate tree build) to reduce startup cost.
+- Implemented shimmer skeletons for Home sections to avoid spinners.
+- Virtualized Trending belt and throttled auto-scroll to cut frame work.
+- Downscaled/cached card images to reduce memory and decode time.
+- Added debug frame timing logs; profile mode + DevTools remain the source of truth.
 
 ### Audio Performance (Phase 3)
 - Preload next in playlist

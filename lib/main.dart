@@ -86,6 +86,19 @@ void main() async {
       debugPrint('Please configure firebase_options.dart with your project values');
     }
 
+    // Debug-only: basic frame timing metrics (profile for authoritative results)
+    if (kDebugMode) {
+      WidgetsBinding.instance.addTimingsCallback((List<ui.FrameTiming> timings) {
+        if (timings.isEmpty) return;
+        final durations = timings.map((t) => t.totalSpan).toList();
+        durations.sort();
+        final avgMs = durations.map((d) => d.inMilliseconds).reduce((a, b) => a + b) / durations.length;
+        final p95Ms = durations[(durations.length * 0.95).floor()].inMilliseconds;
+        final jank = timings.where((t) => t.totalSpan.inMilliseconds > 16).length;
+        debugPrint('[PERF] Frames: ${durations.length} | avg=${avgMs.toStringAsFixed(1)}ms | p95=${p95Ms}ms | jank>16ms=$jank');
+      });
+    }
+
     // Initialize a single shared audio handler for background/lock screen controls
     final audioHandler = await AudioService.init(
       builder: () => AppAudioHandler(),

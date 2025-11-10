@@ -13,6 +13,7 @@ import 'package:meditation_by_vk/presentation/widgets/zen_background.dart';
 import 'package:meditation_by_vk/presentation/widgets/breathing_glow.dart';
 import 'package:meditation_by_vk/presentation/widgets/auth/auth_dialog.dart';
 import 'package:meditation_by_vk/presentation/screens/home_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 String? _imageAt(List<dynamic> list, int index) {
   if (index < 0 || index >= list.length) return null;
@@ -36,6 +37,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
   bool _showCtas = false;
+  bool _introAnimComplete = false;
+  bool _dataReady = false;
+  bool _skipAvailable = false;
   late AnimationController _shimmerController;
   // Exit timeline
   late AnimationController _exitController;
@@ -52,8 +56,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
   static const double _buttonAreaHeight = 140;
   static const double _contentAreaHeight = 220;
   static const double _logoBaseYOffset = (_contentAreaHeight + _buttonAreaHeight) / 2 - 12;
-  static const double _homeWarmupOffscreenPos = -10000.0;
-  static const Duration _homeWarmupDelay = Duration(milliseconds: 500);
+  static const Duration _skipTimeout = Duration(seconds: 4);
   static const int _homePrecacheImageCount = 3;
   static const Duration _homePrecacheTimeout = Duration(seconds: 2);
 
@@ -83,6 +86,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
     ));
 
     _animationController.forward();
+    _animationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed && mounted) {
+        setState(() {
+          _introAnimComplete = true;
+        });
+      }
+    });
 
     _shimmerController = AnimationController(vsync: this, duration: SplashAnimationConfig.shimmerSweep)..repeat();
 
@@ -125,6 +135,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
       });
     });
 
+    // If data is slow, reveal a non-blocking "Skip" after timeout (navigates with skeletons active)
+    Future.delayed(_skipTimeout, () {
+      if (!mounted) return;
+      setState(() {
+        _skipAvailable = true;
+        _showCtas = true;
+      });
+    });
+
     // Background: Try loading data, but don't block CTAs
     Future.delayed(const Duration(milliseconds: 500), () async {
       if (!mounted) return;
@@ -151,6 +170,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
         }
       }
 
+      if (mounted) {
+        setState(() {
+          _dataReady = true;
+        });
+      }
+
       // Ensure auth state checked (no side effects)
       if (mounted) {
         ref.read(authProvider.notifier).checkAuthState();
@@ -175,9 +200,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
           }
 
           if (urls.isEmpty) return;
+          final dpr = MediaQuery.of(context).devicePixelRatio;
+          final screenWidth = MediaQuery.of(context).size.width;
+          final cacheWidth = (screenWidth * dpr).round();
+
           final tasks = <Future<void>>[];
           for (final u in urls) {
-            tasks.add(precacheImage(NetworkImage(u), context).catchError((_) {}));
+            tasks.add(precacheImage(
+              CachedNetworkImageProvider(u, maxWidth: cacheWidth),
+              context,
+            ).catchError((_) {}));
           }
           await Future.wait(tasks).timeout(_homePrecacheTimeout, onTimeout: () => <void>[]);
         } catch (_) {
@@ -186,40 +218,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
       });
     });
 
-    // Warm up Home by building it offscreen to compile shaders and initialize controllers
-    Future.delayed(_homeWarmupDelay, () {
-      if (!mounted) return;
-
-      final overlay = Overlay.of(context);
-      if (overlay == null) return;
-
-      final screenSize = MediaQuery.of(context).size;
-
-      late OverlayEntry warmupEntry;
-      warmupEntry = OverlayEntry(
-        builder: (context) => Positioned(
-          left: _homeWarmupOffscreenPos,
-          top: _homeWarmupOffscreenPos,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: screenSize.width,
-              maxHeight: screenSize.height,
-            ),
-            child: const ProviderScope(
-              overrides: [],
-              child: HomeScreen(),
-            ),
-          ),
-        ),
-      );
-
-      overlay.insert(warmupEntry);
-
-      // Remove after first frame to avoid lingering resources
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        warmupEntry.remove();
-      });
-    });
+    // Offscreen warmup removed: we rely on image precache and skeletons on Home.
   }
 
   @override
@@ -534,12 +533,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
                                       child: SizedBox(
                                         width: double.infinity,
                                         child: ElevatedButton(
-                                          onPressed: () async {
-                                            if (kDebugMode) {
-                                              debugPrint('[SPLASH] Continue button pressed!');
+                                      onPressed: (_dataReady && _introAnimComplete)
+                                          ? () async {
+                                              if (kDebugMode) {
+                                                debugPrint('[SPLASH] Continue button pressed!');
+                                              }
+                                              await _playExitAndNavigate(context);
                                             }
-                                            await _playExitAndNavigate(context);
-                                          },
+                                          : null,
                                           child: const Text('Continue'),
                                         ),
                                       ),
@@ -577,23 +578,25 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
                                       child: SizedBox(
                                         width: double.infinity,
                                         child: ElevatedButton(
-                                          onPressed: () async {
-                                            if (kDebugMode) {
-                                              debugPrint('[SPLASH] Guest button pressed!');
-                                            }
-                                            if (!hasUser) {
-                                              await ref.read(authProvider.notifier).signInAnonymously();
-                                              final postState = ref.read(authProvider);
-                                              if (postState.user == null) {
+                                        onPressed: (_dataReady && _introAnimComplete)
+                                            ? () async {
+                                                if (kDebugMode) {
+                                                  debugPrint('[SPLASH] Guest button pressed!');
+                                                }
+                                                if (!hasUser) {
+                                                  await ref.read(authProvider.notifier).signInAnonymously();
+                                                  final postState = ref.read(authProvider);
+                                                  if (postState.user == null) {
+                                                    if (!mounted) return;
+                                                    final msg = postState.errorMessage ?? 'Guest sign-in failed.';
+                                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                                                    return;
+                                                  }
+                                                }
                                                 if (!mounted) return;
-                                                final msg = postState.errorMessage ?? 'Guest sign-in failed.';
-                                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-                                                return;
+                                                await _playExitAndNavigate(context);
                                               }
-                                            }
-                                            if (!mounted) return;
-                                            await _playExitAndNavigate(context);
-                                          },
+                                            : null,
                                           child: const Text('Continue as Guest'),
                                         ),
                                       ),
@@ -626,6 +629,31 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
                                       ),
                                     ),
                                   ),
+                                  if (_skipAvailable && !_dataReady) ...[
+                                    const SizedBox(height: 12),
+                                    AnimatedOpacity(
+                                      duration: SplashAnimationConfig.ctaItemDuration + const Duration(milliseconds: 120),
+                                      opacity: _showCtas ? 1 : 0,
+                                      curve: AnimationCurves.emphasizedDecelerate,
+                                      child: AnimatedSlide(
+                                        duration: SplashAnimationConfig.ctaItemDuration + const Duration(milliseconds: 120),
+                                        offset: _showCtas ? Offset.zero : const Offset(0, 0.02),
+                                        curve: AnimationCurves.emphasizedDecelerate,
+                                        child: SizedBox(
+                                          width: double.infinity,
+                                          child: OutlinedButton(
+                                            onPressed: () async {
+                                              if (kDebugMode) {
+                                                debugPrint('[SPLASH] Skip (with skeletons) pressed!');
+                                              }
+                                              await _playExitAndNavigate(context);
+                                            },
+                                            child: const Text('Skip (loading in background)'),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                   if (isGuest)
                                     Padding(
                                       padding: const EdgeInsets.only(top: 8),

@@ -8,6 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/meditations_list_provider.dart';
 import '../../services/meditation_service.dart';
 import '../../providers/category_provider.dart';
+import '../../providers/category_map_provider.dart';
+import 'dart:async';
+import 'package:shimmer/shimmer.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -37,13 +40,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final recommendedAsync = ref.watch(recommendedMeditationsProvider);
     final categoriesAsync = ref.watch(categoriesStreamProvider);
 
-    // Build a quick lookup from categoryId -> category name (fallback handled later)
-    final catList = categoriesAsync.asData?.value;
-    final Map<String, String> categoryIdToName = {
-      if (catList != null) ...{
-        for (final c in catList) c.id: c.name,
-      }
-    };
+    // Memoized lookup from categoryId -> category name
+    final categoryIdToName = ref.watch(categoryMapProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -142,10 +140,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             // Recently Added list (vertical cards)
             SliverToBoxAdapter(
               child: recentAsync.when(
-                loading: () => const Center(child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: CircularProgressIndicator(),
-                )),
+                loading: () {
+                  final base = Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3);
+                  final highlight = Theme.of(context).colorScheme.surface.withOpacity(0.6);
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Shimmer.fromColors(
+                      baseColor: base,
+                      highlightColor: highlight,
+                      child: Column(
+                        children: List.generate(3, (i) {
+                          return Container(
+                            height: 180,
+                            margin: EdgeInsets.only(bottom: i == 2 ? 0 : 16),
+                            decoration: BoxDecoration(
+                              color: base,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
+                  );
+                },
                 error: (e, _) => const Padding(
                   padding: EdgeInsets.all(20),
                   child: Text("Couldn't load meditations. Pull to retry."),
@@ -216,7 +233,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: SizedBox(
                 height: 160,
                 child: trendingAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () {
+                    final base = Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3);
+                    final highlight = Theme.of(context).colorScheme.surface.withOpacity(0.6);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Shimmer.fromColors(
+                        baseColor: base,
+                        highlightColor: highlight,
+                        child: Row(
+                          children: List.generate(4, (i) {
+                            return Container(
+                              width: 200,
+                              height: 140,
+                              margin: EdgeInsets.only(right: i == 3 ? 0 : 16),
+                              decoration: BoxDecoration(
+                                color: base,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                    );
+                  },
                   error: (e, _) => const Center(child: Text('Failed to load')),
                   data: (items) => TrendingBelt(items: items, categoryNames: categoryIdToName),
                 ),
@@ -243,7 +283,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: SizedBox(
                 height: 160,
                 child: recommendedAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () {
+                    final base = Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3);
+                    final highlight = Theme.of(context).colorScheme.surface.withOpacity(0.6);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Shimmer.fromColors(
+                        baseColor: base,
+                        highlightColor: highlight,
+                        child: Row(
+                          children: List.generate(4, (i) {
+                            return Container(
+                              width: 200,
+                              height: 140,
+                              margin: EdgeInsets.only(right: i == 3 ? 0 : 16),
+                              decoration: BoxDecoration(
+                                color: base,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                    );
+                  },
                   error: (e, _) => const Center(child: Text('Failed to load')),
                   data: (items) {
                     if (items.isEmpty) return const SizedBox.shrink();
@@ -310,31 +373,34 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
   static const double _itemWidth = 200;
   static const double _spacing = 16;
   static const double _pixelsPerSecond = 20; // gentle auto-scroll speed
+  static const int _virtualRepeatCount = 100; // large enough for illusion
+  static const Duration _tick = Duration(milliseconds: 32); // ~31.25 FPS
+  static const double _minStepPixels = 0.5; // avoid sub-pixel thrash
 
   late final ScrollController _controller;
-  late final Ticker _ticker;
+  Timer? _scrollTimer;
   bool _userInteracting = false;
+  double _accumulated = 0.0;
 
   List<MeditationListItem> get _source => widget.items;
-
-  // We duplicate items to simulate an infinite belt
-  List<MeditationListItem> get _loopedItems => List.generate(
-        _source.isEmpty ? 0 : _source.length * 100,
-        (i) => _source[i % _source.length],
-      );
 
   @override
   void initState() {
     super.initState();
     _controller = ScrollController();
-    _ticker = createTicker(_onTick)..start();
+    _scrollTimer = Timer.periodic(_tick, _onTick);
   }
 
-  void _onTick(Duration elapsed) {
+  void _onTick(Timer t) {
     if (!mounted || _userInteracting || !_controller.hasClients) return;
-    final double delta = _pixelsPerSecond / 60.0; // approx per-frame step
+    final double seconds = _tick.inMilliseconds / 1000.0;
+    final double delta = _pixelsPerSecond * seconds;
+    _accumulated += delta;
+    if (_accumulated < _minStepPixels) return;
+    final double step = _accumulated.floorToDouble();
+    _accumulated -= step;
     final maxExtent = _controller.position.maxScrollExtent;
-    final newOffset = _controller.offset + delta;
+    final newOffset = _controller.offset + step;
     if (newOffset >= maxExtent - (_itemWidth + _spacing)) {
       // jump back some distance to keep the illusion
       final jumpBack = maxExtent / 2;
@@ -346,7 +412,7 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
 
   @override
   void dispose() {
-    _ticker.dispose();
+    _scrollTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -368,9 +434,9 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
         controller: _controller,
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: _loopedItems.length,
+        itemCount: _source.isEmpty ? 0 : _source.length * _virtualRepeatCount,
         itemBuilder: (context, index) {
-          final meditation = _loopedItems[index];
+          final meditation = _source[index % _source.length];
           final colors = Theme.of(context).colorScheme;
           final gradient = [colors.primary.value, colors.tertiary.value];
           final category = _resolveCategoryName(meditation.categoryId, widget.categoryNames);

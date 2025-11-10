@@ -140,6 +140,15 @@ Index Strategy (2025-10-22):
   - Minutes: `minutes_50`, `minutes_100`, `minutes_300`
 - [x] Display unlocked badges on `ProgressScreen` using real data
 
+### Performance & UX Improvements (2025-11-10) ✅ COMPLETE
+- [x] Splash CTAs gated until intro animation completes AND data-ready; add 4s “Skip (loading in background)” fallback
+- [x] Remove offscreen Home warmup overlay and delete dead warmup constants
+- [x] Add shimmer skeletons for Home sections (Recently Added, Trending, Recommended)
+- [x] Virtualize Trending belt (modulo access); remove per-build 100× list allocation
+- [x] Throttle auto-scroll with timer (~32ms), pause on user interaction
+- [x] Use `CachedNetworkImageProvider(maxWidth: …)` in `MeditationCard` for downscaled decode/cache
+- [x] Debug perf metrics hook (avg/p95/jank) via `addTimingsCallback` in `main.dart` (profile for authoritative)
+
 ## Phase 1: Foundation (Core Setup) ✅ COMPLETE
 
 **🎯 Deliverable:** Working skeleton app with all UI screens and navigation
