@@ -12,6 +12,7 @@ class SessionRecord {
     required this.id,
     required this.meditationId,
     this.meditationTitle,
+    this.meditationImageUrl,
     required this.startedAtUtc,
     required this.completedAtUtc,
     required this.durationSec,
@@ -21,6 +22,7 @@ class SessionRecord {
   final String id;
   final String meditationId;
   final String? meditationTitle;
+  final String? meditationImageUrl;
   final DateTime startedAtUtc;
   final DateTime completedAtUtc;
   final int durationSec;
@@ -29,6 +31,7 @@ class SessionRecord {
   Map<String, dynamic> toMap() => <String, dynamic>{
         'meditationId': meditationId,
         if (meditationTitle != null && meditationTitle!.isNotEmpty) 'meditationTitle': meditationTitle,
+        if (meditationImageUrl != null && meditationImageUrl!.isNotEmpty) 'meditationImageUrl': meditationImageUrl,
         'startedAt': Timestamp.fromDate(startedAtUtc),
         'completedAt': Timestamp.fromDate(completedAtUtc),
         'duration': durationSec,
@@ -41,6 +44,7 @@ class SessionRecord {
       id: d.id,
       meditationId: (data['meditationId'] ?? '') as String,
       meditationTitle: data['meditationTitle'] as String?,
+      meditationImageUrl: data['meditationImageUrl'] as String?,
       startedAtUtc: (data['startedAt'] as Timestamp).toDate().toUtc(),
       completedAtUtc: (data['completedAt'] as Timestamp).toDate().toUtc(),
       durationSec: (data['duration'] ?? 0) as int,
@@ -97,6 +101,7 @@ class ProgressService {
   Future<void> writeSession({
     required String meditationId,
     String? meditationTitle,
+    String? meditationImageUrl,
     required DateTime startedAtUtc,
     required DateTime completedAtUtc,
     required int durationSec,
@@ -108,6 +113,7 @@ class ProgressService {
       id: sessionId,
       meditationId: meditationId,
       meditationTitle: meditationTitle,
+      meditationImageUrl: meditationImageUrl,
       startedAtUtc: startedAtUtc.toUtc(),
       completedAtUtc: completedAtUtc.toUtc(),
       durationSec: durationSec < 0 ? 0 : durationSec,
@@ -133,6 +139,7 @@ class ProgressService {
   Future<void> upsertSession({
     required String meditationId,
     String? meditationTitle,
+    String? meditationImageUrl,
     required DateTime startedAtUtc,
     required int durationSec,
     required bool completed,
@@ -145,6 +152,7 @@ class ProgressService {
       // Maintain invariants on first write; on merge these fields persist
       'meditationId': meditationId,
       if (meditationTitle != null && meditationTitle.isNotEmpty) 'meditationTitle': meditationTitle,
+      if (meditationImageUrl != null && meditationImageUrl.isNotEmpty) 'meditationImageUrl': meditationImageUrl,
       'startedAt': Timestamp.fromDate(startedAtUtc.toUtc()),
       'completedAt': FieldValue.serverTimestamp(),
       'duration': durationSec < 0 ? 0 : durationSec,
@@ -167,6 +175,7 @@ class ProgressService {
   Future<void> tryWriteSession({
     required String meditationId,
     String? meditationTitle,
+    String? meditationImageUrl,
     required DateTime startedAtUtc,
     required DateTime completedAtUtc,
     required int durationSec,
@@ -179,6 +188,7 @@ class ProgressService {
         id: sessionId,
         meditationId: meditationId,
         meditationTitle: meditationTitle,
+      meditationImageUrl: meditationImageUrl,
         startedAtUtc: startedAtUtc.toUtc(),
         completedAtUtc: completedAtUtc.toUtc(),
         durationSec: durationSec < 0 ? 0 : durationSec,
@@ -221,6 +231,7 @@ class ProgressService {
       'id': session.id,
       'meditationId': session.meditationId,
       'meditationTitle': session.meditationTitle,
+      'meditationImageUrl': session.meditationImageUrl,
       'startedAt': session.startedAtUtc.millisecondsSinceEpoch,
       'completedAt': session.completedAtUtc.millisecondsSinceEpoch,
       'duration': session.durationSec,
@@ -245,6 +256,7 @@ class ProgressService {
           id: (item['id'] ?? '') as String,
           meditationId: (item['meditationId'] ?? '') as String,
           meditationTitle: item['meditationTitle'] as String?,
+          meditationImageUrl: item['meditationImageUrl'] as String?,
           startedAtUtc: DateTime.fromMillisecondsSinceEpoch((item['startedAt'] ?? 0) as int, isUtc: true),
           completedAtUtc: DateTime.fromMillisecondsSinceEpoch((item['completedAt'] ?? 0) as int, isUtc: true),
           durationSec: (item['duration'] ?? 0) as int,

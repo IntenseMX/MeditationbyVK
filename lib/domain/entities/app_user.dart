@@ -6,6 +6,7 @@ class AppUser {
   final String authProvider;
   final bool isAnonymous;
   final bool isPremium;
+  final int dailyGoldGoal;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -17,6 +18,7 @@ class AppUser {
     required this.authProvider,
     required this.isAnonymous,
     this.isPremium = false,
+    this.dailyGoldGoal = 10,
     required this.createdAt,
     this.updatedAt,
   });
@@ -29,6 +31,7 @@ class AppUser {
     String? authProvider,
     bool? isAnonymous,
     bool? isPremium,
+    int? dailyGoldGoal,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -40,6 +43,7 @@ class AppUser {
       authProvider: authProvider ?? this.authProvider,
       isAnonymous: isAnonymous ?? this.isAnonymous,
       isPremium: isPremium ?? this.isPremium,
+      dailyGoldGoal: dailyGoldGoal ?? this.dailyGoldGoal,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -52,6 +56,7 @@ class AppUser {
         'authProvider': authProvider,
         'isAnonymous': isAnonymous,
         'isPremium': isPremium,
+        'dailyGoldGoal': dailyGoldGoal,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt?.toIso8601String(),
       };
@@ -65,6 +70,7 @@ class AppUser {
       authProvider: (json['authProvider'] as String?) ?? 'unknown',
       isAnonymous: (json['isAnonymous'] as bool?) ?? false,
       isPremium: (json['isPremium'] as bool?) ?? false,
+      dailyGoldGoal: (json['dailyGoldGoal'] as int?) ?? 10,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: (json['updatedAt'] as String?) != null
           ? DateTime.parse(json['updatedAt'] as String)

@@ -5,6 +5,7 @@ import '../../core/animation_constants.dart';
 import '../../providers/meditations_list_provider.dart';
 import '../../providers/audio_player_provider.dart';
 import '../../providers/subscription_provider.dart';
+import '../../providers/category_provider.dart';
 import '../widgets/animated_controls.dart';
 import '../widgets/animated_gradient_background.dart';
 import '../widgets/breathing_circle.dart';
@@ -23,6 +24,10 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   String? _loadedMeditationId;
   late AnimationController _imageAnimationController;
   late Animation<double> _imageScaleAnimation;
+  // Layout sizing constants
+  static const double _breathingSectionHeight = 220.0;
+  static const double _breathingCircleSize = 180.0;
+  static const double _playButtonSize = 80.0;
 
   @override
   void initState() {
@@ -53,6 +58,14 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   Widget build(BuildContext context) {
     final meditationAsync = ref.watch(meditationByIdProvider(widget.meditationId));
     final audioState = ref.watch(audioPlayerProvider);
+    // Categories lookup for resolving categoryId → category name
+    final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final catList = categoriesAsync.asData?.value;
+    final Map<String, String> categoryIdToName = {
+      if (catList != null) ...{
+        for (final c in catList) c.id: c.name,
+      }
+    };
     return meditationAsync.when(
       loading: () => Scaffold(
         appBar: AppBar(title: const Text('Player')),
@@ -126,8 +139,14 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
 
         final heroTag = 'meditation_$title';
 
-        return Stack(
-          children: [
+        return WillPopScope(
+          onWillPop: () async {
+            // Pause playback when leaving the player via back navigation
+            ref.read(audioPlayerProvider.notifier).pause();
+            return true;
+          },
+          child: Stack(
+            children: [
         // Animated gradient background
         Positioned.fill(
           child: AnimatedGradientBackground(
@@ -188,35 +207,37 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
               // Category (simple title-cased id for Phase 2)
               if (categoryId != null && categoryId.isNotEmpty)
                 Chip(
-                  label: Text(_prettyCategory(categoryId)),
+                  label: Text(_resolveCategoryName(categoryId, categoryIdToName)),
                   backgroundColor: colorScheme.primary.withOpacity(0.2),
                 ),
-              const SizedBox(height: 32),
-              // Breathing circle visualization
-              Center(
-                child: BreathingCircle(
-                  size: 150,
-                  color: colorScheme.primary,
-                  autoPlay: audioState.isPlaying,
+              const SizedBox(height: 24),
+              // Breathing circle behind play button
+              SizedBox(
+                height: _breathingSectionHeight,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    BreathingCircle(
+                      size: _breathingCircleSize,
+                      color: colorScheme.primary,
+                      autoPlay: audioState.isPlaying,
+                    ),
+                    AnimatedPlayPauseButton(
+                      isPlaying: audioState.isPlaying,
+                      onPressed: () {
+                        final ctrl = ref.read(audioPlayerProvider.notifier);
+                        if (audioState.isPlaying) {
+                          ctrl.pause();
+                        } else {
+                          ctrl.play();
+                        }
+                      },
+                      size: _playButtonSize,
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 48),
-              // Animated play/pause button
-              Center(
-                child: AnimatedPlayPauseButton(
-                  isPlaying: audioState.isPlaying,
-                  onPressed: () {
-                    final ctrl = ref.read(audioPlayerProvider.notifier);
-                    if (audioState.isPlaying) {
-                      ctrl.pause();
-                    } else {
-                      ctrl.play();
-                    }
-                  },
-                  size: 80,
-                ),
-              ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
               // Time display with animation
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -257,6 +278,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
           ),
         ),
       ],
+          ),
         );
       },
     );
@@ -267,6 +289,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     final m = (total ~/ 60).toString().padLeft(1, '0');
     final s = (total % 60).toString().padLeft(2, '0');
     return '$m:$s';
+  }
+
+  String _resolveCategoryName(String? categoryId, Map<String, String> idToName) {
+    if (categoryId == null || categoryId.trim().isEmpty) return 'General';
+    final byName = idToName[categoryId];
+    if (byName != null && byName.trim().isNotEmpty) return byName;
+    return _prettyCategory(categoryId);
   }
 
   String _prettyCategory(String input) {

@@ -10,6 +10,7 @@ class AppUserModel {
         'authProvider': user.authProvider,
         'isAnonymous': user.isAnonymous,
         'isPremium': user.isPremium,
+        'dailyGoldGoal': user.dailyGoldGoal,
         'createdAt': Timestamp.fromDate(user.createdAt),
         'updatedAt': user.updatedAt != null
             ? Timestamp.fromDate(user.updatedAt!)
@@ -25,6 +26,7 @@ class AppUserModel {
       authProvider: (data['authProvider'] as String?) ?? 'unknown',
       isAnonymous: (data['isAnonymous'] as bool?) ?? false,
       isPremium: (data['isPremium'] as bool?) ?? false,
+      dailyGoldGoal: (data['dailyGoldGoal'] as int?) ?? 10,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );

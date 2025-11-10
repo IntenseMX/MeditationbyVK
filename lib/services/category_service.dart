@@ -7,6 +7,7 @@ class CategoryItem {
   final int order;
   final String? imageUrl;
   final bool active;
+  final int meditationCount;
 
   CategoryItem({
     required this.id,
@@ -14,6 +15,7 @@ class CategoryItem {
     required this.slug,
     required this.order,
     required this.active,
+    required this.meditationCount,
     this.imageUrl,
   });
 
@@ -26,6 +28,7 @@ class CategoryItem {
       order: (data['order'] ?? 0) as int,
       active: (data['active'] ?? true) as bool,
       imageUrl: data['imageUrl'] as String?,
+      meditationCount: (data['meditationCount'] ?? 0) as int,
     );
   }
 }
@@ -63,6 +66,7 @@ class CategoryService {
       'order': 100000, // put at end; user can reorder
       'imageUrl': null,
       'active': true,
+      'meditationCount': 0,
       'createdAt': now,
       'updatedAt': now,
     });

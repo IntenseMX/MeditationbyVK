@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/progress_provider.dart';
 import '../../core/theme.dart';
+import '../widgets/goal_settings_dialog.dart';
 
 class ProgressScreen extends ConsumerStatefulWidget {
   const ProgressScreen({super.key});
@@ -44,11 +45,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
     final dtoAsync = ref.watch(progressDtoProvider);
     final Map<String, dynamic> progressData = dtoAsync.when(
       data: (m) {
-        print('[Progress] DATA RECEIVED: $m');
         return m;
       },
       loading: () {
-        print('[Progress] LOADING...');
         return {
           'daily': <String, dynamic>{
             'percentage': 0,
@@ -68,8 +67,6 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
         };
       },
       error: (e, st) {
-        print('[Progress] ERROR: $e');
-        print('[Progress] STACK: $st');
         return {
           'daily': <String, dynamic>{
             'percentage': 0,
@@ -164,8 +161,14 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
                 controller: _tabController,
                 children: [
                   _buildDayView(progressData['daily'] as Map<String, dynamic>),
-                  _buildWeekView(progressData['weekly'] as Map<String, dynamic>),
-                  _buildMonthView(progressData['monthly'] as Map<String, dynamic>),
+                  _buildWeekView(
+                    progressData['weekly'] as Map<String, dynamic>,
+                    (progressData['daily'] as Map<String, dynamic>)['goalMinutes'] as int,
+                  ),
+                  _buildMonthView(
+                    progressData['monthly'] as Map<String, dynamic>,
+                    (progressData['daily'] as Map<String, dynamic>)['goalMinutes'] as int,
+                  ),
                 ],
               ),
             ),
@@ -245,6 +248,17 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
                   '$goalMinutes min',
                   Icons.flag,
                   Theme.of(context).colorScheme.primary,
+                  onTap: () async {
+                    final result = await showDialog<bool>(
+                      context: context,
+                      builder: (_) => GoalSettingsDialog(initialMinutes: goalMinutes),
+                    );
+                    if (result == true && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Daily goal updated')),
+                      );
+                    }
+                  },
                 ),
               ),
             ],
@@ -264,24 +278,56 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Today\'s Sessions',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Today\'s Sessions',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      '$minutesCompleted min',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 ...sessions.map((session) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.music_note,
-                        color: Theme.of(context).colorScheme.tertiary,
-                        size: 20,
-                      ),
+                      Builder(builder: (context) {
+                        final String? url = (session['imageUrl'] as String?);
+                        if (url != null && url.isNotEmpty) {
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.network(
+                              url,
+                              width: 28,
+                              height: 28,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, _, __) => Icon(
+                                Icons.music_note,
+                                color: Theme.of(context).colorScheme.tertiary,
+                                size: 20,
+                              ),
+                            ),
+                          );
+                        }
+                        return Icon(
+                          Icons.music_note,
+                          color: Theme.of(context).colorScheme.tertiary,
+                          size: 20,
+                        );
+                      }),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -310,7 +356,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
     );
   }
 
-  Widget _buildWeekView(Map<String, dynamic> weeklyData) {
+  Widget _buildWeekView(Map<String, dynamic> weeklyData, int goalMinutes) {
     final data = weeklyData['data'] as List<int>;
     final streak = weeklyData['streak'] as int;
     final currentMinutes = weeklyData['currentMinutes'] as int;
@@ -394,22 +440,47 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
                     children: List.generate(7, (index) {
                       final days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
                       final value = data[index];
-                      final maxValue = data.reduce((a, b) => a > b ? a : b);
+                      final int safeGoal = (goalMinutes <= 0) ? 10 : goalMinutes;
+                      final double ratio = value <= 0 ? 0.0 : (value / safeGoal);
+                      final bool reachedGoal = value >= safeGoal;
 
                       return Column(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           Expanded(
-                            child: Container(
+                            child: SizedBox(
                               width: 30,
-                              margin: const EdgeInsets.only(bottom: 8),
-                              decoration: BoxDecoration(
-                                color: value > 0
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Theme.of(context).colorScheme.outline.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(4),
+                              child: LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final double maxH = constraints.maxHeight;
+                                  final double fillH = (maxH * ratio.clamp(0.0, 1.0));
+                                  final double minVisible = 10.0;
+                                  final Color baseColor = Theme.of(context).colorScheme.outline.withOpacity(0.2);
+                                  final Color fillColor = Theme.of(context).colorScheme.primary;
+                                  return Stack(
+                                    alignment: Alignment.bottomCenter,
+                                    children: [
+                                      Container(
+                                        height: maxH,
+                                        width: double.infinity,
+                                        decoration: BoxDecoration(
+                                          color: baseColor,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                      ),
+                                      if (fillH > 0)
+                                        Container(
+                                          height: fillH.clamp(minVisible, maxH),
+                                          width: double.infinity,
+                                          decoration: BoxDecoration(
+                                            color: fillColor,
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                        ),
+                                    ],
+                                  );
+                                },
                               ),
-                              height: value > 0 ? (value / maxValue) * 100 : 10,
                             ),
                           ),
                           Text(
@@ -456,14 +527,124 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
     );
   }
 
-  Widget _buildMonthView(Map<String, dynamic> monthlyData) {
+  Widget _buildMonthView(Map<String, dynamic> monthlyData, int goalMinutes) {
     final streak = monthlyData['streak'] as int;
     final currentMinutes = monthlyData['currentMinutes'] as int;
+    final data = (monthlyData['data'] as List<dynamic>?)?.cast<int>() ?? const <int>[];
+    final now = DateTime.now();
+    final todayLocal = DateTime(now.year, now.month, now.day);
+    final monthStartLocal = todayLocal.subtract(const Duration(days: 29));
+    final List<DateTime> tickDates = <DateTime>[
+      monthStartLocal,
+      monthStartLocal.add(const Duration(days: 6)),
+      monthStartLocal.add(const Duration(days: 13)),
+      monthStartLocal.add(const Duration(days: 20)),
+      monthStartLocal.add(const Duration(days: 27)),
+    ];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
+          // Monthly Chart (30 days)
+          Container(
+            height: 200,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceVariant,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'This Month',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final double availableWidth = constraints.maxWidth;
+                      const int days = 30;
+                      final double spacing = 4.0;
+                      final double totalSpacing = spacing * (days - 1);
+                      final double barWidth = ((availableWidth - totalSpacing) / days).clamp(4.0, 12.0);
+                      final int safeGoal = goalMinutes <= 0 ? 10 : goalMinutes;
+
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: List.generate(days, (index) {
+                          final int value = (index < data.length) ? data[index] : 0;
+                          final double ratio = value <= 0 ? 0.0 : (value / safeGoal);
+
+                          return Padding(
+                            padding: EdgeInsets.only(right: index == days - 1 ? 0 : spacing),
+                            child: SizedBox(
+                              width: barWidth,
+                              child: LayoutBuilder(
+                                builder: (context, inner) {
+                                  final double maxH = inner.maxHeight;
+                                  final double fillH = (maxH * ratio.clamp(0.0, 1.0));
+                                  final double minVisible = 8.0;
+                                  final Color baseColor = Theme.of(context).colorScheme.outline.withOpacity(0.2);
+                                  final Color fillColor = Theme.of(context).colorScheme.primary;
+                                  return Stack(
+                                    alignment: Alignment.bottomCenter,
+                                    children: [
+                                      Container(
+                                        height: maxH,
+                                        width: double.infinity,
+                                        decoration: BoxDecoration(
+                                          color: baseColor,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                      ),
+                                      if (fillH > 0)
+                                        Container(
+                                          height: fillH.clamp(minVisible, maxH),
+                                          width: double.infinity,
+                                          decoration: BoxDecoration(
+                                            color: fillColor,
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                        ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        }),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: tickDates.map((d) {
+                    final dayStr = d.day.toString().padLeft(2, '0');
+                    return Text(
+                      dayStr,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           // Monthly Stats
           Container(
             width: double.infinity,
@@ -566,8 +747,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
-    return Container(
+  Widget _buildStatCard(String label, String value, IconData icon, Color color, {VoidCallback? onTap}) {
+    final card = Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceVariant,
@@ -613,6 +794,13 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
           ),
         ],
       ),
+    );
+
+    if (onTap == null) return card;
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: card,
     );
   }
 

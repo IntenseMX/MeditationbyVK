@@ -7,6 +7,8 @@ import '../../providers/theme_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../providers/auth_provider.dart';
 import 'package:go_router/go_router.dart';
+import '../../providers/progress_provider.dart';
+import '../widgets/goal_settings_dialog.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -247,7 +249,26 @@ class ProfileScreen extends ConsumerWidget {
                     icon: Icons.flag,
                     title: 'Goals',
                     subtitle: 'Set your meditation goals',
-                    onTap: () {},
+                    onTap: () async {
+                      final dto = ref.read(progressDtoProvider);
+                      int initial = 10;
+                      dto.whenData((m) {
+                        try {
+                          initial = (m['daily']?['goalMinutes'] as int?) ?? 10;
+                        } catch (_) {
+                          initial = 10;
+                        }
+                      });
+                      final result = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => GoalSettingsDialog(initialMinutes: initial),
+                      );
+                      if (result == true && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Daily goal updated')),
+                        );
+                      }
+                    },
                   ),
                   _buildSettingItem(
                     context,

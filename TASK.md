@@ -12,7 +12,7 @@ Pop Red ThemeExtension (2025-10-23)
 
 # TASK.md - Meditation by VK
 
-Last Updated: 2025-11-07
+Last Updated: 2025-11-09
 
 ## 📚 Documentation Overview
 
@@ -210,6 +210,16 @@ Theme Tinting & Color Migration (2025-11-03)
   - `burgundy_luxe` (deep burgundy with soft gold accents)
   - `racing_green_gold` (British racing green with gold)
 - Updated docs: `APP_LOGIC.md` and `docs/architecture/Theming.md`.
+
+---
+
+### Daily Goal (2025-11-09)
+
+- Added `dailyGoldGoal` (int) to `users/{uid}` Firestore document (default 10).
+- Updated `AppUser` entity and `AppUserModel` serialization.
+- `AuthService` sets default on user creation and exposes `updateDailyGoldGoal(int)`.
+- `progressDtoProvider` now reads goal from Firestore with fallback to 10.
+- New dialog `GoalSettingsDialog` for editing goal; wired in `ProfileScreen` → Settings → Goals.
 
 ---
 

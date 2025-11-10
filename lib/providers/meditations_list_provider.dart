@@ -79,10 +79,10 @@ final trendingMeditationsProvider = StreamProvider<List<MeditationListItem>>((re
   return svc.streamTrending(limit: 10);
 });
 
-// Recently Added: newest 4 published
+// Recently Added: newest 3 published
 final recentlyAddedMeditationsProvider = StreamProvider<List<MeditationListItem>>((ref) {
   final svc = ref.watch(meditationServiceProvider);
-  return svc.streamRecentlyPublished(limit: 4);
+  return svc.streamRecentlyPublished(limit: 3);
 });
 
 // Recommended For You: personalized by top categories from recent sessions (fallback to trending)

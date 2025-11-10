@@ -29,6 +29,7 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
 
   String? _currentMeditationId;
   String? _currentMeditationTitle;
+  String? _currentMeditationImageUrl;
   int _lastResumeWriteMs = 0;
   static const int _resumeWriteThrottleMs = 15000; // 15s
   StreamSubscription<Duration>? _positionSub;
@@ -95,6 +96,7 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
               await _progress.upsertSession(
                 meditationId: id,
                 meditationTitle: _currentMeditationTitle,
+                meditationImageUrl: _currentMeditationImageUrl,
                 startedAtUtc: DateTime.fromMillisecondsSinceEpoch(startedMs, isUtc: true),
                 durationSec: pos.inSeconds,
                 completed: false,
@@ -194,10 +196,12 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
     }
     _currentMeditationId = meditationId;
     _currentMeditationTitle = title;
+    _currentMeditationImageUrl = null;
     _playStartMsUtc = null;
     _sessionRecorded = false;
     _lastWrittenMinute = null;
     _lastLoggedSecond = null;
+    _currentMeditationImageUrl = artUri;
 
     final item = MediaItem(
       id: meditationId,
@@ -381,6 +385,7 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
       await _progress.upsertSession(
         meditationId: id,
         meditationTitle: _currentMeditationTitle,
+        meditationImageUrl: _currentMeditationImageUrl,
         startedAtUtc: startedAtUtc,
         durationSec: fullSec,
         completed: true,

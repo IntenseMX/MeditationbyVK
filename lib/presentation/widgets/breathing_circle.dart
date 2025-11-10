@@ -72,7 +72,7 @@ class _BreathingCircleState extends State<BreathingCircle>
         tween: Tween<double>(
           begin: AnimationConfig.breathingCircleMinScale,
           end: AnimationConfig.breathingCircleMaxScale,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
+        ).chain(CurveTween(curve: AnimationCurves.breathe)),
         weight: breatheInEnd * 100,
       ),
       // Hold: stay at max scale
@@ -88,13 +88,26 @@ class _BreathingCircleState extends State<BreathingCircle>
         tween: Tween<double>(
           begin: AnimationConfig.breathingCircleMaxScale,
           end: AnimationConfig.breathingCircleMinScale,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
+        ).chain(CurveTween(curve: AnimationCurves.breathe)),
         weight: (1 - holdEnd) * 100,
       ),
     ]).animate(_controller);
 
     if (widget.autoPlay) {
       _controller.repeat();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant BreathingCircle oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.autoPlay != widget.autoPlay) {
+      if (widget.autoPlay) {
+        _controller.repeat();
+      } else {
+        _controller.stop();
+        _controller.value = 0.0; // reset to min scale when paused
+      }
     }
   }
 

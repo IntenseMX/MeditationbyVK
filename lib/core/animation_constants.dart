@@ -64,8 +64,8 @@ class AnimationCurves {
 class AnimationConfig {
   // Breathing circle defaults
   static const double breathingCircleBaseSize = 100.0;
-  static const double breathingCircleMaxScale = 1.3;
-  static const double breathingCircleMinScale = 0.8;
+  static const double breathingCircleMaxScale = 1.1;
+  static const double breathingCircleMinScale = 0.6;
 
   // Play button defaults
   static const double playButtonSize = 80.0;

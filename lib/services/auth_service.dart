@@ -126,6 +126,7 @@ class AuthService {
         authProvider: provider,
         isAnonymous: user.isAnonymous,
         isPremium: false,
+        dailyGoldGoal: 10,
         createdAt: DateTime.now(),
       );
       await docRef.set(AppUserModel.toFirestore(appUser));
@@ -134,6 +135,16 @@ class AuthService {
         'updatedAt': FieldValue.serverTimestamp(),
       });
     }
+  }
+
+  Future<void> updateDailyGoldGoal(int minutes) async {
+    final u = _auth.currentUser;
+    if (u == null) throw Exception('Not authenticated');
+    final safe = minutes <= 0 ? 10 : minutes;
+    await _firestore.collection('users').doc(u.uid).update({
+      'dailyGoldGoal': safe,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 }
 

@@ -209,7 +209,7 @@ class DiscoverScreen extends ConsumerWidget {
       Theme.of(context).colorScheme.primary.value,
       Theme.of(context).colorScheme.tertiary.value,
     ];
-    final int sessionCount = 0;
+    final int sessionCount = category.meditationCount;
 
     return OpenContainer(
       transitionDuration: AnimationDurations.medium4,
