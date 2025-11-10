@@ -15,6 +15,9 @@ class AppUserModel {
         'updatedAt': user.updatedAt != null
             ? Timestamp.fromDate(user.updatedAt!)
             : FieldValue.serverTimestamp(),
+        'achievements': user.achievements.map(
+          (k, v) => MapEntry(k, Timestamp.fromDate(v)),
+        ),
       };
 
   static AppUser fromFirestore(String uid, Map<String, dynamic> data) {
@@ -29,6 +32,12 @@ class AppUserModel {
       dailyGoldGoal: (data['dailyGoldGoal'] as int?) ?? 10,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+      achievements: ((data['achievements'] as Map?) ?? const <String, dynamic>{})
+          .map<String, DateTime>((dynamic key, dynamic value) {
+        final String k = key as String;
+        final Timestamp? ts = value as Timestamp?;
+        return MapEntry(k, (ts?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0)));
+      }),
     );
   }
 }

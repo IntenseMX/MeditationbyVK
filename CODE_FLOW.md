@@ -770,6 +770,36 @@ Reconnection Sync (Section F):
 - On reconnect: calls `flushPending()` to write queued sessions
 - Provider wiring ensures start/dispose lifecycle to avoid leaks
 
+### Achievements (2025-11-10)
+
+**Data Model:**
+```
+users/{uid}
+├── achievements (map<string, timestamp>)  // e.g. "streak_5": 2025-11-10T12:34:56Z
+```
+
+**Awarding Logic:**
+```
+progressDtoProvider (providers/progress_provider.dart)
+├── Listens to recent sessions + users/{uid}
+├── Computes:
+│   ├── current streak (days, completed-only, UTC)
+│   ├── completed session count
+│   └── total minutes (rounded up from seconds)
+├── Unlocks missing achievements (idempotent):
+│   ├── streak_5, streak_10, streak_30
+│   ├── sessions_5, sessions_25, sessions_50
+│   └── minutes_50, minutes_100, minutes_300
+└── Writes: users/{uid}.achievements.{key} = serverTimestamp() (merge update)
+```
+
+**UI Integration:**
+```
+ProgressScreen (presentation/screens/progress_screen.dart)
+├── Receives achievements list from progressDtoProvider
+└── Renders dynamic badges (Wrap) with unlocked state
+```
+
 UI Indicator (2025-11-05):
 - `isOfflineProvider` (Riverpod StreamProvider) emits offline state
 - `MaterialApp.router(builder:)` wraps child with `OfflineBanner` when offline
@@ -1349,4 +1379,4 @@ ref.watch(futureProvider).when(
 - `categoryPaginationProvider(categoryId)` manages `loadFirstPage()` / `loadMore()`
 - Screen shows “Load More” when `canLoadMore` is true
 
-**Last Updated**: 2025-11-07
+**Last Updated**: 2025-11-10

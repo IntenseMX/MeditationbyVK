@@ -39,23 +39,16 @@ final progressDtoProvider = StreamProvider<Map<String, dynamic>>((ref) {
   final svc = ref.watch(progressServiceProvider);
   final auth = ref.watch(authProvider);
   final uid = auth.user?.uid;
-  final Stream<int> goalStream = uid == null
-      ? Stream<int>.value(10)
-      : FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .snapshots()
-          .map((snap) {
-            final g = (snap.data()?['dailyGoldGoal'] as int?) ?? 10;
-            return g <= 0 ? 10 : g;
-          })
-          .distinct();
+  final userDocStream = uid == null
+      ? Stream<DocumentSnapshot<Map<String, dynamic>>?>.value(null)
+      : FirebaseFirestore.instance.collection('users').doc(uid).snapshots();
   final sessionsStream = svc.streamRecentSessions(daysBack: 60);
 
   // Combine sessions stream with goal stream to emit updates on either change
   return Stream<Map<String, dynamic>>.multi((controller) {
     List<SessionRecord> latestSessions = const <SessionRecord>[];
     var latestGoal = 10;
+    Map<String, dynamic> latestAchievements = const <String, dynamic>{};
 
     Future<void> emit() async {
       final now = DateTime.now().toUtc();
@@ -113,6 +106,43 @@ final progressDtoProvider = StreamProvider<Map<String, dynamic>>((ref) {
       // Streaks
       final streaks = svc.calculateStreak(latestSessions);
 
+      // Award achievements (idempotent: only writes when missing)
+      if (uid != null) {
+        final Map<String, dynamic> toAward = <String, dynamic>{};
+
+        // Helper to add if unlocked now but missing
+        void maybeAdd(String key, bool condition) {
+          if (condition && !latestAchievements.containsKey(key)) {
+            toAward['achievements.$key'] = FieldValue.serverTimestamp();
+          }
+        }
+
+        // Compute aggregates for conditions
+        final int completedSessionsCount = latestSessions.where((s) => s.completed).length;
+        final int totalSeconds = latestSessions.fold<int>(0, (sum, s) => sum + ((s.durationSec as num).toInt()));
+        final int totalMinutes = (totalSeconds + 59) ~/ 60;
+        final int currentStreak = streaks.current;
+
+        // Streak achievements
+        maybeAdd('streak_5', currentStreak >= 5);
+        maybeAdd('streak_10', currentStreak >= 10);
+        maybeAdd('streak_30', currentStreak >= 30);
+
+        // Session count achievements
+        maybeAdd('sessions_5', completedSessionsCount >= 5);
+        maybeAdd('sessions_25', completedSessionsCount >= 25);
+        maybeAdd('sessions_50', completedSessionsCount >= 50);
+
+        // Minutes achievements
+        maybeAdd('minutes_50', totalMinutes >= 50);
+        maybeAdd('minutes_100', totalMinutes >= 100);
+        maybeAdd('minutes_300', totalMinutes >= 300);
+
+        if (toAward.isNotEmpty) {
+          await FirebaseFirestore.instance.collection('users').doc(uid).update(toAward);
+        }
+      }
+
       // Build today's sessions list with denormalized titles
       final todaysSessions = latestSessions.where((s) {
         final d = DateTime.utc(s.completedAtUtc.year, s.completedAtUtc.month, s.completedAtUtc.day);
@@ -143,6 +173,7 @@ final progressDtoProvider = StreamProvider<Map<String, dynamic>>((ref) {
             'streak': streaks.longest,
             'currentMinutes': monthlyMinutes,
           },
+          'achievements': latestAchievements.keys.toList(growable: false),
         });
       }
     }
@@ -152,8 +183,16 @@ final progressDtoProvider = StreamProvider<Map<String, dynamic>>((ref) {
       // ignore: discarded_futures
       emit();
     });
-    final sub2 = goalStream.listen((goal) {
-      latestGoal = goal;
+    final sub2 = userDocStream.listen((snap) {
+      if (snap == null) {
+        latestGoal = 10;
+        latestAchievements = const <String, dynamic>{};
+      } else {
+        final data = snap.data();
+        final g = (data?['dailyGoldGoal'] as int?) ?? 10;
+        latestGoal = g <= 0 ? 10 : g;
+        latestAchievements = (data?['achievements'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+      }
       // ignore: discarded_futures
       emit();
     });

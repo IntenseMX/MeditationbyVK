@@ -12,7 +12,7 @@ Pop Red ThemeExtension (2025-10-23)
 
 # TASK.md - Meditation by VK
 
-Last Updated: 2025-11-09
+Last Updated: 2025-11-10
 
 ## 📚 Documentation Overview
 
@@ -129,6 +129,16 @@ Index Strategy (2025-10-22):
 - Exit early shows minutes counted, but streak only increments if completed
 - ≥90% completion marks session as completed and increments playCount
 - Streaks computed only from completed sessions (UTC day boundaries)
+
+### Achievements (2025-11-10) ✅ COMPLETE
+- [x] Add `achievements` map to `AppUser` entity
+- [x] Serialize `achievements` in `AppUserModel` (Firestore map<string, timestamp>)
+- [x] Initialize empty `achievements` on new user creation (`AuthService`)
+- [x] Auto-award achievements in `progressDtoProvider`:
+  - Streak: `streak_5`, `streak_10`, `streak_30`
+  - Sessions: `sessions_5`, `sessions_25`, `sessions_50`
+  - Minutes: `minutes_50`, `minutes_100`, `minutes_300`
+- [x] Display unlocked badges on `ProgressScreen` using real data
 
 ## Phase 1: Foundation (Core Setup) ✅ COMPLETE
 

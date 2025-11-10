@@ -168,6 +168,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
                   _buildMonthView(
                     progressData['monthly'] as Map<String, dynamic>,
                     (progressData['daily'] as Map<String, dynamic>)['goalMinutes'] as int,
+                    (progressData['achievements'] as List<dynamic>? ?? const <dynamic>[]).cast<String>(),
                   ),
                 ],
               ),
@@ -527,7 +528,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
     );
   }
 
-  Widget _buildMonthView(Map<String, dynamic> monthlyData, int goalMinutes) {
+  Widget _buildMonthView(Map<String, dynamic> monthlyData, int goalMinutes, List<String> achievements) {
     final streak = monthlyData['streak'] as int;
     final currentMinutes = monthlyData['currentMinutes'] as int;
     final data = (monthlyData['data'] as List<dynamic>?)?.cast<int>() ?? const <int>[];
@@ -731,14 +732,27 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
                   ),
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildAchievementBadge('7 Days', Icons.looks_one, true),
-                    _buildAchievementBadge('30 Days', Icons.looks_two, false),
-                    _buildAchievementBadge('100 Days', Icons.looks_3, false),
-                  ],
-                ),
+                Builder(builder: (context) {
+                  final List<Map<String, dynamic>> catalog = <Map<String, dynamic>>[
+                    {'key': 'streak_5', 'label': '5-day streak', 'icon': Icons.local_fire_department},
+                    {'key': 'streak_10', 'label': '10-day streak', 'icon': Icons.local_fire_department},
+                    {'key': 'streak_30', 'label': '30-day streak', 'icon': Icons.local_fire_department},
+                    {'key': 'sessions_5', 'label': '5 sessions', 'icon': Icons.check_circle},
+                    {'key': 'sessions_25', 'label': '25 sessions', 'icon': Icons.check_circle},
+                    {'key': 'sessions_50', 'label': '50 sessions', 'icon': Icons.check_circle},
+                    {'key': 'minutes_50', 'label': '50 minutes', 'icon': Icons.timer},
+                    {'key': 'minutes_100', 'label': '100 minutes', 'icon': Icons.timer},
+                    {'key': 'minutes_300', 'label': '300 minutes', 'icon': Icons.timer},
+                  ];
+                  return Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
+                    children: catalog.map((entry) {
+                      final bool unlocked = achievements.contains(entry['key'] as String);
+                      return _buildAchievementBadge(entry['label'] as String, entry['icon'] as IconData, unlocked);
+                    }).toList(),
+                  );
+                }),
               ],
             ),
           ),

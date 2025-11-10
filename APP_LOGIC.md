@@ -52,7 +52,7 @@ Theme Mode Persistence (2025-11-03)
 
 This document provides concise descriptions of all systems, services, and features in the Meditation by VK application.
 
-**Last Updated**: 2025-11-07
+**Last Updated**: 2025-11-10
 
 ## 📚 Documentation Context
 
@@ -287,6 +287,16 @@ Thumbnail Overlay (2025-10-28)
   - `flushPending()`: Foreground retry for SharedPreferences queue (not used in audio callbacks)
   - `streamRecentSessions()`: Queries last 60 days, filters completed=true, orders by completedAt DESC
   - `calculateStreak()`: UTC day boundaries, only counts completed sessions (current + longest)
+
+- Achievements (2025-11-10)
+  - `AppUser` includes `achievements: Map<String, DateTime>` (entity)
+  - `AppUserModel` serializes `achievements` to Firestore as `Map<String, Timestamp>`
+  - `AuthService` creates users with an empty `achievements` map
+  - `progressDtoProvider` computes thresholds and writes missing keys:
+    - Streaks: `streak_5`, `streak_10`, `streak_30`
+    - Sessions: `sessions_5`, `sessions_25`, `sessions_50`
+    - Minutes: `minutes_50`, `minutes_100`, `minutes_300`
+  - `ProgressScreen` renders badges dynamically from provider-emitted achievements
 
 - progressDtoProvider (`lib/providers/progress_provider.dart`)
   - Aggregates sessions from last 60 days

@@ -9,6 +9,7 @@ class AppUser {
   final int dailyGoldGoal;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final Map<String, DateTime> achievements;
 
   const AppUser({
     required this.uid,
@@ -21,6 +22,7 @@ class AppUser {
     this.dailyGoldGoal = 10,
     required this.createdAt,
     this.updatedAt,
+    this.achievements = const <String, DateTime>{},
   });
 
   AppUser copyWith({
@@ -34,6 +36,7 @@ class AppUser {
     int? dailyGoldGoal,
     DateTime? createdAt,
     DateTime? updatedAt,
+    Map<String, DateTime>? achievements,
   }) {
     return AppUser(
       uid: uid ?? this.uid,
@@ -46,6 +49,7 @@ class AppUser {
       dailyGoldGoal: dailyGoldGoal ?? this.dailyGoldGoal,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      achievements: achievements ?? this.achievements,
     );
   }
 
@@ -59,6 +63,7 @@ class AppUser {
         'dailyGoldGoal': dailyGoldGoal,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt?.toIso8601String(),
+        'achievements': achievements.map((k, v) => MapEntry(k, v.toIso8601String())),
       };
 
   factory AppUser.fromJson(String uid, Map<String, dynamic> json) {
@@ -75,6 +80,15 @@ class AppUser {
       updatedAt: (json['updatedAt'] as String?) != null
           ? DateTime.parse(json['updatedAt'] as String)
           : null,
+      achievements: ((json['achievements'] as Map?) ?? const <String, dynamic>{})
+          .map<String, DateTime>((dynamic key, dynamic value) {
+        final String k = key as String;
+        final String? v = value as String?;
+        if (v == null) {
+          return MapEntry(k, DateTime.fromMillisecondsSinceEpoch(0));
+        }
+        return MapEntry(k, DateTime.parse(v));
+      }),
     );
   }
 }

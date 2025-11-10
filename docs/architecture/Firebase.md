@@ -1,6 +1,6 @@
 # Firebase Architecture - Meditation by VK
 
-Last Updated: 2025-11-05
+Last Updated: 2025-11-10
 
 ## Overview
 
@@ -94,6 +94,7 @@ firestore-root/
 │   ├── subscriptionExpiry: timestamp?
 │   ├── createdAt: timestamp
 │   ├── lastActive: timestamp
+│   ├── achievements: map<string, timestamp>   // e.g. "streak_5": timestamp
 │   ├── preferences: {
 │   │   ├── theme: 'light' | 'dark' | 'system'
 │   │   ├── autoplay: boolean
@@ -365,3 +366,22 @@ Future composite indexes if server-side filtering expands:
 - Weekly full backups
 - Point-in-time recovery enabled
 - Test restore process monthly
+
+## Achievements (2025-11-10)
+
+### Overview
+- Achievements are stored on `users/{uid}.achievements` as a `map<string, timestamp>`.
+- Keys represent unlocked milestones; values are the unlock time (serverTimestamp at write).
+
+### Keys
+- Streaks: `streak_5`, `streak_10`, `streak_30`
+- Sessions: `sessions_5`, `sessions_25`, `sessions_50`
+- Minutes: `minutes_50`, `minutes_100`, `minutes_300`
+
+### Awarding
+- Client-side in `progressDtoProvider` for simplicity and immediate UI feedback.
+- Idempotent write: only sets keys that do not yet exist using `update({ 'achievements.key': serverTimestamp() })`.
+- Reads are lightweight (single user doc snapshot already used for `dailyGoldGoal`).
+
+### Security
+- Covered by existing rule: users can write their own `users/{uid}` document.
