@@ -76,6 +76,42 @@ class AnimationConfig {
 
   // Stagger delay between items
   static const Duration staggerDelay = Duration(milliseconds: 50);
+
+  // Player screen glassmorphism card
+  static const double cardMargin = 20.0;
+  static const double cardOpacity = 0.85;
+  static const double cardCornerRadius = 32.0;
+  static const double cardBlurSigma = 20.0;
+  static const double cardShadowOpacity = 0.1;
+  static const double cardBlurRadius = 40.0;
+  static const double cardSpreadRadius = 5.0;
+
+  // Waveform slider
+  static const double waveformBarWidth = 2.0;
+  static const int waveformBarCount = 50;
+  static const Duration waveformTransition = Duration(milliseconds: 150);
+
+  // Control buttons
+  static const double skipButtonSize = 60.0;
+  static const double controlButtonSize = 48.0;
+}
+
+/// Player screen animation configuration
+class PlayerAnimationConfig {
+  // Background gradient cycle (slower for calm feel)
+  static const Duration gradientCycle = Duration(seconds: 20);
+  
+  // Card entrance animation
+  static const Duration cardEntrance = AnimationDurations.medium4; // 600ms
+  static const Curve cardEntranceCurve = AnimationCurves.entrance;
+  
+  // Image scale animation
+  static const Duration imageScale = AnimationDurations.normal; // 450ms
+  static const Curve imageScaleCurve = AnimationCurves.entrance;
+  
+  // Control button animations
+  static const Duration buttonPress = AnimationDurations.fast; // 300ms
+  static const Curve buttonPressCurve = AnimationCurves.standardEasing;
 }
 
 /// Splash-specific animation configuration to avoid magic numbers

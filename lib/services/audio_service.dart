@@ -327,6 +327,14 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
     await _player.seek(newPos < Duration.zero ? Duration.zero : newPos);
   }
 
+  Future<void> setSpeed(double speed) async {
+    await _player.setSpeed(speed);
+  }
+
+  Future<void> setVolume(double volume) async {
+    await _player.setVolume(volume);
+  }
+
   Future<Duration?> _readResumePosition(String meditationId) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;

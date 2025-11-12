@@ -11,6 +11,8 @@ class AudioUiState {
   final Duration position;
   final Duration? duration;
   final String? error;
+  final double speed;
+  final double volume;
 
   const AudioUiState({
     required this.isLoading,
@@ -18,6 +20,8 @@ class AudioUiState {
     required this.position,
     required this.duration,
     this.error,
+    this.speed = 1.0,
+    this.volume = 1.0,
   });
 
   AudioUiState copyWith({
@@ -26,6 +30,8 @@ class AudioUiState {
     Duration? position,
     Duration? duration,
     String? error,
+    double? speed,
+    double? volume,
   }) {
     return AudioUiState(
       isLoading: isLoading ?? this.isLoading,
@@ -33,6 +39,8 @@ class AudioUiState {
       position: position ?? this.position,
       duration: duration ?? this.duration,
       error: error,
+      speed: speed ?? this.speed,
+      volume: volume ?? this.volume,
     );
   }
 }
@@ -53,6 +61,8 @@ class AudioPlayerNotifier extends Notifier<AudioUiState> {
       isPlaying: false,
       position: Duration.zero,
       duration: null,
+      speed: 1.0,
+      volume: 1.0,
     );
 
     // Bind streams once per provider lifecycle
@@ -104,6 +114,30 @@ class AudioPlayerNotifier extends Notifier<AudioUiState> {
   Future<void> pause() => _handler.pause();
   Future<void> seek(Duration d) => _handler.seek(d);
   Future<void> stop() => _handler.stop();
+
+  Future<void> setSpeed(double speed) async {
+    await _handler.setSpeed(speed);
+    state = state.copyWith(speed: speed);
+  }
+
+  Future<void> setVolume(double volume) async {
+    await _handler.setVolume(volume);
+    state = state.copyWith(volume: volume);
+  }
+
+  Future<void> seekRelative(int seconds) async {
+    final current = state.position;
+    final duration = state.duration ?? Duration.zero;
+    final newPos = current + Duration(seconds: seconds);
+    
+    if (newPos < Duration.zero) {
+      await seek(Duration.zero);
+    } else if (newPos > duration) {
+      await seek(duration);
+    } else {
+      await seek(newPos);
+    }
+  }
 
   void clearError() {
     state = state.copyWith(error: null);

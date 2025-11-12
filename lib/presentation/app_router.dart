@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../core/animation_constants.dart';
 import 'screens/splash_screen.dart';
 import 'screens/main_scaffold.dart';
-import 'screens/player_screen.dart';
+import 'screens/player_screen_redesigned.dart';
 import 'screens/login_screen.dart';
 import 'screens/paywall_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -296,7 +296,7 @@ final appRouter = GoRouter(
       path: '/player/:id',
       name: 'player',
       pageBuilder: (context, state) => _buildPlayerTransition(
-        child: PlayerScreen(
+        child: PlayerScreenRedesigned(
           meditationId: state.pathParameters['id'] ?? '',
         ),
         state: state,
