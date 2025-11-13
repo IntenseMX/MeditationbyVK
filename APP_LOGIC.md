@@ -117,9 +117,20 @@ This document provides concise descriptions of all systems, services, and featur
 ## Navigation & Routing (Phase 1.5 - Updated 2025-10-20)
 
 ### AppRouter (presentation/app_router.dart)
-- GoRouter configuration with routes: `/splash`, `/`, `/player/:id`
+- GoRouter configuration with routes: `/splash`, `/`, `/meditation-detail/:id`, `/player/:id`
 - Custom page transitions: slide+fade for standard pages, fade-only for player
 - Secondary fade animation: Fast exit (0-30% of transition) for background screens during Hero card animations
+
+### MeditationDetailScreen (presentation/screens/meditation_detail_screen.dart) (2025-11-13)
+- Intermediary screen with compact horizontal card (96x96 thumbnail, title/desc/chips) and Play CTA
+- Shows styled "Comments coming soon" placeholder block with divider (Phase 1 design validation)
+- Consumes `meditationByIdProvider(id)` and `categoryMapProvider` for real-time Firestore data
+- Loading/error/unavailable states with themed placeholders
+
+### CompactMeditationCard (presentation/widgets/compact_meditation_card.dart) (2025-11-13)
+- Horizontal layout card with 96x96 Hero thumbnail, metadata chips (duration, category), and circular Play button
+- Premium badge if isPremium=true; styled chips with theme colors
+- Tap Play → invokes onPlay callback (navigates to `/player/:id`)
 
 ### Page Transitions (2025-10-20)
 - Standard transition: Right-to-left slide with fade-in/out (600ms)

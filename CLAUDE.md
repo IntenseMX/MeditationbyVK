@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Last Updated: 2025-11-05
+Last Updated: 2025-11-10
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -254,6 +254,13 @@ Located in `meditation_admin/` directory (if implemented):
 - **iOS**: Configure audio background mode in Info.plist
 - **Android**: Configure audio service in AndroidManifest.xml
 - **Web Admin**: Separate Firebase project or shared with restrictions
+
+### iOS Build Number (Mac) (2025-11-10)
+1. `pubspec.yaml` - version (1.0.0+3 → 1.0.0+4)
+2. `ios/Runner.xcodeproj/project.pbxproj` - 6x `CURRENT_PROJECT_VERSION` (Runner + RunnerTests)
+3. `ios/Flutter/Generated.xcconfig` - `FLUTTER_BUILD_NUMBER`
+4. Xcode → `Runner.xcworkspace` → Archive
+5. **NEVER `flutter build ios`** (signing breaks on Mac)
 
 ## Common Tasks
 

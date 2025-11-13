@@ -144,10 +144,11 @@ class MeditationEditorNotifier extends Notifier<MeditationEditorState> {
   Future<bool> publish() async {
     state = state.copyWith(isSaving: true, error: null);
     try {
-      if (state.id == null) {
-        final id = await saveDraft();
-        if (id == null) return false;
-      }
+      // Always save changes first (including isPremium, title, etc.)
+      final id = await saveDraft();
+      if (id == null) return false;
+
+      // Then publish
       await _service.publishMeditation(state.id!);
       state = state.copyWith(status: 'published', isSaving: false);
       return true;

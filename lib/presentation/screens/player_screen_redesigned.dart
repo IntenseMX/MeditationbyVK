@@ -51,6 +51,7 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
   @override
   void initState() {
     super.initState();
+    _isLooping = false;
     _imageAnimationController = AnimationController(
       duration: PlayerAnimationConfig.imageScale,
       vsync: this,
@@ -136,6 +137,7 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
         if (_loadedMeditationId != widget.meditationId && audioUrl.isNotEmpty) {
           _loadedMeditationId = widget.meditationId;
           _isLoading = false;
+          _isLooping = false;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             ref.read(audioPlayerProvider.notifier).load(
                   meditationId: widget.meditationId,
@@ -250,10 +252,6 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
-            onPressed: () => context.pop(),
-          ),
         ),
 
         // Main content with SafeArea
@@ -292,31 +290,81 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                            // Hero animated image
-                            Hero(
-                              tag: heroTag,
-                              child: Material(
-                                color: Colors.transparent,
-                                child: ScaleTransition(
-                                  scale: _imageScaleAnimation,
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: AspectRatio(
-                                      aspectRatio: 16 / 9,
-                                      child: imageUrl.isNotEmpty
-                                          ? Image.network(imageUrl, fit: BoxFit.cover)
-                                          : Container(
-                                              color: colorScheme.secondary.withOpacity(0.3),
-                                              child: Icon(
-                                                Icons.music_note,
-                                                size: 64,
-                                                color: colorScheme.onSurface.withOpacity(0.5),
-                                              ),
-                                            ),
+                            // Hero animated image with back button overlay
+                            Stack(
+                              children: [
+                                Hero(
+                                  tag: heroTag,
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: ScaleTransition(
+                                      scale: _imageScaleAnimation,
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(20),
+                                        child: AspectRatio(
+                                          aspectRatio: 1.0,
+                                          child: imageUrl.isNotEmpty
+                                              ? Image.network(imageUrl, fit: BoxFit.cover)
+                                              : Container(
+                                                  color: colorScheme.secondary.withOpacity(0.3),
+                                                  child: Icon(
+                                                    Icons.music_note,
+                                                    size: 64,
+                                                    color: colorScheme.onSurface.withOpacity(0.5),
+                                                  ),
+                                                ),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
+                                // Back button positioned at top-left
+                                Positioned(
+                                  top: 8,
+                                  left: 8,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.5),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: IconButton(
+                                      icon: Icon(Icons.arrow_back, color: Colors.white),
+                                      onPressed: () {
+                                        HapticFeedback.lightImpact();
+                                        context.pop();
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                // Premium badge positioned at top-right
+                                if (isPremium)
+                                  Positioned(
+                                    top: 15,
+                                    right: 15,
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.6),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.workspace_premium, color: Colors.amber, size: 16),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            'PREMIUM',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                             
                             SizedBox(height: isSmall ? 16 : 24),
@@ -611,7 +659,7 @@ $subtitle
 ⏱️ Duration: ${_formatDuration(durationSec)}
 ${categoryId != null ? '🏷️ Category: ${_resolveCategoryName(categoryId, {})}' : ''}
 
-Listen on CLARITY Meditation App'''; 
+Listen on UP by VK'''; 
     
     HapticFeedback.lightImpact();
     Share.share(shareText, subject: 'Check out this meditation: $title');
@@ -621,6 +669,7 @@ Listen on CLARITY Meditation App''';
   void dispose() {
     _sleepTimer?.cancel();
     _imageAnimationController.dispose();
+    _isLooping = false;
     super.dispose();
   }
 }

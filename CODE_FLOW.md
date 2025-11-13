@@ -249,6 +249,7 @@ Constants class (core/constants.dart)
 appRouter (presentation/app_router.dart)
 ├── /splash → SplashScreen - Startup animation + CTA pause
 ├── / (home) → MainScaffold - Bottom navigation container
+├── /meditation-detail/:id → MeditationDetailScreen - Intermediary detail with compact card + comments placeholder (2025-11-13)
 ├── /player/:id → PlayerScreen - Audio playback with Hero card animation
 ├── /admin → AdminDashboardScreen (guarded by auth + admin claim)
 └── /categories, /meditations, /meditations/:id (admin routes)
@@ -272,6 +273,22 @@ Note (2025-10-23):
 ├── Default pages: Slide + fade (right-to-left entry)
 │   └── Secondary fade (background exits fast in first 30%)
 └── Player route: Fade-only transition
+
+### Meditation Detail Screen (2025-11-13)
+
+- Added new intermediary screen between Home/Discover and Player
+- Route: `/meditation-detail/:id` (app_router.dart line 297)
+- Files:
+  - `lib/presentation/screens/meditation_detail_screen.dart` (150 lines)
+  - `lib/presentation/widgets/compact_meditation_card.dart` (170 lines)
+- Top section: Compact horizontal card (thumbnail 96x96, title/desc/chips, Play button)
+- Comments: Styled "coming soon" placeholder block (Phase 1 design validation)
+- Navigation flow:
+  - Home/Discover card tap → `/meditation-detail/:id` (home_screen.dart line 192, 334)
+  - Play button → `/player/:id` (compact_meditation_card.dart line 56)
+- Data: Consumes `meditationByIdProvider` + `categoryMapProvider` via Riverpod
+- Theme-aware: All colors via `Theme.of(context).colorScheme` (no hardcoded colors)
+
     ├── Hero animation handles card expansion
     ├── Background fades out quickly (Interval 0.0-0.3)
     └── Player content fades in delayed (Interval 0.3-1.0)

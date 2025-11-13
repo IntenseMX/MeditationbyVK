@@ -15,6 +15,7 @@ import 'screens/admin/categories_screen.dart';
 import 'screens/admin/activity_screen.dart';
 import 'screens/themes_screen.dart';
 import 'screens/category_meditations_screen.dart';
+import 'screens/meditation_detail_screen.dart';
 
 /// Custom page transition with fade and slide animation
 Page<dynamic> _buildPageWithTransition({
@@ -289,6 +290,16 @@ final appRouter = GoRouter(
       name: 'profile',
       pageBuilder: (context, state) => _buildPageWithTransition(
         child: const MainScaffold(initialIndex: 3),
+        state: state,
+      ),
+    ),
+    GoRoute(
+      path: '/meditation-detail/:id',
+      name: 'meditation_detail',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        child: MeditationDetailScreen(
+          meditationId: state.pathParameters['id'] ?? '',
+        ),
         state: state,
       ),
     ),

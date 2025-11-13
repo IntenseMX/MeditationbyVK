@@ -39,7 +39,7 @@ class DiscoverScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'What brings you to Clarity today?',
+                      'What\'s your next step UP?',
                       style: TextStyle(
                         fontSize: 16,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,

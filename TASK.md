@@ -12,7 +12,7 @@ Pop Red ThemeExtension (2025-10-23)
 
 # TASK.md - Meditation by VK
 
-Last Updated: 2025-11-10
+Last Updated: 2025-11-13
 
 ## 📚 Documentation Overview
 
@@ -43,6 +43,20 @@ Last Updated: 2025-11-10
   - Player loads by Firestore ID with not-found handling
   - Images shown across all sections with gradient overlays
   - Index note: status filter moved client-side to avoid composite index prompt (can re-enable server filter after index creation)
+
+### Meditation Detail Screen - Phase 1 (2025-11-13) ✅ COMPLETE
+- [x] Added route `/meditation-detail/:id` in `presentation/app_router.dart` (line 297)
+- [x] Implemented `MeditationDetailScreen` (~150 lines) with compact horizontal card, Play CTA, and themed "Comments coming soon" block
+- [x] Added `CompactMeditationCard` widget (~170 lines) with 96x96 Hero thumbnail, duration/category chips, circular Play button
+- [x] Updated Home taps to navigate to detail screen (home_screen.dart lines 192, 334)
+- [x] Updated CODE_FLOW.md with screen flow details (navigation, data providers, theme compliance)
+- [x] Updated APP_LOGIC.md with MeditationDetailScreen and CompactMeditationCard descriptions
+- Implementation:
+  - Theme-aware colors only (no hardcoded colors)
+  - Loading/error/unavailable states handled
+  - Real-time Firestore data via Riverpod (`meditationByIdProvider`, `categoryMapProvider`)
+  - Play button navigates to existing `/player/:id` route
+- Notes: Comments UI placeholder added for Phase 1 design validation. Player screen remains unchanged.
 
 UX/Infra improvements (2025-10-25)
 - Extracted reusable bottom navigation `MainNavBar`; added routes `/discover`, `/progress`, `/profile`

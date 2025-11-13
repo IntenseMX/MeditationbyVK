@@ -140,7 +140,7 @@ class MyApp extends ConsumerWidget {
     final darkTheme = ref.watch(currentDarkThemeProvider);
 
     return MaterialApp.router(
-      title: 'CLARITY',
+      title: 'UP by VK',
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeMode,

@@ -155,17 +155,23 @@ class MeditationCard extends StatelessWidget {
                                         ),
                                         margin: const EdgeInsets.only(bottom: 8),
                                         decoration: BoxDecoration(
-                                          color: AppTheme.agedGold,
-                                          borderRadius: BorderRadius.circular(8),
+                                          color: Colors.black.withOpacity(0.6),
+                                          borderRadius: BorderRadius.circular(12),
                                         ),
-                                        child: const Text(
-                                          'PREMIUM',
-                                          style: TextStyle(
-                                            color: AppTheme.softCharcoal,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 1,
-                                          ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: const [
+                                            Icon(Icons.workspace_premium, color: Colors.amber, size: 16),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'PREMIUM',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     Text(
@@ -356,17 +362,23 @@ class MeditationCard extends StatelessWidget {
                                       ),
                                       margin: const EdgeInsets.only(bottom: 8),
                                       decoration: BoxDecoration(
-                                        color: AppTheme.agedGold,
-                                        borderRadius: BorderRadius.circular(8),
+                                        color: Colors.black.withOpacity(0.6),
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: const Text(
-                                        'PREMIUM',
-                                        style: TextStyle(
-                                          color: AppTheme.softCharcoal,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 1,
-                                        ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: const [
+                                          Icon(Icons.workspace_premium, color: Colors.amber, size: 16),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            'PREMIUM',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   Text(

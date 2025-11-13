@@ -413,61 +413,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   const SizedBox(height: 16),
-                                  FadeTransition(
-                                    opacity: _titleExitOpacity,
-                                    child: Stack(
-                                      alignment: Alignment.center,
-                                      children: [
-                                        Text(
-                                          'CLARITY',
-                                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                                fontSize: 32,
-                                                fontWeight: FontWeight.bold,
-                                                letterSpacing: 2,
-                                                color: Theme.of(context).colorScheme.onBackground,
-                                              ),
-                                        ),
-                                        AnimatedBuilder(
-                                          animation: _shimmerController,
-                                          builder: (context, child) {
-                                            return ShaderMask(
-                                              shaderCallback: (Rect bounds) {
-                                                final t = _shimmerController.value;
-                                                final w = bounds.width;
-                                                final start = (t * (1.0 + SplashAnimationConfig.shimmerWidth)) - SplashAnimationConfig.shimmerWidth;
-                                                final from = (start * w).clamp(0.0, w);
-                                                final to = ((start + SplashAnimationConfig.shimmerWidth) * w).clamp(0.0, w);
-                                                return LinearGradient(
-                                                  begin: Alignment.centerLeft,
-                                                  end: Alignment.centerRight,
-                                                  colors: [
-                                                    Colors.transparent,
-                                                    Colors.white.withOpacity(0.8),
-                                                    Colors.transparent,
-                                                  ],
-                                                  stops: const [0.0, 0.5, 1.0],
-                                                  transform: GradientRotation(0),
-                                                ).createShader(Rect.fromLTWH(from, 0, math.max(1.0, to - from), bounds.height));
-                                              },
-                                              blendMode: BlendMode.srcATop,
-                                              child: Opacity(
-                                                opacity: 0.12,
-                                                child: Text(
-                                                  'CLARITY',
-                                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                                        fontSize: 32,
-                                                        fontWeight: FontWeight.bold,
-                                                        letterSpacing: 2,
-                                                        color: Colors.white,
-                                                      ),
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
                                   const SizedBox(height: 8),
                                   FadeTransition(
                                     opacity: _subtitleExitOpacity,

@@ -133,38 +133,6 @@ class TitleMetadataBlock extends StatelessWidget {
                 child: Icon(Icons.share_outlined, size: 18, color: colorScheme.onSurface.withOpacity(0.7)),
               ),
             ],
-
-            if (isPremium) ...[
-              const SizedBox(width: 12),
-              _DotSeparator(colorScheme: colorScheme),
-              const SizedBox(width: 12),
-              
-              // Premium badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.amber, Colors.amber.shade700],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.star, size: 12, color: Colors.white),
-                    const SizedBox(width: 4),
-                    Text(
-                      'PREMIUM',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ],
         ),
       ],

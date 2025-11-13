@@ -1,8 +1,8 @@
 # Meditation Detail Screen with Comments - Implementation Plan
 
 **Created:** 2025-11-07
-**Updated:** 2025-01-12
-**Status:** Planning Phase - Ready to Implement
+**Updated:** 2025-11-13
+**Status:** Phase 1 COMPLETE — Design validated. Phases 2–5 pending.
 **New File:** `lib/presentation/screens/meditation_detail_screen.dart`
 
 ---
@@ -45,6 +45,21 @@ Meditation Detail Screen (NEW - this plan)
     ↓ [Tap Play Button]
 Player Screen (EXISTING - already redesigned)
 ```
+
+---
+
+## Implementation Status (2025-11-13)
+
+- ✅ Phase 1 shipped (design validation only)
+  - Route added: `/meditation-detail/:id` (`lib/presentation/app_router.dart`)
+  - Navigation updated: Home/Discover cards → detail screen (`lib/presentation/screens/home_screen.dart`)
+  - New screen: `lib/presentation/screens/meditation_detail_screen.dart` (compact horizontal card + Play CTA)
+  - New widget: `lib/presentation/widgets/compact_meditation_card.dart` (96x96 Hero thumbnail, duration/category chips, circular Play button)
+  - Data: Uses `meditationByIdProvider` + `categoryMapProvider` (real-time via Riverpod)
+  - UX: Themed loading/error/unavailable states; styled “Comments coming soon” block
+  - Flow: Home/Discover → Detail → Play → `/player/:id` (existing redesigned player, unchanged)
+
+Remaining: Phases 2–5 (comments infra + UI, polish, optional achievement stars).
 
 ---
 
@@ -319,22 +334,22 @@ class AddCommentSheet extends ConsumerStatefulWidget {
 
 ## Migration Path
 
-### Phase 1: Create Detail Screen (No Comments Yet)
-1. Create new route `/meditation-detail/:id` in `app_router.dart`
-2. Create `meditation_detail_screen.dart` (new file)
-3. Create `CompactMeditationCard` widget
-4. Wire up navigation: Home → Detail → Player
-5. Add "Play" button that navigates to existing player screen
-6. Test hero animation from Home → Detail → Player
-7. Ensure existing Home → Player direct route still works (backwards compatibility)
+### Phase 1: Create Detail Screen (No Comments Yet) — ✅ COMPLETED (2025-11-13)
+1. Added route `/meditation-detail/:id` in `app_router.dart`
+2. Created `meditation_detail_screen.dart`
+3. Created `compact_meditation_card.dart` (96x96 thumbnail, chips, Play CTA)
+4. Updated navigation: Home/Discover → Detail → Player
+5. Play button navigates to existing `/player/:id` (redesigned player)
+6. Hero transition: Card → Detail thumbnail; player transition unchanged (fade)
+7. Kept `/player/:id` direct route for deep links/back-compat
 
-**Files to Create:**
+**Files Created (Phase 1):**
 - `lib/presentation/screens/meditation_detail_screen.dart`
 - `lib/presentation/widgets/compact_meditation_card.dart`
 
-**Files to Modify:**
-- `lib/presentation/app_router.dart` (add new route)
-- `lib/presentation/screens/home_screen.dart` (change navigation target)
+**Files Modified (Phase 1):**
+- `lib/presentation/app_router.dart` (added new route)
+- `lib/presentation/screens/home_screen.dart` (changed navigation target to detail)
 
 ### Phase 2: Add Comments Infrastructure
 1. Create Firestore collection + security rules
@@ -452,20 +467,18 @@ Index: meditationId ASC, createdAt DESC
 
 ## Files to Create/Modify
 
-### New Files
+### New Files (Remaining)
 ```
 lib/models/meditation_comment.dart
 lib/providers/comments_provider.dart
 lib/services/comment_service.dart
-lib/presentation/widgets/compact_meditation_card.dart
 lib/presentation/widgets/comment_list.dart
 lib/presentation/widgets/comment_item.dart
 lib/presentation/widgets/add_comment_sheet.dart
 ```
 
-### Modified Files
+### Modified Files (Remaining)
 ```
-lib/presentation/screens/player_screen.dart (major refactor)
 firestore.rules (add meditation_comments rules)
 ```
 
@@ -571,5 +584,5 @@ test/providers/comments_provider_test.dart
 ---
 
 **Document Status:** ✅ Updated and Ready
-**Last Updated:** 2025-01-12
-**Status:** Planning Complete - Ready for Implementation
+**Last Updated:** 2025-11-13
+**Status:** Phase 1 COMPLETE — Proceed to Phase 2

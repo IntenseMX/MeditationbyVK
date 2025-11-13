@@ -64,11 +64,18 @@ class UploadService {
     int? durationSec;
     try {
       final player = AudioPlayer();
+      print('🎵 Setting audio URL: $url');
       await player.setUrl(url);
-      final d = player.duration;
+      print('🎵 URL set, waiting for duration metadata...');
+      // Wait for duration to be available (web needs this - duration loads separately from ready state)
+      final d = await player.durationStream
+          .firstWhere((duration) => duration != null)
+          .timeout(const Duration(seconds: 15));
       durationSec = d?.inSeconds;
       await player.dispose();
-    } catch (_) {
+      print('🎵 Duration detected: $durationSec seconds');
+    } catch (e) {
+      print('❌ Duration detection failed: $e');
       durationSec = null;
     }
 
