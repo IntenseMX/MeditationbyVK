@@ -153,7 +153,7 @@ class DiscoverScreen extends ConsumerWidget {
                             imageUrl: m.imageUrl ?? '',
                             gradientColors: gradient,
                             isPremium: m.isPremium ?? false,
-                            onTap: () => context.push('/player/${m.id}'),
+                            onTap: () => context.push('/meditation-detail/${m.id}'),
                           );
                         },
                         childCount: items.length,

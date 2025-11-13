@@ -58,6 +58,12 @@ Last Updated: 2025-11-13
   - Play button navigates to existing `/player/:id` route
 - Notes: Comments UI placeholder added for Phase 1 design validation. Player screen remains unchanged.
 
+### Bug Fixes & Polish (2025-11-13)
+- [x] Standardized premium badges (amber crown + white text) across all cards
+- [x] Fixed audio duration detection (wait for durationStream on web) - `upload_service.dart`
+- [x] Fixed publish flow to save all fields before status change - `meditation_editor_provider.dart`
+- [x] Fixed discover search navigation to route through detail screen - `discover_screen.dart`
+
 UX/Infra improvements (2025-10-25)
 - Extracted reusable bottom navigation `MainNavBar`; added routes `/discover`, `/progress`, `/profile`
 - Attached bottom nav to Admin Dashboard for quick app navigation
