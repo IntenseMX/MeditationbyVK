@@ -62,13 +62,7 @@ class MeditationCard extends StatelessWidget {
         final isLocked = isPremium && !sub.isPremium;
         final bool effectiveEnableHero = enableHero && !isLocked;
         return GestureDetector(
-          onTap: () {
-            if (isLocked) {
-              context.push('/paywall');
-              return;
-            }
-            onTap?.call();
-          },
+          onTap: onTap,
           child: effectiveEnableHero
               ? Hero(
                   tag: heroTag,

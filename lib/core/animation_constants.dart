@@ -85,6 +85,7 @@ class AnimationConfig {
   static const double cardShadowOpacity = 0.1;
   static const double cardBlurRadius = 40.0;
   static const double cardSpreadRadius = 5.0;
+  static const double cardPadding = 24.0;
 
   // Waveform slider
   static const double waveformBarWidth = 2.0;
@@ -164,4 +165,31 @@ class SplashExitConfig {
 
   // CTAs
   static const Duration ctaExit = Duration(milliseconds: 225);
+}
+
+/// Player layout configuration (avoid magic numbers in widgets)
+class PlayerLayoutConfig {
+  // Base estimated content height (title, controls, times, slider, spacing)
+  static const double baseContentHeight = 400.0;
+
+  // When estimated content exceeds this ratio of available height, enable scroll
+  static const double scrollThresholdRatio = 0.6;
+
+  // Clamp text scale used for estimation to avoid extreme expansion
+  static const double minTextScale = 1.0;
+  static const double maxTextScale = 2.0;
+
+  // Portrait flex breakpoints (by height) for image/content split
+  static const double smallHeightBreakpoint = 650.0;
+  static const double largeHeightBreakpoint = 900.0;
+
+  // Content card maximum width (tablet/desktop)
+  static const double maxContentWidth = 500.0;
+
+  // Image size constraints for portrait dynamic sizing
+  static const double minImageSize = 240.0;
+  static const double maxImageSize = 500.0;
+
+  // Gap between image and content
+  static const double contentGap = 24.0;
 }

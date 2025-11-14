@@ -651,15 +651,22 @@ Initialization:
 └── AppAudioHandler._initStreams() (existing playback state wiring)
 
 Runtime:
-├── Interruption begin (pause/unknown) → handler.pause() → resume position saved
+├── Interruption begin (pause/unknown) → handler.pause()
 ├── Interruption begin (duck) → volume 0.3
 ├── Interruption end (duck) → volume 1.0 (no auto-resume)
 └── Becoming noisy (unplug) → handler.pause()
 
-Resume Persistence:
-├── Throttled writes every 15s during playback
-├── On pause/stop/complete → write resume
-└── On next load → seek to stored position (bounded by duration)
+Progressive Audio Caching (2025-11-14):
+├── Dependency: path_provider ^2.1.5
+├── Cache directory: Library/Caches/audio_cache/{meditationId}.mp3
+├── Cache HIT: Load from disk (instant playback)
+├── Cache MISS: Stream + cache in background (LockCachingAudioSource)
+└── Buffering UI: 30-second initial buffer with progress indicator
+
+Lifecycle Management (2025-11-14):
+├── AudioPlayerNotifier: `_isMounted` flag guards state updates
+├── Disposal order: Set flag FIRST, then cancel subscriptions
+└── PlayerScreen: Cached `_audio` field in initState for safe dispose()
 ```
 
 ---
@@ -1396,7 +1403,7 @@ ref.watch(futureProvider).when(
 - `categoryPaginationProvider(categoryId)` manages `loadFirstPage()` / `loadMore()`
 - Screen shows “Load More” when `canLoadMore` is true
 
-**Last Updated**: 2025-11-10
+**Last Updated**: 2025-11-14
 
 ### Splash UX/Data Gating (2025-11-10)
 

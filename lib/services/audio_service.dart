@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
@@ -7,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path_provider/path_provider.dart';
 import 'progress_service.dart';
 
 /// AppAudioHandler bridges just_audio with audio_service and Firestore resume.
@@ -30,8 +32,6 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
   String? _currentMeditationId;
   String? _currentMeditationTitle;
   String? _currentMeditationImageUrl;
-  int _lastResumeWriteMs = 0;
-  static const int _resumeWriteThrottleMs = 15000; // 15s
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<PlayerState>? _completionSub;
   StreamSubscription<AudioInterruptionEvent>? _interruptionSub;
@@ -109,10 +109,6 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
           }
         }
       }
-      final now = DateTime.now().millisecondsSinceEpoch;
-      if (now - _lastResumeWriteMs < _resumeWriteThrottleMs) return;
-      _lastResumeWriteMs = now;
-      await _writeResumePosition(id, pos);
       // 80% completion threshold check while playing
       _maybeRecordSession(forceComplete: false);
     });
@@ -124,10 +120,6 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
         _playStartMsUtc = DateTime.now().toUtc().millisecondsSinceEpoch;
       }
       if (state.processingState == ProcessingState.completed) {
-        final id = _currentMeditationId;
-        if (id != null) {
-          await _writeResumePosition(id, _player.duration ?? Duration.zero);
-        }
         // Record as completed when playback naturally completes
         _maybeRecordSession(forceComplete: true);
       }
@@ -183,6 +175,8 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
   Stream<Duration> get positionStream => _player.positionStream;
   Stream<Duration?> get durationStream => _player.durationStream;
   Stream<PlayerState> get playerStateStream => _player.playerStateStream;
+  Stream<Duration> get bufferedPositionStream => _player.bufferedPositionStream;
+  Future<Duration> get bufferedPosition async => _player.bufferedPosition;
 
   Future<void> loadFromMeditation({
     required String meditationId,
@@ -251,7 +245,14 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
     try {
       debugPrint('[AudioService] Loading URL: $playableUrl');
       debugPrint('[AudioService] Original URL: $audioUrl');
-      await _player.setUrl(playableUrl);
+
+      // Use cached audio source (instant if cached, stream+cache if not)
+      final audioSource = await _createCachedAudioSource(
+        meditationId: meditationId,
+        url: playableUrl,
+      );
+
+      await _player.setAudioSource(audioSource);
       debugPrint('[AudioService] Successfully loaded! Duration: ${_player.duration}');
     } catch (e, stack) {
       // Surface error to audio_service playback state
@@ -262,17 +263,6 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
       debugPrint('[AudioService] Error: $e');
       debugPrint('[AudioService] Stack: $stack');
       rethrow;
-    }
-
-    // Seek to stored resume
-    final resume = await _readResumePosition(meditationId);
-    if (resume != null && resume > Duration.zero) {
-      // Avoid seeking beyond duration if it is known
-      final total = _player.duration;
-      final safe = (total != null && resume > total) ? total : resume;
-      if (safe != null) {
-        await _player.seek(safe);
-      }
     }
   }
 
@@ -289,10 +279,6 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
   @override
   Future<void> pause() async {
     await _player.pause();
-    final id = _currentMeditationId;
-    if (id != null) {
-      await _writeResumePosition(id, _player.position);
-    }
   }
 
   @override
@@ -300,10 +286,6 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> stop() async {
-    final id = _currentMeditationId;
-    if (id != null) {
-      await _writeResumePosition(id, _player.position);
-    }
     // If user stops after crossing threshold, record completion
     _maybeRecordSession(forceComplete: false);
     await _player.stop();
@@ -335,37 +317,44 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
     await _player.setVolume(volume);
   }
 
-  Future<Duration?> _readResumePosition(String meditationId) async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return null;
-    final doc = await _firestore
-        .collection('users')
-        .doc(uid)
-        .collection('resume')
-        .doc(meditationId)
-        .get();
-    final data = doc.data();
-    if (data == null) return null;
-    final ms = data['positionMs'] as int?;
-    if (ms == null || ms <= 0) return null;
-    return Duration(milliseconds: ms);
-  }
+  /// Creates cached audio source for progressive download and playback
+  /// - If cached: loads from file (instant playback)
+  /// - If not cached: streams from URL (immediate playback) + caches in background
+  Future<AudioSource> _createCachedAudioSource({
+    required String meditationId,
+    required String url,
+  }) async {
+    if (kIsWeb) {
+      // Web doesn't support file caching
+      return AudioSource.uri(Uri.parse(url));
+    }
 
-  Future<void> _writeResumePosition(String meditationId, Duration position) async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
     try {
-      await _firestore
-          .collection('users')
-          .doc(uid)
-          .collection('resume')
-          .doc(meditationId)
-          .set({
-        'positionMs': position.inMilliseconds,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-    } catch (_) {
-      // Intentionally swallow errors for resume writes; not user-critical
+      // iOS-safe: Library/Caches directory (auto-managed, no backup, no permissions)
+      final cacheDir = await getApplicationCacheDirectory();
+      final audioCacheDir = Directory('${cacheDir.path}/audio_cache');
+
+      if (!await audioCacheDir.exists()) {
+        await audioCacheDir.create(recursive: true);
+      }
+
+      final cacheFile = File('${audioCacheDir.path}/$meditationId.mp3');
+
+      // Check if already cached
+      if (await cacheFile.exists()) {
+        debugPrint('[AudioService] 🎯 Cache HIT - loading from disk: ${cacheFile.path}');
+        return AudioSource.file(cacheFile.path);
+      }
+
+      // Cache MISS - use LockCachingAudioSource for progressive download
+      debugPrint('[AudioService] 💾 Cache MISS - streaming + caching: ${cacheFile.path}');
+      return LockCachingAudioSource(
+        Uri.parse(url),
+        cacheFile: cacheFile,
+      );
+    } catch (e) {
+      debugPrint('[AudioService] ⚠️ Cache setup failed, fallback to direct stream: $e');
+      return AudioSource.uri(Uri.parse(url));
     }
   }
 

@@ -52,7 +52,7 @@ Theme Mode Persistence (2025-11-03)
 
 This document provides concise descriptions of all systems, services, and features in the Meditation by VK application.
 
-**Last Updated**: 2025-11-10
+**Last Updated**: 2025-11-14
 
 ### Performance & UX Updates (2025-11-10)
 
@@ -271,11 +271,15 @@ Thumbnail Overlay (2025-10-28)
 
 ### AudioService (services/audio_service.dart)
 - just_audio wrapper managing audio player instance, streaming, and playback controls
+- Progressive audio caching: instant playback from disk (cache HIT) or stream + background download (cache MISS)
+- Exposes bufferedPositionStream for loading UI with 30-second initial buffer
 - Configures audio_session as music; handles interruptions (duck/pause) and becoming noisy (auto-pause)
 - Sets AndroidAudioAttributes (usage=media, contentType=music) for proper focus
 
 ### AudioPlayerProvider (providers/audio_player_provider.dart)
 - State management for playback including position, duration, and playing status; exposes play/pause/seek/stop
+- Lifecycle-safe: `_isMounted` flag guards state updates, disposal sets flag FIRST then cancels subscriptions
+- Exposes bufferedPositionStream for loading UI (2025-11-14)
 
 ### PlayerScreen (presentation/screens/player_screen.dart)
 - UI-only player; receives meditationId from route, shows cover/title/subtitle, play/pause toggle, disabled slider

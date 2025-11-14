@@ -53,9 +53,12 @@ class AudioPlayerNotifier extends Notifier<AudioUiState> {
   StreamSubscription<Duration>? _posSub;
   StreamSubscription<Duration?>? _durSub;
   StreamSubscription<PlayerState>? _stateSub;
+  bool _isMounted = true;
 
   @override
   AudioUiState build() {
+    _isMounted = true; // Reset mounted flag on rebuild
+
     final initial = const AudioUiState(
       isLoading: false,
       isPlaying: false,
@@ -67,20 +70,23 @@ class AudioPlayerNotifier extends Notifier<AudioUiState> {
 
     // Bind streams once per provider lifecycle
     _posSub = _handler.positionStream.listen((d) {
-      state = state.copyWith(position: d);
+      if (_isMounted) state = state.copyWith(position: d);
     });
     _durSub = _handler.durationStream.listen((d) {
-      state = state.copyWith(duration: d);
+      if (_isMounted) state = state.copyWith(duration: d);
     });
     _stateSub = _handler.playerStateStream.listen((s) {
+      if (!_isMounted) return;
       final loading = s.processingState == ProcessingState.loading || s.processingState == ProcessingState.buffering;
       state = state.copyWith(isLoading: loading, isPlaying: s.playing);
     });
 
-    ref.onDispose(() async {
-      await _posSub?.cancel();
-      await _durSub?.cancel();
-      await _stateSub?.cancel();
+    ref.onDispose(() {
+      // Block all future updates first, then cancel subscriptions
+      _isMounted = false;
+      _posSub?.cancel();
+      _durSub?.cancel();
+      _stateSub?.cancel();
     });
 
     return initial;
@@ -142,6 +148,12 @@ class AudioPlayerNotifier extends Notifier<AudioUiState> {
   void clearError() {
     state = state.copyWith(error: null);
   }
+
+  // Expose buffered position stream for buffering UI
+  Stream<Duration> get bufferedPositionStream => _handler.bufferedPositionStream;
+
+  // Get current buffered position
+  Future<Duration> get bufferedPosition => _handler.bufferedPosition;
 }
 
 final audioPlayerProvider = NotifierProvider.autoDispose<AudioPlayerNotifier, AudioUiState>(

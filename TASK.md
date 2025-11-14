@@ -12,7 +12,7 @@ Pop Red ThemeExtension (2025-10-23)
 
 # TASK.md - Meditation by VK
 
-Last Updated: 2025-11-13
+Last Updated: 2025-11-14
 
 ## 📚 Documentation Overview
 
@@ -342,15 +342,16 @@ Theme Tinting & Color Migration (2025-11-03)
 See detailed plan: [PHASE_3_CORE_FEATURES.md](./PHASE_3_CORE_FEATURES.md)
 
 ### Tasks
-- [ ] **Audio Player (just_audio)**
-  - [ ] Install and configure just_audio
-  - [ ] Stream audio from Firebase Storage URLs
-  - [ ] Play/pause controls
-  - [ ] Seek bar with position
-  - [ ] Skip forward/back buttons
-  - [ ] Background audio support (iOS/Android)
-  - [ ] Lock screen controls
-  - [ ] Resume from last position
+- [x] **Audio Player (just_audio)** (2025-11-14)
+  - [x] Install and configure just_audio
+  - [x] Stream audio from Firebase Storage URLs
+  - [x] Play/pause controls
+  - [x] Seek bar with position (WaveformSlider)
+  - [x] Skip forward/back buttons (±15s)
+  - [x] Background audio support (iOS/Android)
+  - [x] Lock screen controls
+  - [x] Progressive audio caching (path_provider, LockCachingAudioSource)
+  - [ ] ~~Resume from last position~~ (replaced with progressive caching approach)
 - [ ] **Real Data Integration**
   - [ ] Replace dummy data with Firestore queries
   - [ ] Pagination for meditation lists
@@ -514,6 +515,14 @@ See detailed plan: [PHASE_3_CORE_FEATURES.md](./PHASE_3_CORE_FEATURES.md)
 ---
 
 ## Known Issues & Resolutions
+
+### Resolved (2025-11-14): Audio Lifecycle Bugs
+- **Issue**: Hundreds of `_ElementLifecycle.defunct` exceptions when exiting player screen
+  - **Root Cause**: Stream subscriptions updating state after widget disposal; disposal order allowed events to slip through
+  - **Fix**: Set `_isMounted = false` FIRST, then cancel subscriptions; guard all state updates with flag check
+- **Issue**: "Using ref when widget is unmounted" in PlayerScreen dispose()
+  - **Root Cause**: `ref.read()` called in dispose() after BuildContext is defunct
+  - **Fix**: Cache `AudioPlayerNotifier` in field during initState, use cached reference in dispose()
 
 ### Resolved (2025-10-25): Secret in git history
 ### Resolved (2025-10-28): Home thumbnails looked blurry
