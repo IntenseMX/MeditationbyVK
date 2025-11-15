@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
@@ -6,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/meditations_list_provider.dart';
 import '../../providers/category_map_provider.dart';
 import '../../services/meditation_service.dart';
+import '../../providers/favorites_provider.dart';
 
 
 class MeditationDetailScreen extends ConsumerStatefulWidget {
@@ -21,13 +23,12 @@ class _MeditationDetailScreenState extends ConsumerState<MeditationDetailScreen>
   static const double _pagePadding = 20.0;
   static const double _cardCornerRadius = 16.0;
 
-  bool _isFavorite = false;
-
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final meditationAsync = ref.watch(meditationByIdProvider(widget.meditationId));
     final categoryMap = ref.watch(categoryMapProvider);
+    final isFavorited = ref.watch(isFavoritedProvider(widget.meditationId));
 
     return Scaffold(
       appBar: AppBar(
@@ -77,8 +78,11 @@ class _MeditationDetailScreenState extends ConsumerState<MeditationDetailScreen>
                     context: context,
                     title: title,
                     description: description,
-                    isFavorite: _isFavorite,
-                    onFavoriteToggle: () => setState(() => _isFavorite = !_isFavorite),
+                    isFavorite: isFavorited,
+                    onFavoriteToggle: () async {
+                      HapticFeedback.lightImpact();
+                      await ref.read(favoritesActionsProvider).toggle(widget.meditationId);
+                    },
                   ),
 
                   const SizedBox(height: 20),

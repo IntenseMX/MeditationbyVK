@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Last Updated: 2025-11-10
+Last Updated: 2025-11-15
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -82,6 +82,9 @@ class PlayerConfig {
 - **ALL colors in theme.dart only**: Define colors in `ThemeData`, never hardcode in widgets
 - Reference via `Theme.of(context).colorScheme.primary`, not `Color(0xFF...)`
 - Swap themes without touching widgets - extend ThemeData for light/dark/custom variants
+
+### Debug Logging Rule (2025-11-15)
+- **Always add debug print statements when implementing new features** - Single-line logs showing what happened (e.g., `print('[FEATURE_NAME] Action completed: $data')`)
 
 ## Development Commands
 

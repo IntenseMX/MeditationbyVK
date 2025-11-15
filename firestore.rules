@@ -30,6 +30,20 @@ service cloud.firestore {
       }
     }
 
+    // Top-level favorites: each doc represents a user-meditation favorite
+    // Doc shape: { userId, meditationId, createdAt }
+    match /favorites/{favoriteId} {
+      // Owner-only reads
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Allow create for self only; bind userId to auth uid
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+
+      // No updates (immutability of favorite tuple); delete allowed by owner
+      allow update: if false;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
     // Session history stored at userProgress/{uid}/sessions/*
     match /userProgress/{uid} {
       allow read, write: if isSignedIn() && request.auth.uid == uid;
