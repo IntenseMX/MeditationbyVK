@@ -530,17 +530,23 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
                               ],
                             ),
                             SizedBox(width: 8),
-                            IconButton(
-                              icon: Icon(Icons.repeat, size: 20),
-                              color: _isLooping
-                                  ? colorScheme.primary
-                                  : colorScheme.onSurface.withOpacity(0.8),
-                              padding: EdgeInsets.zero,
-                              constraints: BoxConstraints(),
-                              onPressed: () {
-                                HapticFeedback.lightImpact();
-                                setState(() => _isLooping = !_isLooping);
-                              },
+                            Container(
+                              decoration: _isLooping ? BoxDecoration(
+                                color: colorScheme.primary.withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ) : null,
+                              child: IconButton(
+                                icon: Icon(_isLooping ? Icons.repeat_on : Icons.repeat, size: 20),
+                                color: _isLooping
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurface.withOpacity(0.8),
+                                padding: EdgeInsets.zero,
+                                constraints: BoxConstraints(),
+                                onPressed: () {
+                                  HapticFeedback.lightImpact();
+                                  setState(() => _isLooping = !_isLooping);
+                                },
+                              ),
                             ),
                           ],
                         ),
@@ -614,7 +620,13 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
                         Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            imageStack,
+                            ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: computedImageSize,
+                                maxHeight: computedImageSize,
+                              ),
+                              child: imageStack,
+                            ),
                             SizedBox(height: 24),
                             contentColumn,
                           ],
