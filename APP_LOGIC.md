@@ -281,8 +281,11 @@ Thumbnail Overlay (2025-10-28)
 - Lifecycle-safe: `_isMounted` flag guards state updates, disposal sets flag FIRST then cancels subscriptions
 - Exposes bufferedPositionStream for loading UI (2025-11-14)
 
-### PlayerScreen (presentation/screens/player_screen.dart)
+### PlayerScreen (presentation/screens/player_screen.dart) (2025-11-15)
 - UI-only player; receives meditationId from route, shows cover/title/subtitle, play/pause toggle, disabled slider
+- Metadata row: category chip, loop toggle, sleep timer with live countdown when active
+- Sleep timer: live countdown updates every second, shows remaining time (e.g., "🌙 2:51") instead of static icon
+- Sleep timer dialog: 6 duration options (Off, 5, 10, 15, 30, 60min), repeat toggle auto-enables/disables with timer selection
 
 ### BackgroundAudioHandler
 - Enables audio playback to continue when app is backgrounded or screen is locked

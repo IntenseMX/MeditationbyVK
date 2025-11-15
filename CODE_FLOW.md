@@ -289,6 +289,14 @@ Note (2025-10-23):
 - Data: Consumes `meditationByIdProvider` + `categoryMapProvider` via Riverpod
 - Theme-aware: All colors via `Theme.of(context).colorScheme` (no hardcoded colors)
 
+### Player Screen Metadata Updates (2025-11-15)
+
+- Metadata row reorganized: duration removed (redundant with scrubber), loop toggle moved from controls to title metadata block
+- Sleep timer shows live countdown (e.g., "🌙 2:51") instead of static icon when active; updates every second via `Timer.periodic`
+- Sleep timer dialog: 6 options (Off, 5, 10, 15, 30, 60min), removed icons for cleaner UI, added "Repeat after completion" toggle
+- Auto-enables repeat when selecting timer duration, auto-disables when selecting "Off"
+- Files: `title_metadata_block.dart`, `sleep_timer_dialog.dart`, `player_screen_redesigned.dart`
+
     ├── Hero animation handles card expansion
     ├── Background fades out quickly (Interval 0.0-0.3)
     └── Player content fades in delayed (Interval 0.3-1.0)

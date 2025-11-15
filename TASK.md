@@ -342,7 +342,7 @@ Theme Tinting & Color Migration (2025-11-03)
 See detailed plan: [PHASE_3_CORE_FEATURES.md](./PHASE_3_CORE_FEATURES.md)
 
 ### Tasks
-- [x] **Audio Player (just_audio)** (2025-11-14)
+- [x] **Audio Player (just_audio)** (2025-11-15)
   - [x] Install and configure just_audio
   - [x] Stream audio from Firebase Storage URLs
   - [x] Play/pause controls
@@ -351,6 +351,9 @@ See detailed plan: [PHASE_3_CORE_FEATURES.md](./PHASE_3_CORE_FEATURES.md)
   - [x] Background audio support (iOS/Android)
   - [x] Lock screen controls
   - [x] Progressive audio caching (path_provider, LockCachingAudioSource)
+  - [x] Sleep timer with live countdown display (updates every second)
+  - [x] Sleep timer dialog (6 options, repeat toggle with auto-enable)
+  - [x] Metadata row reorganization (loop moved from controls, duration removed)
   - [ ] ~~Resume from last position~~ (replaced with progressive caching approach)
 - [ ] **Real Data Integration**
   - [ ] Replace dummy data with Firestore queries

@@ -12,6 +12,9 @@ class TitleMetadataBlock extends StatelessWidget {
   final VoidCallback? onCategoryTap;
   final VoidCallback? onSleepTimerTap;
   final VoidCallback? onShareTap;
+  final int? sleepTimerSecondsRemaining;
+  final bool isLooping;
+  final VoidCallback? onLoopToggle;
 
   const TitleMetadataBlock({
     required this.title,
@@ -23,6 +26,9 @@ class TitleMetadataBlock extends StatelessWidget {
     this.onCategoryTap,
     this.onSleepTimerTap,
     this.onShareTap,
+    this.sleepTimerSecondsRemaining,
+    this.isLooping = false,
+    this.onLoopToggle,
     super.key,
   });
 
@@ -38,7 +44,7 @@ class TitleMetadataBlock extends StatelessWidget {
     return s.split(' ').map((w) => w.isEmpty ? '' : (w[0].toUpperCase() + w.substring(1))).join(' ');
   }
 
-  String _formatDuration(int seconds) {
+  String _formatCountdown(int seconds) {
     final m = (seconds ~/ 60).toString();
     final s = (seconds % 60).toString().padLeft(2, '0');
     return '$m:$s';
@@ -79,7 +85,7 @@ class TitleMetadataBlock extends StatelessWidget {
         
         const SizedBox(height: 12),
         
-        // Metadata row (category, duration, premium badge)
+        // Metadata row (category + sleep timer only)
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -97,40 +103,51 @@ class TitleMetadataBlock extends StatelessWidget {
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
-            
-            if (categoryId != null && categoryId!.isNotEmpty) ...[
-              const SizedBox(width: 12),
-              _DotSeparator(colorScheme: colorScheme),
-              const SizedBox(width: 12),
-            ],
-            
-            // Duration
-            Icon(Icons.timer_outlined, size: 16, color: colorScheme.onSurface.withOpacity(0.6)),
-            const SizedBox(width: 4),
-            Text(
-              _formatDuration(durationSec),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.6),
-                  ),
-            ),
 
-            // Sleep timer button
-            if (onSleepTimerTap != null) ...[
-              const SizedBox(width: 12),
-              _DotSeparator(colorScheme: colorScheme),
-              const SizedBox(width: 12),
+            // Loop button
+            if (onLoopToggle != null) ...[
+              if (categoryId != null && categoryId!.isNotEmpty) ...[
+                const SizedBox(width: 12),
+                _DotSeparator(colorScheme: colorScheme),
+                const SizedBox(width: 12),
+              ],
               GestureDetector(
-                onTap: onSleepTimerTap,
-                child: Icon(Icons.bedtime_outlined, size: 18, color: colorScheme.onSurface.withOpacity(0.7)),
+                onTap: onLoopToggle,
+                child: Icon(
+                  isLooping ? Icons.repeat_on : Icons.repeat,
+                  size: 18,
+                  color: isLooping
+                      ? colorScheme.primary
+                      : colorScheme.onSurface.withOpacity(0.7),
+                ),
               ),
             ],
 
-            // Share button
-            if (onShareTap != null) ...[
-              const SizedBox(width: 12),
+            // Sleep timer button or countdown
+            if (onSleepTimerTap != null) ...[
+              if (categoryId != null && categoryId!.isNotEmpty || onLoopToggle != null) ...[
+                const SizedBox(width: 12),
+                _DotSeparator(colorScheme: colorScheme),
+                const SizedBox(width: 12),
+              ],
               GestureDetector(
-                onTap: onShareTap,
-                child: Icon(Icons.share_outlined, size: 18, color: colorScheme.onSurface.withOpacity(0.7)),
+                onTap: onSleepTimerTap,
+                child: (sleepTimerSecondsRemaining != null && sleepTimerSecondsRemaining! > 0)
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.bedtime_outlined, size: 16, color: colorScheme.primary),
+                          const SizedBox(width: 4),
+                          Text(
+                            _formatCountdown(sleepTimerSecondsRemaining!),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ],
+                      )
+                    : Icon(Icons.bedtime_outlined, size: 18, color: colorScheme.onSurface.withOpacity(0.7)),
               ),
             ],
           ],

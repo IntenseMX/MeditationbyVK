@@ -35,7 +35,9 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
   
   // Sleep timer state
   int _sleepTimerMinutes = 0;
+  int _sleepTimerSecondsRemaining = 0;
   Timer? _sleepTimer;
+  Timer? _countdownTimer;
   
   // Breathing guide toggle (unused removed)
 
@@ -138,6 +140,11 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
           _bufferProgress = 0.0;
           _bufferSub?.cancel();
           _bufferSub = null;
+          // Reset sleep timer for new meditation
+          _sleepTimer?.cancel();
+          _countdownTimer?.cancel();
+          _sleepTimerMinutes = 0;
+          _sleepTimerSecondsRemaining = 0;
 
           WidgetsBinding.instance.addPostFrameCallback((_) {
             ref.read(audioPlayerProvider.notifier).load(
@@ -360,6 +367,12 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
                       categoryIdToName: categoryIdToName,
                       onSleepTimerTap: () => _showSleepTimerDialog(),
                       onShareTap: () => _shareMeditation(),
+                      sleepTimerSecondsRemaining: _sleepTimerSecondsRemaining,
+                      isLooping: _isLooping,
+                      onLoopToggle: () {
+                        HapticFeedback.lightImpact();
+                        setState(() => _isLooping = !_isLooping);
+                      },
                     ),
                     SizedBox(height: 24),
                     Row(
@@ -529,25 +542,6 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
                                 PopupMenuItem(value: 2.0, child: Text('2x')),
                               ],
                             ),
-                            SizedBox(width: 8),
-                            Container(
-                              decoration: _isLooping ? BoxDecoration(
-                                color: colorScheme.primary.withOpacity(0.15),
-                                shape: BoxShape.circle,
-                              ) : null,
-                              child: IconButton(
-                                icon: Icon(_isLooping ? Icons.repeat_on : Icons.repeat, size: 20),
-                                color: _isLooping
-                                    ? colorScheme.primary
-                                    : colorScheme.onSurface.withOpacity(0.8),
-                                padding: EdgeInsets.zero,
-                                constraints: BoxConstraints(),
-                                onPressed: () {
-                                  HapticFeedback.lightImpact();
-                                  setState(() => _isLooping = !_isLooping);
-                                },
-                              ),
-                            ),
                           ],
                         ),
                         Text(
@@ -709,9 +703,11 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
       context: context,
       builder: (context) => SleepTimerDialog(
         currentMinutes: _sleepTimerMinutes,
-        onTimerSelected: (minutes) {
+        currentLoopEnabled: _isLooping,
+        onTimerSelected: (minutes, loopEnabled) {
           setState(() {
             _sleepTimerMinutes = minutes;
+            _isLooping = loopEnabled;
           });
           _startSleepTimer(minutes);
         },
@@ -721,27 +717,46 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
 
   void _startSleepTimer(int minutes) {
     _sleepTimer?.cancel();
+    _countdownTimer?.cancel();
 
     if (minutes > 0) {
-      // Simple timer - stops after N minutes
-      _sleepTimer = Timer(Duration(minutes: minutes), () {
-        ref.read(audioPlayerProvider.notifier).pause();
+      // Set initial countdown
+      setState(() {
+        _sleepTimerSecondsRemaining = minutes * 60;
+      });
+
+      // Countdown timer - updates display every second
+      _countdownTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+
         setState(() {
-          _sleepTimerMinutes = 0;
+          _sleepTimerSecondsRemaining--;
         });
-        
-        // Show confirmation
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Sleep timer ended - playback stopped')),
-          );
+
+        // When countdown reaches 0, stop playback
+        if (_sleepTimerSecondsRemaining <= 0) {
+          timer.cancel();
+          ref.read(audioPlayerProvider.notifier).pause();
+          setState(() {
+            _sleepTimerMinutes = 0;
+            _sleepTimerSecondsRemaining = 0;
+          });
+
+          // Show confirmation
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Sleep timer ended - playback stopped')),
+            );
+          }
         }
       });
-    } else if (minutes == -1) {
-      // End of track - handled by audio completion
-      // Just store the preference
+    } else {
+      // Timer turned off
       setState(() {
-        _sleepTimerMinutes = -1;
+        _sleepTimerSecondsRemaining = 0;
       });
     }
   }
@@ -822,6 +837,7 @@ Listen on UP by VK''';
     // Stop audio when screen is disposed
     _audio.stop();
     _sleepTimer?.cancel();
+    _countdownTimer?.cancel();
     _bufferSub?.cancel();
     _imageAnimationController.dispose();
     _isLooping = false;

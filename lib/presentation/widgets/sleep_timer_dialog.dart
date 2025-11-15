@@ -5,10 +5,12 @@ import '../../core/animation_constants.dart';
 /// Options: Off, 5min, 10min, 15min, 30min, 45min, 60min, End of track
 class SleepTimerDialog extends StatefulWidget {
   final int currentMinutes;
-  final Function(int minutes) onTimerSelected;
+  final bool currentLoopEnabled;
+  final Function(int minutes, bool loopEnabled) onTimerSelected;
 
   const SleepTimerDialog({
     required this.currentMinutes,
+    required this.currentLoopEnabled,
     required this.onTimerSelected,
     super.key,
   });
@@ -19,27 +21,26 @@ class SleepTimerDialog extends StatefulWidget {
 
 class _SleepTimerDialogState extends State<SleepTimerDialog> {
   late int _selectedMinutes;
+  late bool _loopEnabled;
 
   static const List<Map<String, dynamic>> _timerOptions = [
-    {'label': 'Off', 'minutes': 0, 'icon': Icons.timer_off},
-    {'label': '5 minutes', 'minutes': 5, 'icon': Icons.timer},
-    {'label': '10 minutes', 'minutes': 10, 'icon': Icons.timer},
-    {'label': '15 minutes', 'minutes': 15, 'icon': Icons.timer},
-    {'label': '30 minutes', 'minutes': 30, 'icon': Icons.timer},
-    {'label': '45 minutes', 'minutes': 45, 'icon': Icons.timer},
-    {'label': '60 minutes', 'minutes': 60, 'icon': Icons.timer},
-    {'label': 'End of track', 'minutes': -1, 'icon': Icons.track_changes},
+    {'label': 'Off', 'minutes': 0},
+    {'label': '5 minutes', 'minutes': 5},
+    {'label': '10 minutes', 'minutes': 10},
+    {'label': '15 minutes', 'minutes': 15},
+    {'label': '30 minutes', 'minutes': 30},
+    {'label': '60 minutes', 'minutes': 60},
   ];
 
   @override
   void initState() {
     super.initState();
     _selectedMinutes = widget.currentMinutes;
+    _loopEnabled = widget.currentLoopEnabled;
   }
 
   String _getCurrentTimerText() {
     if (_selectedMinutes == 0) return 'Off';
-    if (_selectedMinutes == -1) return 'End of track';
     return '$_selectedMinutes min';
   }
 
@@ -53,11 +54,12 @@ class _SleepTimerDialogState extends State<SleepTimerDialog> {
       ),
       child: Container(
         padding: const EdgeInsets.all(24.0),
-        constraints: const BoxConstraints(maxWidth: 400),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Header
             Row(
               children: [
@@ -114,15 +116,57 @@ class _SleepTimerDialogState extends State<SleepTimerDialog> {
                 ],
               ),
             ),
-            
+
+            const SizedBox(height: 12),
+
+            // Loop toggle
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colorScheme.primary.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'Repeat after completion',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface,
+                        ),
+                  ),
+                  SizedBox(
+                    height: 20,
+                    child: FittedBox(
+                      fit: BoxFit.contain,
+                      child: Switch(
+                        value: _loopEnabled,
+                        onChanged: (value) {
+                          setState(() => _loopEnabled = value);
+                        },
+                        activeColor: colorScheme.primary,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             const SizedBox(height: 16),
-            
+
             // Timer options grid
             GridView.builder(
               shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 3.5,
+                childAspectRatio: 2.8,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
               ),
@@ -130,13 +174,17 @@ class _SleepTimerDialogState extends State<SleepTimerDialog> {
               itemBuilder: (context, index) {
                 final option = _timerOptions[index];
                 final isSelected = _selectedMinutes == option['minutes'];
-                
+                final minutes = option['minutes'] as int;
+
                 return _TimerOptionCard(
                   label: option['label'],
-                  icon: option['icon'],
                   isSelected: isSelected,
                   onTap: () {
-                    setState(() => _selectedMinutes = option['minutes']);
+                    setState(() {
+                      _selectedMinutes = minutes;
+                      // Auto-enable loop for any timer, disable for "Off"
+                      _loopEnabled = minutes > 0;
+                    });
                   },
                 );
               },
@@ -160,7 +208,7 @@ class _SleepTimerDialogState extends State<SleepTimerDialog> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      widget.onTimerSelected(_selectedMinutes);
+                      widget.onTimerSelected(_selectedMinutes, _loopEnabled);
                       Navigator.of(context).pop();
                     },
                     child: Text('Set Timer'),
@@ -173,6 +221,7 @@ class _SleepTimerDialogState extends State<SleepTimerDialog> {
             ),
           ],
         ),
+        ),
       ),
     );
   }
@@ -181,13 +230,11 @@ class _SleepTimerDialogState extends State<SleepTimerDialog> {
 /// Individual timer option card
 class _TimerOptionCard extends StatelessWidget {
   final String label;
-  final IconData icon;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _TimerOptionCard({
     required this.label,
-    required this.icon,
     required this.isSelected,
     required this.onTap,
   });
@@ -215,28 +262,19 @@ class _TimerOptionCard extends StatelessWidget {
               width: isSelected ? 2 : 1,
             ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 20,
-                color: isSelected ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.7),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: isSelected
-                          ? colorScheme.primary
-                          : colorScheme.onSurface.withOpacity(0.8),
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+          child: Center(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: isSelected
+                        ? colorScheme.primary
+                        : colorScheme.onSurface.withOpacity(0.8),
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ),
       ),
@@ -248,12 +286,14 @@ class _TimerOptionCard extends StatelessWidget {
 Future<int?> showSleepTimerDialog({
   required BuildContext context,
   required int currentMinutes,
-  required Function(int minutes) onTimerSelected,
+  required bool currentLoopEnabled,
+  required Function(int minutes, bool loopEnabled) onTimerSelected,
 }) async {
   return showDialog<int>(
     context: context,
     builder: (context) => SleepTimerDialog(
       currentMinutes: currentMinutes,
+      currentLoopEnabled: currentLoopEnabled,
       onTimerSelected: onTimerSelected,
     ),
   );
