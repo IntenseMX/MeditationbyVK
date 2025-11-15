@@ -8,6 +8,7 @@ import 'screens/login_screen.dart';
 import 'screens/paywall_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
+import '../providers/subscription_provider.dart';
 import 'screens/admin/dashboard_screen.dart';
 import 'screens/admin/meditations_list_screen.dart';
 import 'screens/admin/meditation_editor_screen.dart';
@@ -306,6 +307,16 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/player/:id',
       name: 'player',
+      redirect: (context, state) {
+        final container = ProviderScope.containerOf(context, listen: false);
+        final sub = container.read(subscriptionProvider);
+        final id = state.pathParameters['id'] ?? '';
+        final extra = state.extra;
+        if (extra == null) return '/meditation-detail/$id';
+        final meditationIsPremium =
+            (extra is Map<String, dynamic>) ? (extra['isPremium'] == true) : false;
+        return (meditationIsPremium && !sub.isPremium) ? '/paywall' : null;
+      },
       pageBuilder: (context, state) => _buildPlayerTransition(
         child: PlayerScreenRedesigned(
           meditationId: state.pathParameters['id'] ?? '',

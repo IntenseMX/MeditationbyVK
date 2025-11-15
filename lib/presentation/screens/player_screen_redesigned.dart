@@ -12,7 +12,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/animation_constants.dart';
 import '../../providers/meditations_list_provider.dart';
 import '../../providers/audio_player_provider.dart';
-import '../../providers/subscription_provider.dart';
+
 import '../../providers/category_provider.dart';
 import '../widgets/waveform_slider.dart';
 import '../widgets/title_metadata_block.dart';
@@ -128,20 +128,6 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
         final String audioUrl = (data['audioUrl'] as String?) ?? '';
         final String? categoryId = data['categoryId'] as String?;
         final bool isPremium = (data['isPremium'] == true);
-
-        // Subscription gate
-        final sub = ref.watch(subscriptionProvider);
-        if (isPremium && !sub.isPremium) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Premium content. Upgrade to continue.')),
-              );
-              context.push('/paywall');
-            }
-          });
-          return _buildPremiumLockedScreen();
-        }
 
         // Load audio when ready
         if (_loadedMeditationId != widget.meditationId && audioUrl.isNotEmpty) {

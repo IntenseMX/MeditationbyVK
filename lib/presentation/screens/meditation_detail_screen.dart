@@ -52,7 +52,7 @@ class MeditationDetailScreen extends ConsumerWidget {
                     durationSec: durationSec,
                     categoryName: categoryName,
                     isPremium: isPremium,
-                    onPlay: () => context.push('/player/$id'),
+                    onPlay: () => context.push('/player/$id', extra: {'isPremium': isPremium}),
                   ),
                   const SizedBox(height: _sectionSpacing),
                   Divider(color: colors.outline.withOpacity(0.2)),
