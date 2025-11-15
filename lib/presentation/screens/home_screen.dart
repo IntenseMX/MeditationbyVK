@@ -11,6 +11,8 @@ import '../../providers/category_provider.dart';
 import '../../providers/category_map_provider.dart';
 import 'dart:async';
 import 'package:shimmer/shimmer.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/progress_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -43,6 +45,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Memoized lookup from categoryId -> category name
     final categoryIdToName = ref.watch(categoryMapProvider);
 
+    // Auth and progress
+    final auth = ref.watch(authProvider);
+    final progressAsync = ref.watch(progressDtoProvider);
+
+    // Personalized greeting
+    final displayName = auth.user?.displayName?.trim();
+    final firstName = (displayName != null && displayName.isNotEmpty) ? displayName.split(' ').first : null;
+    final greeting = 'Good ${_getTimeOfDay()}${firstName != null ? ', $firstName' : ''}!';
+
     return Scaffold(
       body: SafeArea(
         child: CustomScrollView(
@@ -61,20 +72,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Good ${_getTimeOfDay()}',
+                              greeting,
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Let\'s meditate',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.onSurface,
+                            const SizedBox(height: 8),
+                            // Stat pills moved into greeting area
+                            progressAsync.when(
+                              loading: () => Row(
+                                children: [
+                                  _StatPill.skeleton(context),
+                                  const SizedBox(width: 8),
+                                  _StatPill.skeleton(context),
+                                ],
                               ),
+                              error: (_, __) => const SizedBox.shrink(),
+                              data: (progress) {
+                                final weekly = (progress['weekly'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+                                final int streak = (weekly['streak'] as int?) ?? 0;
+                                final int weeklyMinutes = (weekly['currentMinutes'] as int?) ?? 0;
+
+                                return Row(
+                                  children: [
+                                    _StatPill(
+                                      icon: Icons.local_fire_department,
+                                      label: 'Streak',
+                                      value: '$streak days',
+                                    ),
+                                    const SizedBox(width: 8),
+                                    _StatPill(
+                                      icon: Icons.schedule,
+                                      label: 'This week',
+                                      value: '$weeklyMinutes min',
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -357,6 +392,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (hour < 12) return 'morning';
     if (hour < 17) return 'afternoon';
     return 'evening';
+  }
+}
+
+class _StatPill extends StatelessWidget {
+  const _StatPill({required this.icon, required this.label, required this.value});
+  final IconData icon;
+  final String label;
+  final String value;
+
+  static Widget skeleton(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: c.surfaceVariant.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(children: [
+        Icon(Icons.circle, size: 14, color: c.onSurface.withOpacity(0.2)),
+        const SizedBox(width: 8),
+        SizedBox(width: 60, height: 12, child: DecoratedBox(decoration: BoxDecoration(color: c.onSurface.withOpacity(0.12), borderRadius: BorderRadius.circular(4)))),
+      ]),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: c.surfaceVariant.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: c.primary),
+          const SizedBox(width: 8),
+          Text(label, style: TextStyle(fontSize: 12, color: c.onSurfaceVariant)),
+          const SizedBox(width: 6),
+          Text('•', style: TextStyle(fontSize: 12, color: c.onSurfaceVariant)),
+          const SizedBox(width: 6),
+          Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: c.onSurface)),
+        ],
+      ),
+    );
   }
 }
 

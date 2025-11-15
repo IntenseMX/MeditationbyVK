@@ -567,6 +567,8 @@ See detailed plan: [PHASE_3_CORE_FEATURES.md](./PHASE_3_CORE_FEATURES.md)
 ## Ideas for Later (Post-Launch Backlog)
 
 ### Features
+- **Mood Tracker** - Simple daily check-in ("How are you feeling today?") with 3 mood options; stored per session/day in user account; displayed in Progress screen alongside meditation stats to show correlation between practice and mood over time
+- **Custom Habit Calendars** - Users can create multiple named calendars (e.g., "Affirmations", "Writing", "Exercise") and check off days when completed; visual calendar view to track streaks/patterns; potential future integration with app features (e.g., after affirmations meditation, prompt to check off "Affirmations" calendar); flexible habit tracking beyond core meditation progress
 - Social features (friend meditation sessions, challenges)
 - Meditation programs (multi-day courses)
 - AI-personalized recommendations
