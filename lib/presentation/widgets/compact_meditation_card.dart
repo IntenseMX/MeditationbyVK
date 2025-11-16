@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CompactMeditationCard extends StatelessWidget {
   const CompactMeditationCard({
@@ -91,12 +92,12 @@ class CompactMeditationCard extends StatelessWidget {
                         children: [
                           const Icon(Icons.workspace_premium, color: Colors.amber, size: 16),
                           const SizedBox(width: 4),
-                          const Text(
-                            'PREMIUM',
-                            style: TextStyle(
+                          Text(
+                            'Plus',
+                            style: GoogleFonts.norican(
                               color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              height: 1.0,
                             ),
                           ),
                         ],
@@ -115,7 +116,7 @@ class CompactMeditationCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   description,
-                  maxLines: 3,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
                 ),

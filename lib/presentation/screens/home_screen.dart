@@ -220,7 +220,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           child: MeditationCard(
                             id: m.id,
                             title: m.title,
-                            subtitle: '',
                             duration: minutes,
                             imageUrl: m.imageUrl ?? '',
                             gradientColors: gradient,
@@ -366,7 +365,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           child: MeditationCard(
                             id: m.id,
                             title: m.title,
-                            subtitle: '',
                             duration: minutes,
                             imageUrl: m.imageUrl ?? '',
                             gradientColors: gradient,
@@ -534,7 +532,6 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
             child: MeditationCard(
               id: meditation.id,
               title: meditation.title,
-              subtitle: '',
               duration: minutes,
               imageUrl: meditation.imageUrl ?? '',
               gradientColors: gradient,

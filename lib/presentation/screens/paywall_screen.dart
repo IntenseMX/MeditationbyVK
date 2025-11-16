@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme.dart';
 import '../../providers/subscription_provider.dart';
@@ -29,7 +30,7 @@ class PaywallScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Premium'),
+        title: Text('Plus', style: GoogleFonts.norican(fontSize: 24)),
       ),
       body: SafeArea(
         child: Padding(
@@ -39,7 +40,7 @@ class PaywallScreen extends ConsumerWidget {
             children: [
               _HeaderCard(),
               const SizedBox(height: 24),
-              _BenefitRow(icon: Icons.lock_open_rounded, text: 'Unlock all premium meditations'),
+              _BenefitRow(icon: Icons.lock_open_rounded, text: 'Unlock all Plus meditations'),
               const SizedBox(height: 12),
               _BenefitRow(icon: Icons.stars_rounded, text: 'Curated collections and new releases'),
               const SizedBox(height: 12),
@@ -133,16 +134,29 @@ class _HeaderCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Go Premium',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: ext?.textOnGradient ?? colors.onInverseSurface,
-                  fontWeight: FontWeight.bold,
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'Go ',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: ext?.textOnGradient ?? colors.onInverseSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
+                TextSpan(
+                  text: 'Plus',
+                  style: GoogleFonts.norican(
+                    fontSize: 32,
+                    color: ext?.textOnGradient ?? colors.onInverseSurface,
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Instant access to all premium sessions',
+            'Instant access to all Plus sessions',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: (ext?.textOnGradient ?? colors.onInverseSurface).withOpacity(0.9),
                 ),

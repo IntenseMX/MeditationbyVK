@@ -71,7 +71,6 @@ class _CategoryMeditationsScreenState extends ConsumerState<CategoryMeditationsS
                 ...state.items.map((m) => MeditationCard(
                       id: m.id,
                       title: m.title,
-                      subtitle: '',
                       duration: _minutesFromSeconds(m.durationSec),
                       imageUrl: m.imageUrl ?? '',
                       gradientColors: gradient,

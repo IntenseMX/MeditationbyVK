@@ -166,7 +166,6 @@ class DiscoverScreen extends ConsumerWidget {
                           return MeditationCard(
                             id: m.id,
                             title: m.title,
-                            subtitle: '',
                             duration: minutes,
                             imageUrl: m.imageUrl ?? '',
                             gradientColors: gradient,
@@ -291,7 +290,6 @@ class DiscoverScreen extends ConsumerWidget {
                           child: MeditationCard(
                             id: m.id,
                             title: m.title,
-                            subtitle: '',
                             duration: minutes,
                             imageUrl: m.imageUrl ?? '',
                             gradientColors: gradient,

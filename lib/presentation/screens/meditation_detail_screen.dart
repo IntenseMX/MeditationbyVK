@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../providers/meditations_list_provider.dart';
 import '../../providers/category_map_provider.dart';
 import '../../services/meditation_service.dart';
@@ -209,10 +210,10 @@ class _MeditationDetailScreenState extends ConsumerState<MeditationDetailScreen>
                   const Icon(Icons.workspace_premium, color: Colors.amber, size: 18),
                   const SizedBox(width: 6),
                   Text(
-                    'PREMIUM',
-                    style: textTheme.labelSmall?.copyWith(
+                    'Plus',
+                    style: GoogleFonts.norican(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
                     ),
                   ),
                 ],
@@ -405,7 +406,7 @@ class _MeditationDetailScreenState extends ConsumerState<MeditationDetailScreen>
         ),
         const SizedBox(height: 16),
         SizedBox(
-          height: 180,
+          height: 160,
           child: Consumer(
             builder: (context, ref, child) {
               final relatedAsync = ref.watch(
@@ -723,10 +724,23 @@ class _RelatedMeditationCard extends StatelessWidget {
                           ),
                         ),
                         if (isPremium)
-                          const Icon(
-                            Icons.workspace_premium,
-                            color: Colors.amber,
-                            size: 16,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.workspace_premium,
+                                color: Colors.amber,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                'Plus',
+                                style: GoogleFonts.norican(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
                       ],
                     ),

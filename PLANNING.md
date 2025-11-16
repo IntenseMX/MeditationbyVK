@@ -307,6 +307,13 @@ match /meditations/{meditationId} {
 
 ---
 
+## Code Cleanup Backlog (2025-11-16)
+
+### Orphaned Widgets
+- **CompactMeditationCard** (`lib/presentation/widgets/compact_medication_card.dart`): Not used anywhere in the app. Home and Discover use `MeditationCard(compact: true)` instead. Consider removing in future cleanup to reduce bundle size and maintenance surface.
+
+---
+
 ## Open Questions
 
 1. **Admin Panel**: Flutter Web or React? (See Phase 2 tasks)

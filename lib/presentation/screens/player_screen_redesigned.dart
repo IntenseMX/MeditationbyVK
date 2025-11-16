@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/animation_constants.dart';
 import '../../providers/meditations_list_provider.dart';
 import '../../providers/audio_player_provider.dart';
@@ -263,9 +264,9 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
         body: Stack(
           children: [
             // Permanent calm tint over black background (does not intercept taps)
-            IgnorePointer(
-              ignoring: true,
-              child: Positioned.fill(
+            Positioned.fill(
+              child: IgnorePointer(
+                ignoring: true,
                 child: Container(
                   color: colorScheme.primary.withOpacity(_globalPlaybackHazeOpacity),
                 ),
@@ -358,11 +359,10 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
                             Icon(Icons.workspace_premium, color: Colors.amber, size: 16),
                             SizedBox(width: 4),
                             Text(
-                              'PREMIUM',
-                              style: TextStyle(
+                              'Plus',
+                              style: GoogleFonts.norican(
                                 color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
                               ),
                             ),
                           ],

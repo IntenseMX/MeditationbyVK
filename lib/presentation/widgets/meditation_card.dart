@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme.dart';
 import '../../providers/subscription_provider.dart';
 
 class MeditationCard extends StatelessWidget {
   final String id;
   final String title;
-  final String subtitle;
   final int duration;
   final String imageUrl;
   final List<int> gradientColors;
@@ -22,7 +22,6 @@ class MeditationCard extends StatelessWidget {
     super.key,
     required this.id,
     required this.title,
-    required this.subtitle,
     required this.duration,
     required this.imageUrl,
     required this.gradientColors,
@@ -154,15 +153,14 @@ class MeditationCard extends StatelessWidget {
                                         ),
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
-                                          children: const [
-                                            Icon(Icons.workspace_premium, color: Colors.amber, size: 16),
-                                            SizedBox(width: 4),
+                                          children: [
+                                            const Icon(Icons.workspace_premium, color: Colors.amber, size: 16),
+                                            const SizedBox(width: 4),
                                             Text(
-                                              'PREMIUM',
-                                              style: TextStyle(
+                                              'Plus',
+                                              style: GoogleFonts.norican(
                                                 color: Colors.white,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
                                               ),
                                             ),
                                           ],
@@ -176,16 +174,6 @@ class MeditationCard extends StatelessWidget {
                                         color: gradientText,
                                         fontSize: titleFontSize,
                                         fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      subtitle,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: gradientText.withOpacity(0.9),
-                                        fontSize: 14,
                                       ),
                                     ),
                                   ],
@@ -361,15 +349,14 @@ class MeditationCard extends StatelessWidget {
                                       ),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
-                                        children: const [
-                                          Icon(Icons.workspace_premium, color: Colors.amber, size: 16),
-                                          SizedBox(width: 4),
+                                        children: [
+                                          const Icon(Icons.workspace_premium, color: Colors.amber, size: 16),
+                                          const SizedBox(width: 4),
                                           Text(
-                                            'PREMIUM',
-                                            style: TextStyle(
+                                            'Plus',
+                                            style: GoogleFonts.norican(
                                               color: Colors.white,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
                                             ),
                                           ),
                                         ],
@@ -383,16 +370,6 @@ class MeditationCard extends StatelessWidget {
                                       color: gradientText,
                                       fontSize: titleFontSize,
                                       fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    subtitle,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: gradientText.withOpacity(0.9),
-                                      fontSize: 14,
                                     ),
                                   ),
                                 ],

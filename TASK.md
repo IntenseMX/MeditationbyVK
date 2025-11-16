@@ -643,6 +643,17 @@ See detailed plan: [PHASE_3_CORE_FEATURES.md](./PHASE_3_CORE_FEATURES.md)
 
 ---
 
+## Code Cleanup Notes (2025-11-16)
+
+### Orphaned CompactMeditationCard Widget
+- **File**: `lib/presentation/widgets/compact_meditation_card.dart`
+- **Status**: Not used anywhere in the app (zero imports/instantiations)
+- **Action**: Consider removing completely in future cleanup pass
+- **Context**: Home/Discover use `MeditationCard` with `compact: true` parameter instead
+- **Note**: May have been created for a different use case that was later refactored
+
+---
+
 ## Ideas for Later (Post-Launch Backlog)
 
 ### Features
