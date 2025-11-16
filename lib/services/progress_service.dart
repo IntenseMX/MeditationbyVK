@@ -351,6 +351,28 @@ class ProgressService {
     final next = DateTime.utc(y, m, d).add(const Duration(days: 1));
     return _utcDayKey(next);
   }
+
+  // Retrieve a specific session by composed sessionId (uid + meditationId + startedAtUtc)
+  Future<SessionRecord?> getSessionById({
+    required String meditationId,
+    required DateTime startedAtUtc,
+  }) async {
+    final uid = _requireUid();
+    final sessionId = buildSessionId(uid: uid, meditationId: meditationId, startedAtUtc: startedAtUtc.toUtc());
+    try {
+      final doc = await _firestore
+          .collection('userProgress')
+          .doc(uid)
+          .collection('sessions')
+          .doc(sessionId)
+          .get();
+      if (!doc.exists) return null;
+      return SessionRecord.fromDoc(doc);
+    } catch (e) {
+      debugPrint('getSessionById failed: $e');
+      return null;
+    }
+  }
 }
 
 

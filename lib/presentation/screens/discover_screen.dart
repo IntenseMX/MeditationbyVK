@@ -321,22 +321,30 @@ class DiscoverScreen extends ConsumerWidget {
 
   IconData _getCategoryIcon(String category) {
     switch (category.toLowerCase()) {
-      case 'focus':
-        return Icons.center_focus_strong;
+      case 'morning':
+        return Icons.wb_sunny;
+      case 'manifest':
+        return Icons.psychology;
       case 'sleep':
         return Icons.nightlight_round;
-      case 'relaxation':
+      case 'breathing':
+        return Icons.air;
+      case 'spa':
         return Icons.spa;
+      case 'stress':
+        return Icons.heart_broken;
+      case 'anxiety':
+        return Icons.healing;
       case 'music':
         return Icons.music_note;
-      case 'wisdom':
-        return Icons.auto_awesome;
-      case 'nature':
-        return Icons.forest;
-      case 'binural':
-        return Icons.hearing;
-      case 'jazz':
-        return Icons.piano;
+      case 'for women':
+        return Icons.woman;
+      case 'for parents':
+        return Icons.family_restroom;
+      case 'challenges':
+        return Icons.military_tech;
+      case 'courses':
+        return Icons.school;
       default:
         return Icons.self_improvement;
     }

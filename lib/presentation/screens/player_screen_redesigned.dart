@@ -90,7 +90,12 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
 
         // If looping is enabled, start playing again
         if (_isLooping) {
+          // Inform handler that a loop has completed for accumulation
+          await ref.read(audioPlayerProvider.notifier).notifyLoopRestart();
           await ref.read(audioPlayerProvider.notifier).play();
+        } else {
+          // Not looping: finalize this session (sets completed based on 90% rule)
+          await ref.read(audioPlayerProvider.notifier).finalizeSession();
         }
       });
     }

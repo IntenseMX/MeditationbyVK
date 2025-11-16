@@ -426,7 +426,7 @@ class _MeditationDetailScreenState extends ConsumerState<MeditationDetailScreen>
                         padding: EdgeInsets.only(right: index < meditations.length - 1 ? 12 : 0),
                         child: _RelatedMeditationCard(
                           meditation: meditation,
-                          onTap: () => context.push('/meditation-detail/${meditation.id}'),
+                          onTap: () => context.go('/meditation-detail/${meditation.id}'),
                         ),
                       );
                     },

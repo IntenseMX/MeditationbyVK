@@ -9,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'progress_service.dart';
 
 /// AppAudioHandler bridges just_audio with audio_service and Firestore resume.
@@ -37,9 +38,62 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
   StreamSubscription<AudioInterruptionEvent>? _interruptionSub;
   StreamSubscription<void>? _becomingNoisySub;
   int? _playStartMsUtc; // when playback first started for current item
-  bool _sessionRecorded = false; // guard to avoid duplicate writes per item
+  int _accumulatedSeconds = 0; // total time from previous completed loops
+  int? _lastWrittenDuration; // last duration written to Firestore (non-decreasing guard)
   int? _lastWrittenMinute; // last whole minute written for progressive updates
   int? _lastLoggedSecond; // last second we logged (to avoid spam)
+  int? _singleTrackDurationSec; // source duration in seconds (if known)
+  bool _finalized = false; // ensure we only finalize once
+
+  String? get _uid => _auth.currentUser?.uid;
+  String get _baselineKey => 'audio_session_baseline_${_uid ?? "anon"}_${_currentMeditationId ?? "none"}';
+
+  Future<void> _loadBaseline() async {
+    if (_uid == null || _currentMeditationId == null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_baselineKey);
+      if (raw == null || raw.isEmpty) return;
+      final parts = raw.split('|');
+      if (parts.length < 3) return;
+      final startedAtMs = int.tryParse(parts[0]);
+      final acc = int.tryParse(parts[1]);
+      final lastDur = int.tryParse(parts[2]);
+      if (startedAtMs != null && startedAtMs > 0) {
+        _playStartMsUtc = startedAtMs;
+      }
+      if (acc != null && acc >= 0) _accumulatedSeconds = acc;
+      if (lastDur != null && lastDur >= 0) _lastWrittenDuration = lastDur;
+      debugPrint('[AudioService] 🔁 Baseline loaded: start=$_playStartMsUtc acc=$_accumulatedSeconds last=$_lastWrittenDuration');
+    } catch (e) {
+      debugPrint('[AudioService] Baseline load failed: $e');
+    }
+  }
+
+  Future<void> _saveBaseline() async {
+    if (_uid == null || _currentMeditationId == null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final started = _playStartMsUtc ?? 0;
+      final acc = _accumulatedSeconds;
+      final lastDur = _lastWrittenDuration ?? 0;
+      await prefs.setString(_baselineKey, '$started|$acc|$lastDur');
+      debugPrint('[AudioService] 💾 Baseline saved: start=$started acc=$acc last=$lastDur');
+    } catch (e) {
+      debugPrint('[AudioService] Baseline save failed: $e');
+    }
+  }
+
+  Future<void> _clearBaseline() async {
+    if (_uid == null || _currentMeditationId == null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_baselineKey);
+      debugPrint('[AudioService] 🧹 Baseline cleared for key=$_baselineKey');
+    } catch (e) {
+      debugPrint('[AudioService] Baseline clear failed: $e');
+    }
+  }
 
   void _initStreams() {
     // Map just_audio state to audio_service PlaybackState
@@ -75,54 +129,80 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
       final id = _currentMeditationId;
       if (id == null) return;
       if (!_player.playing) return;
+      if (_finalized) return;
 
       // Only log when second changes (avoid spam from multiple updates per second)
       final currentSecond = pos.inSeconds;
       if (_lastLoggedSecond == null || currentSecond != _lastLoggedSecond) {
         _lastLoggedSecond = currentSecond;
         debugPrint('[AudioService] ${pos.inSeconds}s');
+
+        // DIAGNOSTIC: Log state every 10 seconds to debug why writes aren't happening
+        if (currentSecond % 10 == 0) {
+          final dur = _player.duration;
+          debugPrint('[AudioService] 🔍 DIAGNOSTIC at ${currentSecond}s:');
+          debugPrint('  - duration: ${dur?.inSeconds} sec');
+          debugPrint('  - _playStartMsUtc: $_playStartMsUtc');
+          debugPrint('  - _accumulatedSeconds: $_accumulatedSeconds');
+          debugPrint('  - _lastWrittenMinute: $_lastWrittenMinute');
+          debugPrint('  - _uid: $_uid');
+          debugPrint('  - _currentMeditationId: $_currentMeditationId');
+        }
       }
 
       // Progressive minute upsert
       final dur = _player.duration;
       if (dur != null && dur.inSeconds > 0) {
+        // Keep a copy of single track duration when known
+        _singleTrackDurationSec ??= dur.inSeconds;
         final startedMs = _playStartMsUtc;
-        if (startedMs != null && !_sessionRecorded) {
+        if (startedMs != null) {
           final minute = pos.inSeconds ~/ 60;
           if (_lastWrittenMinute == null || minute > _lastWrittenMinute!) {
             _lastWrittenMinute = minute;
             debugPrint('[AudioService] 📊 Minute $minute rollover - writing session update...');
             try {
+              // Absolute, non-decreasing duration
+              final computed = _accumulatedSeconds + pos.inSeconds;
+              final toWrite = _lastWrittenDuration == null ? computed : (computed > _lastWrittenDuration! ? computed : _lastWrittenDuration!);
               await _progress.upsertSession(
                 meditationId: id,
                 meditationTitle: _currentMeditationTitle,
                 meditationImageUrl: _currentMeditationImageUrl,
                 startedAtUtc: DateTime.fromMillisecondsSinceEpoch(startedMs, isUtc: true),
-                durationSec: pos.inSeconds,
+                durationSec: toWrite,
                 completed: false,
               );
               debugPrint('[AudioService] ✅ Minute $minute write SUCCESS');
+              _lastWrittenDuration = toWrite;
+              await _saveBaseline();
             } catch (e, st) {
               debugPrint('[AudioService] ❌ Minute write FAILED: $e');
               debugPrint('[AudioService] Stack: $st');
             }
           }
+        } else {
+          // DIAGNOSTIC: startedMs is null
+          if (currentSecond % 30 == 0) {
+            debugPrint('[AudioService] ⚠️ BLOCKED: _playStartMsUtc is NULL (session not started)');
+          }
+        }
+      } else {
+        // DIAGNOSTIC: duration is null or 0
+        if (currentSecond % 30 == 0) {
+          debugPrint('[AudioService] ⚠️ BLOCKED: duration is NULL or 0 (dur=$dur)');
         }
       }
-      // 80% completion threshold check while playing
-      _maybeRecordSession(forceComplete: false);
     });
 
     // Track first playing transition and finalize on complete
     _completionSub = _player.playerStateStream.listen((state) async {
       // Capture start time on first transition to playing for current item
-      if (state.playing && _playStartMsUtc == null && !_sessionRecorded) {
+      if (state.playing && _playStartMsUtc == null && !_finalized) {
         _playStartMsUtc = DateTime.now().toUtc().millisecondsSinceEpoch;
+        await _saveBaseline();
       }
-      if (state.processingState == ProcessingState.completed) {
-        // Record as completed when playback naturally completes
-        _maybeRecordSession(forceComplete: true);
-      }
+      // Do not auto-finalize on ProcessingState.completed; UI will either loop or finalize.
     });
   }
 
@@ -192,10 +272,16 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
     _currentMeditationTitle = title;
     _currentMeditationImageUrl = null;
     _playStartMsUtc = null;
-    _sessionRecorded = false;
     _lastWrittenMinute = null;
     _lastLoggedSecond = null;
     _currentMeditationImageUrl = artUri;
+    _accumulatedSeconds = 0;
+    _lastWrittenDuration = null;
+    _finalized = false;
+    _singleTrackDurationSec = durationSec;
+
+    // Try to rehydrate previous baseline (if any) for this meditation
+    await _loadBaseline();
 
     final item = MediaItem(
       id: meditationId,
@@ -254,6 +340,8 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
 
       await _player.setAudioSource(audioSource);
       debugPrint('[AudioService] Successfully loaded! Duration: ${_player.duration}');
+      // Update track duration when known
+      _singleTrackDurationSec ??= _player.duration?.inSeconds;
     } catch (e, stack) {
       // Surface error to audio_service playback state
       playbackState.add(playbackState.value.copyWith(
@@ -272,8 +360,11 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
     await _player.play();
     // Capture first start timestamp (UTC) for current item
     final timestamp = DateTime.now().toUtc().millisecondsSinceEpoch;
-    _playStartMsUtc ??= timestamp;
-    debugPrint('[AudioService] play() set _playStartMsUtc = $_playStartMsUtc (timestamp=$timestamp)');
+    if (_playStartMsUtc == null) {
+      _playStartMsUtc = timestamp;
+      await _saveBaseline();
+      debugPrint('[AudioService] play() set _playStartMsUtc = $_playStartMsUtc (timestamp=$timestamp)');
+    }
   }
 
   @override
@@ -286,8 +377,8 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> stop() async {
-    // If user stops after crossing threshold, record completion
-    _maybeRecordSession(forceComplete: false);
+    // Finalize on explicit stop
+    await finalizeSession();
     await _player.stop();
     await super.stop();
   }
@@ -358,39 +449,47 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
     }
   }
 
-  void _maybeRecordSession({required bool forceComplete}) async {
-    if (_sessionRecorded) return;
-    final id = _currentMeditationId;
-    if (id == null) return;
-    final duration = _player.duration;
-    if (duration == null || duration.inSeconds <= 0) return;
-    final position = _player.position;
-    final crossedThreshold = position.inSeconds >= (duration.inSeconds * 0.9).floor();
-    final shouldComplete = forceComplete || crossedThreshold;
-    if (!shouldComplete) return;
+  // Public API: called by UI when a loop restarts
+  Future<void> onLoopRestart() async {
+    final single = _singleTrackDurationSec ?? _player.duration?.inSeconds;
+    if (single == null || single <= 0) return;
+    _accumulatedSeconds += single;
+    _lastWrittenMinute = null;  // Reset minute guard for new loop
+    debugPrint('[AudioService] 🔁 Loop restart: +$single s → accumulated=$_accumulatedSeconds (minute guard reset)');
+    await _saveBaseline();
+  }
 
-    DateTime startedAtUtc;
-    if (_playStartMsUtc != null) {
-      startedAtUtc = DateTime.fromMillisecondsSinceEpoch(_playStartMsUtc!, isUtc: true);
-    } else {
-      // Fallback: approximate by subtracting listened duration
-      startedAtUtc = DateTime.now().toUtc().subtract(position);
+  // Public API: finalize the session (stop/exit or non-loop completion)
+  Future<void> finalizeSession() async {
+    if (_finalized) return;
+    final id = _currentMeditationId;
+    final startedMs = _playStartMsUtc;
+    if (id == null || startedMs == null) {
+      debugPrint('[AudioService] finalizeSession skipped (missing id or start)');
+      return;
     }
-    // On completion, give full credit (use full track duration)
-    final fullSec = duration.inSeconds;
+    final pos = _player.position.inSeconds;
+    final total = _accumulatedSeconds + (pos < 0 ? 0 : pos);
+    final singleSec = _singleTrackDurationSec ?? _player.duration?.inSeconds ?? 0;
+    final threshold = (singleSec * 0.9).floor();
+    final crossed = singleSec > 0 && total >= threshold;
+    final toWrite = _lastWrittenDuration == null ? total : (total > _lastWrittenDuration! ? total : _lastWrittenDuration!);
     try {
+      debugPrint('[AudioService] 🧾 Finalize: total=$total single=$singleSec crossed=$crossed write=$toWrite');
       await _progress.upsertSession(
         meditationId: id,
         meditationTitle: _currentMeditationTitle,
         meditationImageUrl: _currentMeditationImageUrl,
-        startedAtUtc: startedAtUtc,
-        durationSec: fullSec,
-        completed: true,
+        startedAtUtc: DateTime.fromMillisecondsSinceEpoch(startedMs, isUtc: true),
+        durationSec: toWrite,
+        completed: crossed,
       );
-    } catch (_) {
-      // Swallow to keep audio thread safe
-    } finally {
-      _sessionRecorded = true;
+      _lastWrittenDuration = toWrite;
+      _finalized = true;
+      _currentMeditationId = null;  // Clear ID so next load isn't blocked
+      await _clearBaseline();
+    } catch (e) {
+      debugPrint('[AudioService] Finalize failed: $e');
     }
   }
 

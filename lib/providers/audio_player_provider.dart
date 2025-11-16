@@ -145,6 +145,12 @@ class AudioPlayerNotifier extends Notifier<AudioUiState> {
     }
   }
 
+  // Loop restart hook: informs the handler that a loop has completed
+  Future<void> notifyLoopRestart() => _handler.onLoopRestart();
+
+  // Explicit finalize hook (stop/exit or non-loop completion)
+  Future<void> finalizeSession() => _handler.finalizeSession();
+
   void clearError() {
     state = state.copyWith(error: null);
   }

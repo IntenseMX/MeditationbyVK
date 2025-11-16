@@ -172,64 +172,69 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
 
-            // Recently Added list (vertical cards)
+            // Recently Added belt (horizontal cards)
             SliverToBoxAdapter(
-              child: recentAsync.when(
-                loading: () {
-                  final base = Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3);
-                  final highlight = Theme.of(context).colorScheme.surface.withOpacity(0.6);
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Shimmer.fromColors(
-                      baseColor: base,
-                      highlightColor: highlight,
-                      child: Column(
-                        children: List.generate(3, (i) {
-                          return Container(
-                            height: 180,
-                            margin: EdgeInsets.only(bottom: i == 2 ? 0 : 16),
-                            decoration: BoxDecoration(
-                              color: base,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          );
-                        }),
+              child: SizedBox(
+                height: 160,
+                child: recentAsync.when(
+                  loading: () {
+                    final base = Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3);
+                    final highlight = Theme.of(context).colorScheme.surface.withOpacity(0.6);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Shimmer.fromColors(
+                        baseColor: base,
+                        highlightColor: highlight,
+                        child: Row(
+                          children: List.generate(4, (i) {
+                            return Container(
+                              width: 200,
+                              height: 140,
+                              margin: EdgeInsets.only(right: i == 3 ? 0 : 16),
+                              decoration: BoxDecoration(
+                                color: base,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            );
+                          }),
+                        ),
                       ),
-                    ),
-                  );
-                },
-                error: (e, _) => const Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Text("Couldn't load meditations. Pull to retry."),
-                ),
-                data: (list) {
-                  if (list.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Text('No meditations available yet'),
                     );
-                  }
-                  final colors = Theme.of(context).colorScheme;
-                  final gradient = [colors.primary.value, colors.tertiary.value];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      children: list.map((m) {
+                  },
+                  error: (e, _) => const Center(child: Text('Failed to load')),
+                  data: (items) {
+                    if (items.isEmpty) return const SizedBox.shrink();
+                    final colors = Theme.of(context).colorScheme;
+                    final gradient = [colors.primary.value, colors.tertiary.value];
+                    return ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final m = items[index];
                         final minutes = _minutesFromSeconds(m.durationSec);
-                        return MeditationCard(
-                          id: m.id,
-                          title: m.title,
-                          subtitle: '',
-                          duration: minutes,
-                          imageUrl: m.imageUrl ?? '',
-                          gradientColors: gradient,
-                          isPremium: m.isPremium ?? false,
-                          onTap: () => context.push('/meditation-detail/${m.id}'),
+                        final category = _resolveCategoryName(m.categoryId, categoryIdToName);
+                        return Container(
+                          width: 200,
+                          margin: const EdgeInsets.only(right: 16),
+                          child: MeditationCard(
+                            id: m.id,
+                            title: m.title,
+                            subtitle: '',
+                            duration: minutes,
+                            imageUrl: m.imageUrl ?? '',
+                            gradientColors: gradient,
+                            isPremium: m.isPremium ?? false,
+                            onTap: () => context.push('/meditation-detail/${m.id}'),
+                            compact: true,
+                            category: category,
+                            enableHero: false,
+                          ),
                         );
-                      }).toList(),
-                    ),
-                  );
-                },
+                      },
+                    );
+                  },
+                ),
               ),
             ),
 
