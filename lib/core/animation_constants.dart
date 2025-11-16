@@ -193,3 +193,38 @@ class PlayerLayoutConfig {
   // Gap between image and content
   static const double contentGap = 24.0;
 }
+
+/// Category grid UI tuning (centralizes sizes to avoid magic numbers)
+class CategoryGridConfig {
+  // Grid outer padding
+  static const double gridPaddingH = 20.0;
+  static const double gridPaddingV = 16.0;
+
+  // Unified grid spacing
+  static const double gridSpacing = 9.0;
+
+  // Preferred tile width to derive column count responsively
+  static const double preferredTileWidth = 112.0; // ~3 columns on ~390dp screens
+
+  // Grid item shape
+  static const double childAspectRatio = 1.00;
+
+  // Card content padding
+  static const double cardPadding = 9.0;
+
+  // Leading icon sizing
+  static const double iconContainerSize = 27.0;
+  static const double iconSize = 18.0;
+
+  // Fixed layout regions to hard-center icon independent of text
+  static const double iconRegionHeight = 42.0;
+  static const double titleAreaHeight = 18.0;
+  static const double iconTitleGap = 6.0;
+
+  // Typography
+  static const double titleFontSize = 12.0;
+  static const double subtitleFontSize = 10.0;
+
+  // Minimum text lane width (dp) to allow 3 columns without truncation
+  static const double minTitleTextWidthDp = 82.0;
+}

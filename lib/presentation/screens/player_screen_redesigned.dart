@@ -54,6 +54,7 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
   static const int _seekStepSeconds = 15;
   static const double _playButtonGradientRadius = 0.8;
   static const double _bufferStrokeWidth = 3.0;
+  static const double _globalPlaybackHazeOpacity = 0.18;
 
   @override
   void initState() {
@@ -258,9 +259,20 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
         backgroundColor: Colors.transparent,
         extendBodyBehindAppBar: true,
 
-        // Main content with SafeArea
-        body: SafeArea(
-            child: LayoutBuilder(
+        // Main content with SafeArea layered over a calm, permanent background haze
+        body: Stack(
+          children: [
+            // Permanent calm tint over black background (does not intercept taps)
+            IgnorePointer(
+              ignoring: true,
+              child: Positioned.fill(
+                child: Container(
+                  color: colorScheme.primary.withOpacity(_globalPlaybackHazeOpacity),
+                ),
+              ),
+            ),
+            SafeArea(
+              child: LayoutBuilder(
               builder: (context, constraints) {
                 final mediaQuery = MediaQuery.of(context);
                 final isLandscape = constraints.maxWidth > constraints.maxHeight;
@@ -288,6 +300,7 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
                   children: [
                     Hero(
                       tag: heroTag,
+                      createRectTween: (begin, end) => MaterialRectArcTween(begin: begin, end: end),
                       child: Material(
                         color: Colors.transparent,
                         child: ScaleTransition(
@@ -672,8 +685,10 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
                   ),
                 );
               },
+              ),
             ),
-          ),
+          ],
+        ),
       ),
     );
   }

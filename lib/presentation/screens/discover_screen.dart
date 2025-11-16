@@ -9,6 +9,18 @@ import '../../core/animation_constants.dart';
 import 'category_meditations_screen.dart';
 import '../../providers/meditations_list_provider.dart';
 import '../widgets/meditation_card.dart';
+import 'package:shimmer/shimmer.dart';
+import '../../providers/category_map_provider.dart';
+
+// Local UI state: whether the inline search bar is visible
+class _SearchVisibleNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+  void toggle() => state = !state;
+}
+final discoverSearchVisibleProvider = NotifierProvider<_SearchVisibleNotifier, bool>(
+  () => _SearchVisibleNotifier(),
+);
 
 class DiscoverScreen extends ConsumerWidget {
   const DiscoverScreen({super.key});
@@ -18,11 +30,69 @@ class DiscoverScreen extends ConsumerWidget {
     final categoriesAsync = ref.watch(categoriesStreamProvider);
     final appColors = Theme.of(context).extension<AppColors>();
     final query = ref.watch(meditationsQueryProvider);
+    final recommendedAsync = ref.watch(recommendedMeditationsProvider);
+    final categoryIdToName = ref.watch(categoryMapProvider);
     final bool isSearching = query.search.trim().isNotEmpty;
+    final bool isSearchVisible = ref.watch(discoverSearchVisibleProvider);
     return Scaffold(
+      drawer: Drawer(
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            children: const [
+              ListTile(leading: Icon(Icons.home_outlined), title: Text('Home')),
+              ListTile(leading: Icon(Icons.person_outline), title: Text('Profile')),
+              ListTile(leading: Icon(Icons.settings_outlined), title: Text('Settings')),
+            ],
+          ),
+        ),
+      ),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
+            // Top icon row (menu + search)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.menu),
+                      color: Theme.of(context).colorScheme.onSurface,
+                      onPressed: () {
+                        Scaffold.of(context).openDrawer();
+                      },
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          'Discover',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: AnimatedSwitcher(
+                        duration: AnimationDurations.short3,
+                        child: Icon(
+                          isSearchVisible ? Icons.close : Icons.search,
+                          key: ValueKey<bool>(isSearchVisible),
+                        ),
+                      ),
+                      color: Theme.of(context).colorScheme.onSurface,
+                      onPressed: () {
+                        ref.read(discoverSearchVisibleProvider.notifier).toggle();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
             // Header
             SliverToBoxAdapter(
               child: Padding(
@@ -30,14 +100,6 @@ class DiscoverScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Discover',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
                     Text(
                       'What\'s your next step UP?',
                       style: TextStyle(
@@ -45,63 +107,19 @@ class DiscoverScreen extends ConsumerWidget {
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    // Search Bar with Filter
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            height: 52,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceVariant,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: Theme.of(context).colorScheme.outline.withOpacity(0.12),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.search,
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: TextField(
-                                    onChanged: (value) {
-                                      final current = ref.read(meditationsQueryProvider);
-                                      ref.read(meditationsQueryProvider.notifier).setQuery(
-                                        current.copyWith(search: value, status: 'published'),
-                                      );
-                                    },
-                                    decoration: InputDecoration(
-                                      hintText: 'Search...',
-                                      hintStyle: TextStyle(
-                                        color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
-                                      ),
-                                      border: InputBorder.none,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Icon(
-                            Icons.tune,
-                            color: Theme.of(context).colorScheme.onPrimary,
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 12),
+                    // Animated search reveal
+                    AnimatedSize(
+                      duration: AnimationDurations.medium2,
+                      curve: AnimationCurves.emphasized,
+                      child: AnimatedSwitcher(
+                        duration: AnimationDurations.medium2,
+                        switchInCurve: AnimationCurves.emphasized,
+                        switchOutCurve: AnimationCurves.emphasized,
+                        child: isSearchVisible
+                            ? _SearchBar(ref: ref, scheme: Theme.of(context).colorScheme)
+                            : const SizedBox.shrink(),
+                      ),
                     ),
                   ],
                 ),
@@ -164,7 +182,10 @@ class DiscoverScreen extends ConsumerWidget {
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: CategoryGridConfig.gridPaddingH,
+                  vertical: CategoryGridConfig.gridPaddingV,
+                ),
                 sliver: categoriesAsync.when(
                   loading: () => const SliverToBoxAdapter(
                     child: Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())),
@@ -178,12 +199,22 @@ class DiscoverScreen extends ConsumerWidget {
                         child: Padding(padding: EdgeInsets.all(20), child: Text('No categories yet')),
                       );
                     }
+                    // Compute responsive column count based on available width and ensure title lane is wide enough
+                    final width = MediaQuery.of(context).size.width;
+                    final available = width - (CategoryGridConfig.gridPaddingH * 2);
+                    // Try 3 columns first
+                    int crossAxisCount = 3;
+                    double tileWidth3 = (available - (CategoryGridConfig.gridSpacing * (crossAxisCount - 1))) / crossAxisCount;
+                    double textLane3 = tileWidth3 - (CategoryGridConfig.cardPadding * 2);
+                    if (textLane3 < CategoryGridConfig.minTitleTextWidthDp) {
+                      crossAxisCount = 2;
+                    }
                     return SliverGrid(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 0.85,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: CategoryGridConfig.gridSpacing,
+                        mainAxisSpacing: CategoryGridConfig.gridSpacing,
+                        childAspectRatio: CategoryGridConfig.childAspectRatio,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
@@ -196,6 +227,90 @@ class DiscoverScreen extends ConsumerWidget {
                   },
                 ),
               ),
+
+            // Section: Recommended For You
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+                child: Text(
+                  'Recommended For You',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ),
+
+            // Horizontal scroll for recommended
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 160,
+                child: recommendedAsync.when(
+                  loading: () {
+                    final base = Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3);
+                    final highlight = Theme.of(context).colorScheme.surface.withOpacity(0.6);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Shimmer.fromColors(
+                        baseColor: base,
+                        highlightColor: highlight,
+                        child: Row(
+                          children: List.generate(4, (i) {
+                            return Container(
+                              width: 200,
+                              height: 140,
+                              margin: EdgeInsets.only(right: i == 3 ? 0 : 16),
+                              decoration: BoxDecoration(
+                                color: base,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                    );
+                  },
+                  error: (e, _) => const Center(child: Text('Failed to load')),
+                  data: (items) {
+                    if (items.isEmpty) return const SizedBox.shrink();
+                    final colors = Theme.of(context).colorScheme;
+                    final gradient = [colors.primary.value, colors.tertiary.value];
+                    return ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final m = items[index];
+                        final minutes = ((m.durationSec ?? 0) <= 0) ? 1 : ((m.durationSec! + 59) ~/ 60);
+                        final category = categoryIdToName[m.categoryId] ?? '';
+                        return Container(
+                          width: 200,
+                          margin: const EdgeInsets.only(right: 16),
+                          child: MeditationCard(
+                            id: m.id,
+                            title: m.title,
+                            subtitle: '',
+                            duration: minutes,
+                            imageUrl: m.imageUrl ?? '',
+                            gradientColors: gradient,
+                            isPremium: m.isPremium ?? false,
+                            onTap: () => context.push('/meditation-detail/${m.id}'),
+                            compact: true,
+                            category: category,
+                            enableHero: false,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            // Bottom padding
+            const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
           ],
         ),
       ),
@@ -274,38 +389,54 @@ class DiscoverScreen extends ConsumerWidget {
                 ),
                 // Content
                 Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(CategoryGridConfig.cardPadding),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: gradientText.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          _getCategoryIcon(name),
-                          color: gradientText,
-                          size: 28,
+                      SizedBox(
+                        height: CategoryGridConfig.iconRegionHeight,
+                        child: Center(
+                          child: Container(
+                            width: CategoryGridConfig.iconContainerSize,
+                            height: CategoryGridConfig.iconContainerSize,
+                            decoration: BoxDecoration(
+                              color: gradientText.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              _getCategoryIcon(name),
+                              color: gradientText,
+                              size: CategoryGridConfig.iconSize,
+                            ),
+                          ),
                         ),
                       ),
-                      const Spacer(),
-                      Text(
-                        name,
-                        style: TextStyle(
-                          color: gradientText,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                      SizedBox(height: CategoryGridConfig.iconTitleGap),
+                      SizedBox(
+                        height: CategoryGridConfig.titleAreaHeight,
+                        child: Center(
+                          child: Text(
+                            name,
+                            maxLines: 1,
+                            softWrap: false,
+                            overflow: TextOverflow.clip,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: gradientText,
+                              fontSize: CategoryGridConfig.titleFontSize,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '$sessionCount sessions',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
                           color: gradientText.withOpacity(0.8),
-                          fontSize: 14,
+                          fontSize: CategoryGridConfig.subtitleFontSize,
                         ),
                       ),
                     ],
@@ -321,7 +452,7 @@ class DiscoverScreen extends ConsumerWidget {
 
   IconData _getCategoryIcon(String category) {
     switch (category.toLowerCase()) {
-      case 'morning':
+      case 'mornings':
         return Icons.wb_sunny;
       case 'manifest':
         return Icons.psychology;
@@ -334,19 +465,85 @@ class DiscoverScreen extends ConsumerWidget {
       case 'stress':
         return Icons.heart_broken;
       case 'anxiety':
-        return Icons.healing;
+        return Icons.cloud; // Cloud instead of band-aid - much more zen
       case 'music':
         return Icons.music_note;
       case 'for women':
         return Icons.woman;
       case 'for parents':
         return Icons.family_restroom;
-      case 'challenges':
+      case 'challenge': // Singular, not plural
         return Icons.military_tech;
       case 'courses':
         return Icons.school;
       default:
         return Icons.self_improvement;
     }
+  }
+}
+
+class _SearchBar extends StatelessWidget {
+  const _SearchBar({required this.ref, required this.scheme});
+  final WidgetRef ref;
+  final ColorScheme scheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            height: 52,
+            decoration: BoxDecoration(
+              color: scheme.surfaceVariant,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: scheme.outline.withOpacity(0.12),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.search,
+                  color: scheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    onChanged: (value) {
+                      final current = ref.read(meditationsQueryProvider);
+                      ref.read(meditationsQueryProvider.notifier).setQuery(
+                        current.copyWith(search: value, status: 'published'),
+                      );
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Search...',
+                      hintStyle: TextStyle(
+                        color: scheme.onSurfaceVariant.withOpacity(0.6),
+                      ),
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: scheme.primary,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(
+            Icons.tune,
+            color: scheme.onPrimary,
+          ),
+        ),
+      ],
+    );
   }
 }

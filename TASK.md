@@ -12,7 +12,7 @@ Pop Red ThemeExtension (2025-10-23)
 
 # TASK.md - Meditation by VK
 
-Last Updated: 2025-11-14
+Last Updated: 2025-11-16
 
 ## 📚 Documentation Overview
 
@@ -63,6 +63,77 @@ Last Updated: 2025-11-14
 - [x] Fixed audio duration detection (wait for durationStream on web) - `upload_service.dart`
 - [x] Fixed publish flow to save all fields before status change - `meditation_editor_provider.dart`
 - [x] Fixed discover search navigation to route through detail screen - `discover_screen.dart`
+
+### Discover Grid UI Tuning (2025-11-16)
+- [x] Added `CategoryGridConfig` in `lib/core/animation_constants.dart` to avoid magic numbers
+- [x] Updated `discover_screen.dart`:
+  - Grid padding: horizontal 20, vertical 16
+  - childAspectRatio: 0.78 (taller cards)
+  - Card padding: 16
+  - Icon container 40, icon size 24
+  - Typography: title 18, subtitle 13
+- Result: same visual identity, ~15% more refined spacing and hierarchy
+
+### Discover Grid Responsive Sizing (2025-11-16)
+- [x] Responsive columns for category cards:
+  - Derive `crossAxisCount` from available width using `preferredTileWidth=112`
+  - Use compact sizes (icons/text) automatically when 3+ columns
+- Files:
+  - `lib/core/animation_constants.dart` (CategoryGridConfig: preferredTileWidth + compact sizes)
+  - `lib/presentation/screens/discover_screen.dart` (computed crossAxisCount + compact card option)
+- Result: Smaller category cards on typical phones (3 columns where space allows), preserving readability
+
+### Discover Title Overflow Fix (2025-11-16)
+- [x] Prevented category names from splitting awkwardly (e.g., "challenge\ns")
+- Change: `Text(name, maxLines: 1, overflow: TextOverflow.ellipsis)` in `discover_screen.dart`
+- Result: Single-line titles with ellipsis; professional, production-ready appearance
+
+### Discover Grid Uniform Layout (2025-11-16)
+- [x] Removed per-card compact sizing and ellipsis; unified typography
+- [x] Added threshold-based columns: prefer 3 columns only if text lane ≥ 82dp; otherwise 2 columns
+- [x] Reduced grid spacing to 12 and card padding to 14; title 16px
+- Files:
+  - `lib/core/animation_constants.dart`: gridSpacing, cardPadding=14, titleFontSize=16, minTitleTextWidthDp=82
+  - `lib/presentation/screens/discover_screen.dart`: compute tile width, choose 3→2 cols, unified sizes
+- Result: No truncation like “Challeng…”, consistent look across devices (matches Browse screenshot intent)
+
+### Category Card Fixed Icon/Title Zones (2025-11-16)
+- [x] Separated icon and title into fixed-height regions to hard-center icon
+- Config: `iconRegionHeight=56`, `titleAreaHeight=22`, `iconTitleGap=8`
+- Files:
+  - `lib/core/animation_constants.dart` (added region constants)
+  - `lib/presentation/screens/discover_screen.dart` (refactored layout using SizedBox regions)
+- Result: Icon remains visually centered regardless of label length; titles stay uniform
+
+### 25% Visual Shrink + No Fade Titles (2025-11-16)
+- [x] Reduced overall visual scale (~25%): padding, spacing, icon sizes, text, and region heights
+- [x] Removed fading on titles; single-line with clip (no ellipsis, no fade)
+- Config updates:
+  - `gridSpacing=9`, `cardPadding=9`, `childAspectRatio=1.00`
+  - `iconContainerSize=27`, `iconSize=18`, `iconRegionHeight=42`, `titleAreaHeight=18`, `iconTitleGap=6`
+  - `titleFontSize=12`, `subtitleFontSize=10`
+- Files: `animation_constants.dart`, `discover_screen.dart` (title overflow to clip)
+- Result: Smaller, tighter cards; centered icons; crisp titles without fading
+
+### Discover: Added Recommended Section (2025-11-16)
+- [x] Mirrored Home’s “Recommended For You” to bottom of Discover
+- Behavior: shimmer while loading, horizontal compact `MeditationCard` list, category chip/label
+- Files:
+  - `lib/presentation/screens/discover_screen.dart` (header + horizontal list)
+  - Imports: `shimmer.dart`, `category_map_provider.dart`
+- Uses providers: `recommendedMeditationsProvider`, `categoryMapProvider`
+- Result: Consistent recommendations UX across Home and Discover
+
+### Discover Top Icons + Animated Search (2025-11-16)
+- [x] Added top row with menu (left) and search (right) icons
+- [x] Removed always-visible search; replaced with animated reveal (fade + size)
+- Implementation:
+  - Local `discoverSearchVisibleProvider` toggles visibility
+  - AnimatedSize + AnimatedSwitcher push/fade the search bar
+  - Search bar extracted to `_SearchBar` widget; same behavior as before
+  - Added minimal `Drawer` so menu icon opens safely
+- File: `lib/presentation/screens/discover_screen.dart`
+- Result: Cleaner header like screenshot; tap search to reveal/hide smoothly
 
 UX/Infra improvements (2025-10-25)
 - Extracted reusable bottom navigation `MainNavBar`; added routes `/discover`, `/progress`, `/profile`
@@ -143,6 +214,14 @@ Index Strategy (2025-10-22):
 - [x] Sessions composite index verified (completed ASC, completedAt DESC)
 - [ ] Enrich daily sessions list with titles (denormalized fetch)
 - [ ] Add extended tests (offline replay, threshold, multi-device)
+
+### Resolved (2025-11-16): Looping progress undercount & finalize rules
+- [x] Implement loop-accurate minutes using base + position (idempotent minute upserts)
+- [x] Add single finalization point (stop/exit or non-loop end); do not finalize on background
+- [x] Apply 90% completion threshold at finalize only; increment `playCount` only once
+- [x] Persist baseline per `uid+meditationId` (`startedAtUtc`, `accumulatedSeconds`, `lastWrittenDuration`) via SharedPreferences
+- [x] Add handler hooks: `onLoopRestart()` and `finalizeSession()`; wire PlayerScreen to call them
+- [x] Update CODE_FLOW.md and APP_LOGIC.md with architecture changes
 
 **Testing Notes:**
 - Minutes increase each minute during playback

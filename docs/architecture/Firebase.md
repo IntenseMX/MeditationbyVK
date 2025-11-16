@@ -1,6 +1,6 @@
 # Firebase Architecture - Meditation by VK
 
-Last Updated: 2025-11-10
+Last Updated: 2025-11-16
 
 ## Overview
 
@@ -148,10 +148,10 @@ firestore-root/
 ├── userProgress/{userId}/sessions/{sessionId}
 │   ├── meditationId: string
 │   ├── meditationTitle: string? (denormalized at write, used for Today's Sessions list)
-│   ├── startedAt: timestamp (UTC, captured on first playing transition)
-│   ├── completedAt: timestamp (UTC, serverTimestamp on upsert)
-│   ├── duration: number (seconds listened, updated progressively every minute)
-│   ├── completed: boolean (true when ≥90% threshold or natural end)
+│   ├── startedAt: timestamp (UTC, captured on first playing transition; persists across app restarts)
+│   ├── completedAt: timestamp (UTC, serverTimestamp on upsert; set on all upserts, authoritative at finalize)
+│   ├── duration: number (absolute seconds listened; updated progressively every minute with base + position)
+│   ├── completed: boolean (set true once at finalization if total ≥ 90% of single track)
 │   └── sessionId format: "{uid}_{meditationId}_{startedAtMsUtc}" (deterministic)
 │
 ├── playlists/{playlistId}

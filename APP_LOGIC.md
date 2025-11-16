@@ -52,7 +52,7 @@ Theme Mode Persistence (2025-11-03)
 
 This document provides concise descriptions of all systems, services, and features in the Meditation by VK application.
 
-**Last Updated**: 2025-11-14
+**Last Updated**: 2025-11-16
 
 ### Performance & UX Updates (2025-11-10)
 
@@ -292,6 +292,18 @@ Thumbnail Overlay (2025-10-28)
 
 ### MediaNotificationService
 - Shows playback controls in system notification and lock screen
+
+### Audio Progress Tracking Update (2025-11-16)
+- Loop-accurate, idempotent tracking using base + position:
+  - Minute upserts write `durationSec = max(lastWritten, accumulatedBase + position)` (never decreases).
+  - Baseline persisted per `uid+meditationId`: `{startedAtUtc, accumulatedSeconds, lastWrittenDuration}`.
+- Finalization rules (single point):
+  - Finalize only on explicit stop/exit or non-loop completion; not on background.
+  - At finalize, `completed = true` iff totalListened >= 90% of single track duration (prevents session spam).
+  - `playCount` increments only on finalize (via `ProgressService.upsertSession` when `completed=true`).
+- Public handler hooks:
+  - `onLoopRestart()` — increment base by single track duration at loop rollover.
+  - `finalizeSession()` — write final totals and set completed flag once.
 
 ---
 

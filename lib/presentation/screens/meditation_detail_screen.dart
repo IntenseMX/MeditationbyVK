@@ -142,7 +142,7 @@ class _MeditationDetailScreenState extends ConsumerState<MeditationDetailScreen>
 
     return Stack(
       children: [
-        // Background Image
+        // Background Image (Hero)
         Container(
           height: 280,
           width: double.infinity,
@@ -152,20 +152,24 @@ class _MeditationDetailScreenState extends ConsumerState<MeditationDetailScreen>
               bottomRight: Radius.circular(_cardCornerRadius * 2),
             ),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(_cardCornerRadius * 2),
-              bottomRight: Radius.circular(_cardCornerRadius * 2),
+          child: Hero(
+            tag: 'meditation_${widget.meditationId}',
+            createRectTween: (begin, end) => MaterialRectArcTween(begin: begin, end: end),
+            child: ClipRRect(
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(_cardCornerRadius * 2),
+                bottomRight: Radius.circular(_cardCornerRadius * 2),
+              ),
+              child: imageUrl.isEmpty
+                  ? Container(
+                      color: colors.surfaceVariant,
+                      child: Icon(Icons.spa, size: 80, color: colors.onSurfaceVariant),
+                    )
+                  : Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                    ),
             ),
-            child: imageUrl.isEmpty
-                ? Container(
-                    color: colors.surfaceVariant,
-                    child: Icon(Icons.spa, size: 80, color: colors.onSurfaceVariant),
-                  )
-                : Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                  ),
           ),
         ),
         

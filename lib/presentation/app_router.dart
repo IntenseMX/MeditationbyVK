@@ -121,7 +121,7 @@ Page<dynamic> _buildPlayerTransition({
         ],
       );
     },
-    transitionDuration: AnimationDurations.long2, // 750ms for smooth Hero + content
+    transitionDuration: AnimationDurations.extraSlow, // 1200ms for calmer Hero + content
   );
 }
 

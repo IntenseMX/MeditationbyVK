@@ -720,13 +720,32 @@ Progress Tracking (Phase 3C - 2025-11-05)
   - `completed: bool`
 - Start capture: First transition to playing detected via `playerStateStream` (handles auto-play and manual play)
 - Progressive updates: Minute-by-minute upserts via `SetOptions(merge: true)` every 60 seconds with actual listened duration
-- Completion trigger: 90% of track duration OR natural completion → marks completed=true, sets duration to full track length, increments playCount atomically
+- Completion trigger (legacy): 90% of track duration OR natural completion → marks completed=true, sets duration to full track length, increments playCount atomically
 - Idempotency: `sessionId = "{uid}_{meditationId}_{startedAtMsUtc}"` ensures single session per play
 - Threading: Audio callback uses Firestore-only writes (`tryWriteSession`, `upsertSession`) - no SharedPreferences/plugins in audio thread
 - Offline: Firestore SDK handles offline queueing automatically; SharedPreferences queue only for foreground retry flows
 - Streaks: Computed only from completed sessions (completed=true) using UTC day boundaries (current + longest streak)
 - Provider output: Matches UI shape (`daily/weekly/monthly`) aggregated from last 60 days; minutes rounded UP (4.4 → 5)
 - Index: Composite index on sessions collection: completed ASC, completedAt DESC (deployed as COLLECTION_GROUP)
+
+Progress Tracking Update (2025-11-16)
+
+- Loop-accurate minutes with idempotent writes:
+  - Minute upserts write absolute duration = accumulatedBaseSeconds + currentPosition (never decreases).
+  - Guard: we persist max(lastWrittenDuration, computed) to avoid backward seek lowering totals.
+- Single finalization point:
+  - Finalize only on explicit stop/exit or non-loop natural end (UI calls finalize).
+  - At finalize, set completed=true iff totalListened >= 90% of single meditation duration; playCount increments only here.
+- Loop handling:
+  - On loop restart, accumulatedBaseSeconds += singleTrackDuration; position resets to 0; writes continue to accumulate.
+- Baseline persistence:
+  - Persist `{startedAtUtc, accumulatedSeconds, lastWrittenDuration}` per `uid+meditationId` in SharedPreferences to survive app restarts.
+  - SessionId remains `uid_meditationId_startedAtMsUtc`; baseline rehydration resumes the same session.
+- Not finalized on background to avoid accidental completions; UI finalizes on route-leave/stop.
+
+Public handler hooks (services/audio_service.dart):
+- `onLoopRestart()` → increments base at loop rollover
+- `finalizeSession()` → writes final duration and completed flag once
 
 **Query Patterns:**
 ```
@@ -1411,7 +1430,7 @@ ref.watch(futureProvider).when(
 - `categoryPaginationProvider(categoryId)` manages `loadFirstPage()` / `loadMore()`
 - Screen shows “Load More” when `canLoadMore` is true
 
-**Last Updated**: 2025-11-14
+**Last Updated**: 2025-11-16
 
 ### Splash UX/Data Gating (2025-11-10)
 
