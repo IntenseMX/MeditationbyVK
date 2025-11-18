@@ -1,3 +1,23 @@
+## Mood Carousel & Detail (2025-11-17)
+- Implemented mood-based discovery:
+  - Added domain model `lib/domain/mood.dart`
+  - Added config `lib/config/moods.dart` with 3 moods and card constants
+  - Added `lib/presentation/widgets/mood_carousel_3d.dart` (3D transforms)
+  - Inserted section into Home: Recently Added → Mood Carousel → Trending → Recommended
+  - Added `lib/presentation/screens/mood_detail_screen.dart` with decorative header and related meditations
+  - Extended `MeditationService.streamByCategoryIds(List<String> ids, {int limit})`
+  - Added route `/mood/:moodId`
+- Backlog: Phase 5 — Replace icons with custom SVGs; mood favorites persistence
+
+Last Updated: 2025-11-18
+
+## Mood Carousel Rewrite (2025-11-18)
+- Rewrote carousel to Stack-based 3-card system with explicit transforms and z-order
+- Added discrete gesture controller:
+  - Drag distance threshold: 40px; velocity threshold: 250 px/s
+  - Side taps promote to center; center tap navigates
+- Extracted constants (translate/rotate/scale/opacity/curve/duration); added `RepaintBoundary`
+- Result: Tighter visuals, smoother swipes on Android emulator, fewer rebuilds
 Brand Colors for Bottom Nav (2025-10-23)
 
 - Added brand constants in `AppTheme`: `brandPrimaryLight=#AC7456`, `brandNeutralLight=#D5B09C`.
@@ -12,7 +32,7 @@ Pop Red ThemeExtension (2025-10-23)
 
 # TASK.md - Meditation by VK
 
-Last Updated: 2025-11-16
+Last Updated: 2025-11-18
 
 ## 📚 Documentation Overview
 
@@ -134,6 +154,13 @@ Last Updated: 2025-11-16
   - Added minimal `Drawer` so menu icon opens safely
 - File: `lib/presentation/screens/discover_screen.dart`
 - Result: Cleaner header like screenshot; tap search to reveal/hide smoothly
+
+### Home/MeditationCard Overlay & Belt Centering Fix (2025-11-18) ✅
+- Switched `MeditationCard` to render thumbnail via `Image` in `Stack` and apply bottom fade as `Positioned.fill` over the image only (no full-card tint); removed `foregroundDecoration`.
+- Wrapped image+fade in `ClipRRect(borderRadius: 20)` to eliminate corner bleed; kept `Material` `clipBehavior: AntiAlias`.
+- For compact belts, set card container `margin` to `EdgeInsets.zero` to center 140dp cards within 160dp belts.
+- Fixed `MainAxisAlignment.space_between` → `spaceBetween`.
+- Files: `lib/presentation/widgets/meditation_card.dart`, `lib/presentation/screens/home_screen.dart` (margin usage)
 
 UX/Infra improvements (2025-10-25)
 - Extracted reusable bottom navigation `MainNavBar`; added routes `/discover`, `/progress`, `/profile`

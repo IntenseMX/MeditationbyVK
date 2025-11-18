@@ -295,12 +295,11 @@ class ProgressService {
   }
 
   // Calculates current and longest streak (days) using UTC midnight boundaries
-  // Only counts days with at least one COMPLETED session
+  // Counts any day with at least one recorded session (completed or not)
   ({int current, int longest}) calculateStreak(List<SessionRecord> sessions) {
-    final completedSessions = sessions.where((s) => s.completed).toList();
-    if (completedSessions.isEmpty) return (current: 0, longest: 0);
+    if (sessions.isEmpty) return (current: 0, longest: 0);
     final days = <String>{};
-    for (final s in completedSessions) {
+    for (final s in sessions) {
       final d = _utcDayKey(s.completedAtUtc);
       days.add(d);
     }

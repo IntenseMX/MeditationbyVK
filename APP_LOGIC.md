@@ -52,7 +52,7 @@ Theme Mode Persistence (2025-11-03)
 
 This document provides concise descriptions of all systems, services, and features in the Meditation by VK application.
 
-**Last Updated**: 2025-11-16
+**Last Updated**: 2025-11-18
 
 ### Performance & UX Updates (2025-11-10)
 
@@ -126,6 +126,23 @@ This document provides concise descriptions of all systems, services, and featur
 - Shows styled "Comments coming soon" placeholder block with divider (Phase 1 design validation)
 - Consumes `meditationByIdProvider(id)` and `categoryMapProvider` for real-time Firestore data
 - Loading/error/unavailable states with themed placeholders
+
+### Mood System (2025-11-17)
+- `lib/domain/mood.dart`: Mood model (id, name, tagline, description, icon, categoryIds)
+- `lib/config/moods.dart`: MVP hardcoded moods (Calm, Focus, Sleep) + card constants
+- `lib/presentation/widgets/mood_carousel_3d.dart`: 3D fan deck carousel (Stack-based, 3-card)
+- `lib/presentation/screens/mood_detail_screen.dart`: Decorative gradient header, actions, related meditations
+- `lib/services/meditation_service.dart`: `streamByCategoryIds(List<String> ids, {int limit})` for multi-category filtering
+- Home insertion: Recently Added → Mood Carousel → Trending → Recommended
+- Routing: `/mood/:moodId` added in `presentation/app_router.dart`
+
+### Mood Carousel Rewrite (2025-11-18)
+- Replaced `PageView` with Stack of 3 visible cards (+1 hidden) for precise control
+- Discrete swipe controller:
+  - Distance threshold: 40px; velocity threshold: 250 px/s
+  - Side taps promote to center; center tap navigates to mood detail
+- Transforms: ±140px X, -100 Z, rotateY ±0.35, scale 0.8 (sides), center scale 1.0
+- Performance: Only 3-4 widgets rendered; `RepaintBoundary` per card; no shadows
 
 ### CompactMeditationCard (presentation/widgets/compact_meditation_card.dart) (2025-11-13)
 - Horizontal layout card with 96x96 Hero thumbnail, metadata chips (duration, category), and circular Play button
@@ -224,11 +241,19 @@ This document provides concise descriptions of all systems, services, and featur
 - Props: `compact` (dense layout for belts), `category` (optional chip)
 - Handles premium lock overlay and paywall-gated tap centrally
 
-Thumbnail Overlay (2025-10-28)
+### Thumbnail Overlay (2025-10-28)
 
 - Introduced `AppTheme.thumbnailBottomFadeOpacity` to avoid magic numbers.
 - Home lists and `MeditationCard` now use a bottom-only fade (transparent → themed color at configured opacity) to keep text legible without dulling images.
 - Files: `core/theme.dart`, `presentation/screens/home_screen.dart`, `presentation/widgets/meditation_card.dart`.
+
+### MeditationCard Overlay & Clipping + Compact Centering (2025-11-18)
+
+- Switched from `BoxDecoration.image` to an explicit `Image` inside the card's `Stack`; apply the bottom fade as a `Positioned.fill` gradient so tint covers only the image layer.
+- Wrapped the image+gradient stack with `ClipRRect(borderRadius: BorderRadius.circular(20))` to guarantee rounded-corner clipping and eliminate bottom-corner bleed; removed `foregroundDecoration`.
+- For `compact: true` belts, set the card container `margin` to `EdgeInsets.zero` (retain `EdgeInsets.only(bottom: 16)` for non‑compact) to center 140dp cards within 160dp belts.
+- Fixed `MainAxisAlignment.space_between` → `MainAxisAlignment.spaceBetween`.
+- Touched: `lib/presentation/widgets/meditation_card.dart`.
 
 ### HomeScreen (presentation/screens/home_screen.dart) (2025-11-07)
 - Search bar, "Suggested for you" meditation cards (3)
@@ -324,8 +349,8 @@ Thumbnail Overlay (2025-10-28)
   - `upsertSession()`: Merge-based upsert for minute-by-minute updates (duration increments, completion flag); batches playCount increment only when completed=true
   - `tryWriteSession()`: Firestore-only write for audio thread (no plugins)
   - `flushPending()`: Foreground retry for SharedPreferences queue (not used in audio callbacks)
-  - `streamRecentSessions()`: Queries last 60 days, filters completed=true, orders by completedAt DESC
-  - `calculateStreak()`: UTC day boundaries, only counts completed sessions (current + longest)
+  - `streamRecentSessions()`: Queries last 60 days, orders by `completedAt` DESC (includes incomplete sessions; `completedAt` set on all upserts)
+  - `calculateStreak()`: UTC day boundaries, counts any day with recorded activity (completed or not). Current resets only if latest activity is neither today nor yesterday.
 
 - Achievements (2025-11-10)
   - `AppUser` includes `achievements: Map<String, DateTime>` (entity)

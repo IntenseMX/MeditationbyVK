@@ -13,6 +13,7 @@ import 'dart:async';
 import 'package:shimmer/shimmer.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/progress_provider.dart';
+import '../widgets/mood_carousel_3d.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -288,6 +289,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     );
                   },
                 ),
+              ),
+            ),
+
+            // Section: Pick Your Mood
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+                child: Text(
+                  'Pick Your Mood',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ),
+
+            // 3D Mood Carousel
+            const SliverToBoxAdapter(
+              child: SizedBox(
+                height: 260,
+                child: MoodCarousel3D(),
               ),
             ),
 

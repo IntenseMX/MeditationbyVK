@@ -464,26 +464,101 @@ class _MeditationDetailScreenState extends ConsumerState<MeditationDetailScreen>
             ),
           ),
           const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: colors.surfaceVariant.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(_cardCornerRadius),
-              border: Border.all(color: colors.outline.withOpacity(0.2)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.chat_bubble_outline, color: colors.onSurfaceVariant),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Comments coming soon.\nShare your experience once this feature is live.',
-                    style: textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
-                  ),
+
+          // ===== PLACEHOLDER START: Hardcoded comments for UI preview ONLY =====
+          // Remove this block when wiring the real comments feature.
+          // Replace with provider-backed list + input per MEDITATION_SCREEN_REDESIGN.md.
+          ...const <Map<String, String>>[
+            {
+              'name': 'Aurora',
+              'time': '2d ago',
+              'text': 'Fell asleep so peacefully. The breathing part really settled my mind.'
+            },
+            {
+              'name': 'Noah',
+              'time': '4d ago',
+              'text': 'Listened on a lunch break—felt grounded for the rest of the day.'
+            },
+            {
+              'name': 'Mila',
+              'time': '1w ago',
+              'text': 'Gentle voice and pacing. Helped me release a lot of tension.'
+            },
+            {
+              'name': 'Lucas',
+              'time': '2w ago',
+              'text': 'Used it before a big meeting. Anxiety dialed way down. Thank you!'
+            },
+            {
+              'name': 'Zara',
+              'time': '3w ago',
+              'text': 'Great visualization. I keep coming back to this one.'
+            },
+            {
+              'name': 'Ethan',
+              'time': '1mo ago',
+              'text': 'Even 10 minutes did wonders. Nice balance of calm and focus.'
+            },
+          ].map((c) {
+            final name = c['name']!;
+            final time = c['time']!;
+            final text = c['text']!;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colors.surfaceVariant.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(_cardCornerRadius),
+                  border: Border.all(color: colors.outline.withOpacity(0.2)),
                 ),
-              ],
-            ),
-          ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundColor: colors.primary.withOpacity(0.1),
+                          child: Text(
+                            name.isNotEmpty ? name[0].toUpperCase() : '?',
+                            style: TextStyle(
+                              color: colors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            name,
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colors.onSurface,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          time,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      text,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colors.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+          // ===== PLACEHOLDER END =====
         ],
       ),
     );

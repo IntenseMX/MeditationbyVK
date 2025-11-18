@@ -289,6 +289,45 @@ Note (2025-10-23):
 - Data: Consumes `meditationByIdProvider` + `categoryMapProvider` via Riverpod
 - Theme-aware: All colors via `Theme.of(context).colorScheme` (no hardcoded colors)
 
+### Mood System (2025-11-17)
+
+- Added mood-based discovery flow with 3D carousel and detail screen
+- Route: `/mood/:moodId` (app_router.dart)
+- Files:
+  - `lib/domain/mood.dart` – Domain model (UI-agnostic)
+  - `lib/config/moods.dart` – Hardcoded MVP moods + card constants
+  - `lib/presentation/widgets/mood_carousel_3d.dart` – 3D fan deck
+  - `lib/presentation/screens/mood_detail_screen.dart` – Decorative header + related meditations (filtered by categories)
+- Home order: Recently Added → Mood Carousel → Trending → Recommended
+- Data: `MeditationService.streamByCategoryIds(categoryIds)` with composite index
+- Theme-aware gradients derived from `colorScheme` (no hardcoded colors)
+
+Last Updated: 2025-11-18
+
+### Mood Carousel Rewrite (2025-11-18)
+
+- Implementation switched from `PageView.builder` to a Stack-based 3-card system
+  - Always-visible left/center/right cards with explicit z-order
+  - Hidden fourth card slides in from swipe direction
+- Transforms and opacity:
+  - Left/Right: translateX ±140, translateZ -100, rotateY ±0.35, scale 0.8, opacity 0.7
+  - Center: scale 1.0, no rotation, full opacity
+  - Hidden: translateZ -200, scale 0.6, opacity 0.0
+- Gestures:
+  - Discrete swipes: triggers on drag distance ≥ 40px or velocity ≥ 250 px/s
+  - Side-card tap promotes to center; center tap navigates to detail
+  - Haptics: light on tap, medium on swipe
+- Performance:
+  - Only 3-4 cards rendered; each wrapped in `RepaintBoundary`
+  - All constants extracted at class level (no magic numbers)
+
+### MeditationCard Overlay & Belt Centering (2025-11-18)
+
+- Moved thumbnail rendering from `BoxDecoration.image` to an explicit `Image` inside the card’s `Stack`; applied bottom fade as a `Positioned.fill` gradient over the image layer only (no full‑card tint).
+- Wrapped image+fade in `ClipRRect(borderRadius: 20)` to guarantee rounded-corner clipping and eliminate bottom-corner bleed; removed `foregroundDecoration` tint.
+- For horizontal belts (`compact: true`), set the card container’s bottom margin to `0` (retain `16dp` only for non‑compact) to visually center 140dp cards inside 160dp belts.
+- Files: `lib/presentation/widgets/meditation_card.dart`, `lib/presentation/screens/home_screen.dart` (compact margin usage).
+
 ### Player Screen Metadata Updates (2025-11-15)
 
 - Metadata row reorganized: duration removed (redundant with scrubber), loop toggle moved from controls to title metadata block
@@ -724,7 +763,7 @@ Progress Tracking (Phase 3C - 2025-11-05)
 - Idempotency: `sessionId = "{uid}_{meditationId}_{startedAtMsUtc}"` ensures single session per play
 - Threading: Audio callback uses Firestore-only writes (`tryWriteSession`, `upsertSession`) - no SharedPreferences/plugins in audio thread
 - Offline: Firestore SDK handles offline queueing automatically; SharedPreferences queue only for foreground retry flows
-- Streaks: Computed only from completed sessions (completed=true) using UTC day boundaries (current + longest streak)
+- Streaks: Computed from any day with recorded activity (completed or not) using UTC day boundaries (current + longest streak). Current resets only if latest activity is neither today nor yesterday.
 - Provider output: Matches UI shape (`daily/weekly/monthly`) aggregated from last 60 days; minutes rounded UP (4.4 → 5)
 - Index: Composite index on sessions collection: completed ASC, completedAt DESC (deployed as COLLECTION_GROUP)
 

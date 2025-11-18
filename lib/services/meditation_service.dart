@@ -354,6 +354,23 @@ class MeditationService {
     return PagedResult(items: items, lastDoc: lastDoc);
   }
 
+  // Stream newest published meditations filtered by any of the provided categoryIds.
+  // Uses Firestore whereIn on categoryId with proper composite index.
+  Stream<List<MeditationListItem>> streamByCategoryIds(List<String> categoryIds, {int limit = 20}) {
+    if (categoryIds.isEmpty) {
+      return streamTrending(limit: limit);
+    }
+    // Firestore whereIn: up to 10 values supported
+    final List<String> ids = categoryIds.take(10).toList(growable: false);
+    Query<Map<String, dynamic>> q = _firestore
+        .collection('meditations')
+        .where('status', isEqualTo: 'published')
+        .where('categoryId', whereIn: ids)
+        .orderBy('publishedAt', descending: true)
+        .limit(limit);
+    return q.snapshots().map((snap) => snap.docs.map(MeditationListItem.fromDoc).toList());
+  }
+
   // Container for page results
   // Holds the last document cursor for subsequent pagination calls
   PagedResult emptyPage() => const PagedResult(items: <MeditationListItem>[], lastDoc: null);

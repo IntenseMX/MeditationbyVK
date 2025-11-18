@@ -66,10 +66,12 @@ final progressDtoProvider = StreamProvider<Map<String, dynamic>>((ref) {
       final int safeGoal = latestGoal <= 0 ? 10 : latestGoal;
       final int dailyPercentage = ((todayMinutes / safeGoal) * 100).clamp(0, 100).toInt();
 
-      // Weekly (last 7 days, oldest -> newest)
+      // Weekly (current calendar week, Sunday -> Saturday), using UTC day boundaries
       final List<int> weeklyData = List<int>.filled(7, 0);
-      for (int i = 6; i >= 0; i--) {
-        final day = todayKey.subtract(Duration(days: 6 - i));
+      final int daysSinceSunday = todayKey.weekday % 7; // Monday=1..Sunday=7 -> 0 for Sunday
+      final DateTime weekStart = todayKey.subtract(Duration(days: daysSinceSunday));
+      for (int i = 0; i < 7; i++) {
+        final day = weekStart.add(Duration(days: i));
         final key = DateTime.utc(day.year, day.month, day.day);
         int seconds = 0;
         for (final s in latestSessions) {

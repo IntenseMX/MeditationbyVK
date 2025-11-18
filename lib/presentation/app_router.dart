@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'screens/mood_detail_screen.dart';
 import '../core/animation_constants.dart';
 import 'screens/splash_screen.dart';
 import 'screens/main_scaffold.dart';
@@ -174,6 +175,16 @@ final appRouter = GoRouter(
       name: 'splash',
       pageBuilder: (context, state) => _buildPageWithTransition(
         child: const SplashScreen(),
+        state: state,
+      ),
+    ),
+    GoRoute(
+      path: '/mood/:moodId',
+      name: 'mood_detail',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        child: MoodDetailScreen(
+          moodId: state.pathParameters['moodId'] ?? '',
+        ),
         state: state,
       ),
     ),
