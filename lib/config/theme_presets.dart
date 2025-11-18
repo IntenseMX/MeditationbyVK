@@ -832,6 +832,55 @@ final List<ThemePreset> kThemePresets = [
     ),
     previewGradient: const [Color(0xFF16302B), Color(0xFFA38560)],
   ),
+
+  // 16 Blue Bliss
+  ThemePreset(
+    key: 'blue_bliss',
+    name: 'Blue Bliss',
+    light: _cs(
+      b: Brightness.light,
+      primary: const Color(0xFF94CAFF), // Soft Sky Blue
+      onPrimary: const Color(0xFF0A1A26),
+      secondary: const Color(0xFF98B9D4), // Powder Blue
+      onSecondary: const Color(0xFF132534),
+      surface: const Color(0xFFEBEBEB), // Neutral
+      onSurface: Color.alphaBlend(
+        const Color(0xFF94CAFF).withOpacity(0.30),
+        const Color(0xFF0F1921),
+      ),
+      tertiary: const Color(0xFFFFAE5F), // Orange
+      onTertiary: const Color(0xFF2A1A0D),
+    ),
+    dark: _cs(
+      b: Brightness.dark,
+      primary: const Color(0xFF94CAFF), // Soft Sky Blue (same for visibility)
+      onPrimary: const Color(0xFF08131C),
+      secondary: const Color(0xFF98B9D4), // Powder Blue
+      onSecondary: const Color(0xFF0D1A24),
+      surface: const Color(0xFF1A1D21), // Darker neutral
+      onSurface: Color.alphaBlend(
+        const Color(0xFF94CAFF).withOpacity(0.20),
+        const Color(0xFFE8F1F9),
+      ),
+      tertiary: const Color(0xFFFFAE5F), // Orange
+      onTertiary: const Color(0xFF1E1309),
+    ),
+    lightExtension: const AppColors(
+      pop: Color(0xFFD00000),
+      onPop: AppTheme.white,
+      textOnGradient: Colors.white,
+      statusSuccess: Color(0xFF2E7D32),
+      statusWarning: Color(0xFFF57C00),
+    ),
+    darkExtension: const AppColors(
+      pop: Color(0xFFD00000),
+      onPop: AppTheme.white,
+      textOnGradient: Colors.white,
+      statusSuccess: Color(0xFF81C784),
+      statusWarning: Color(0xFFFFB74D),
+    ),
+    previewGradient: const [Color(0xFF94CAFF), Color(0xFF98B9D4)],
+  ),
 ];
 
 ThemeData buildThemeFromPreset(ThemePreset preset, {required bool isDark}) {

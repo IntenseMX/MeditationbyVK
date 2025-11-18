@@ -23,6 +23,13 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _showLogo = false;
+  // Header stat box layout constants
+  static const double _statBoxGap = 8.0;
+  static const double _statBoxCompactWidth = 48.0;
+  static const double _statBoxWideWidth = 88.0;
+  static const double _burgerToStatsGap = 4.0;
+  static const double _burgerMinSize = 40.0;
+  static const double _burgerIconSize = 22.0;
 
   @override
   void initState() {
@@ -60,59 +67,89 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           slivers: [
             // App Bar
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top icon row padding to match Discover (12, 8, 12, 4)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                    child: Row(
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              greeting,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            // Stat pills moved into greeting area
-                            progressAsync.when(
-                              loading: () => Row(
-                                children: [
-                                  _StatPill.skeleton(context),
-                                  const SizedBox(width: 8),
-                                  _StatPill.skeleton(context),
-                                ],
-                              ),
-                              error: (_, __) => const SizedBox.shrink(),
-                              data: (progress) {
-                                final weekly = (progress['weekly'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
-                                final int streak = (weekly['streak'] as int?) ?? 0;
-                                final int weeklyMinutes = (weekly['currentMinutes'] as int?) ?? 0;
-
-                                return Row(
-                                  children: [
-                                    _StatPill(
-                                      icon: Icons.local_fire_department,
-                                      label: 'Streak',
-                                      value: '$streak days',
-                                    ),
-                                    const SizedBox(width: 8),
-                                    _StatPill(
-                                      icon: Icons.schedule,
-                                      label: 'This week',
-                                      value: '$weeklyMinutes min',
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          ],
+                        // Burger icon at far left
+                        IconButton(
+                          icon: const Icon(Icons.menu),
+                          color: Theme.of(context).colorScheme.onSurface,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: _burgerMinSize, minHeight: _burgerMinSize),
+                          iconSize: _burgerIconSize,
+                          onPressed: () {
+                            final scaffold = Scaffold.maybeOf(context);
+                            if (scaffold != null && scaffold.hasDrawer) {
+                              scaffold.openDrawer();
+                            } else {
+                              debugPrint('[HOME] Menu tapped (no drawer available)');
+                            }
+                          },
                         ),
+                        const SizedBox(width: _burgerToStatsGap),
+                        // Centered stat boxes in available space
+                        Expanded(
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              return progressAsync.when(
+                                loading: () => Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _StatPill.skeleton(context),
+                                    const SizedBox(width: 8),
+                                    _StatPill.skeleton(context),
+                                  ],
+                                ),
+                                error: (_, __) => const SizedBox.shrink(),
+                                data: (progress) {
+                                  final weekly = (progress['weekly'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+                                  final int weeklyMinutes = (weekly['currentMinutes'] as int?) ?? 0;
+                                  final int streak = (weekly['streak'] as int?) ?? 0;
+
+                                  final String timeText = '$weeklyMinutes min this week';
+                                  final String fullStreakText = '${streak}-day streak';
+                                  final String compactStreakText = '$streak days';
+
+                                  // Measure text widths with the same typography as pills
+                                  final TextStyle measureStyle = const TextStyle(fontSize: 12, fontWeight: FontWeight.w600);
+                                  double measureTextWidth(String s) {
+                                    final painter = TextPainter(
+                                      text: TextSpan(text: s, style: measureStyle),
+                                      maxLines: 1,
+                                      textDirection: TextDirection.ltr,
+                                    )..layout();
+                                    return painter.width;
+                                  }
+
+                                  // Pill width = horizontal padding (12*2) + icon(16) + spacer(8) + text width
+                                  double pillWidth(String label) => 24 + 16 + 8 + measureTextWidth(label);
+                                  const double gapBetweenPills = 8.0;
+
+                                  final double neededFull = pillWidth(timeText) + gapBetweenPills + pillWidth(fullStreakText);
+                                  final bool canShowFull = constraints.maxWidth >= neededFull;
+                                  final String streakText = canShowFull ? fullStreakText : compactStreakText;
+
+                                  debugPrint('[HOME_HEADER] Measured: width=${constraints.maxWidth}, need=$neededFull, full=$canShowFull, time="$timeText", streak="$streakText"');
+
+                                  return Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      _StatPill(icon: Icons.timer, text: timeText),
+                                      const SizedBox(width: gapBetweenPills),
+                                      _StatPill(icon: Icons.local_fire_department, text: streakText),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        // Right: UP logo (unchanged)
                         Builder(
                           builder: (context) {
                             final appColors = Theme.of(context).extension<AppColors>();
@@ -152,8 +189,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                  // Greeting area retains standard 20px side padding
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 12),
+                        Text(
+                          greeting,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -398,11 +452,76 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-class _StatPill extends StatelessWidget {
-  const _StatPill({required this.icon, required this.label, required this.value});
+class _CompactStatBox extends StatelessWidget {
+  const _CompactStatBox({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.showLabel,
+    this.width,
+  });
   final IconData icon;
-  final String label;
   final String value;
+  final String label;
+  final bool showLabel;
+  final double? width;
+
+  static const double _height = 40.0;
+  static const double _radius = 16.0;
+  static const double _iconSize = 14.0;
+
+  const _CompactStatBox.skeleton({this.width, this.showLabel = false})
+      : icon = Icons.circle,
+        value = '',
+        label = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final bool isSkeleton = value.isEmpty;
+    final double resolvedWidth = width ?? _HomeScreenState._statBoxCompactWidth;
+
+    return Container(
+      width: resolvedWidth,
+      height: _height,
+      decoration: BoxDecoration(
+        color: c.surfaceVariant.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(_radius),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Top row: icon only
+            Icon(icon, size: _iconSize, color: isSkeleton ? c.onSurface.withOpacity(0.25) : c.primary),
+            const SizedBox(height: 2),
+            // Bottom row: value + optional description
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                isSkeleton
+                    ? '—'
+                    : (showLabel ? '$value $label' : value),
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: isSkeleton ? c.onSurface.withOpacity(0.35) : c.onSurface,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatPill extends StatelessWidget {
+  const _StatPill({required this.icon, required this.text});
+  final IconData icon;
+  final String text;
 
   static Widget skeleton(BuildContext context) {
     final c = Theme.of(context).colorScheme;
@@ -412,11 +531,21 @@ class _StatPill extends StatelessWidget {
         color: c.surfaceVariant.withOpacity(0.5),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Row(children: [
-        Icon(Icons.circle, size: 14, color: c.onSurface.withOpacity(0.2)),
-        const SizedBox(width: 8),
-        SizedBox(width: 60, height: 12, child: DecoratedBox(decoration: BoxDecoration(color: c.onSurface.withOpacity(0.12), borderRadius: BorderRadius.circular(4)))),
-      ]),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.circle, size: 14, color: c.onSurface.withOpacity(0.25)),
+          const SizedBox(width: 8),
+          Container(
+            width: 60,
+            height: 12,
+            decoration: BoxDecoration(
+              color: c.onSurface.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -434,17 +563,19 @@ class _StatPill extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: c.primary),
           const SizedBox(width: 8),
-          Text(label, style: TextStyle(fontSize: 12, color: c.onSurfaceVariant)),
-          const SizedBox(width: 6),
-          Text('•', style: TextStyle(fontSize: 12, color: c.onSurfaceVariant)),
-          const SizedBox(width: 6),
-          Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: c.onSurface)),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: c.onSurface,
+            ),
+          ),
         ],
       ),
     );
   }
 }
-
 class TrendingBelt extends StatefulWidget {
   const TrendingBelt({super.key, required this.items, required this.categoryNames});
   final List<MeditationListItem> items;

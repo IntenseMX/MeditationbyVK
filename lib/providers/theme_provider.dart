@@ -48,8 +48,8 @@ class ThemeSelectionState {
 class ThemeSelectionNotifier extends Notifier<ThemeSelectionState> {
   @override
   ThemeSelectionState build() {
-    // Default to first preset
-    return const ThemeSelectionState('emerald_teal');
+    // Default to Blue Bliss
+    return const ThemeSelectionState('blue_bliss');
   }
 
   Future<void> load() async {

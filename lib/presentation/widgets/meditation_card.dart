@@ -67,14 +67,14 @@ class MeditationCard extends StatelessWidget {
                   tag: heroTag,
                   child: Material(
                     color: Colors.transparent,
-                    child: Container(
+                    clipBehavior: Clip.antiAlias,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    child: Container
+                    (
                       height: cardHeight,
-                      margin: const EdgeInsets.only(bottom: 16),
+                      margin: compact ? EdgeInsets.zero : const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        image: _cachedImage != null
-                            ? DecorationImage(image: _cachedImage, fit: BoxFit.cover)
-                            : null,
                         boxShadow: [
                           BoxShadow(
                             color: Color(gradientColors[0]).withOpacity(0.3),
@@ -83,21 +83,265 @@ class MeditationCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      foregroundDecoration: BoxDecoration(
+                      child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: imageUrl.isNotEmpty
-                              ? [
-                                  Colors.transparent,
-                                  Color(gradientColors.last).withOpacity(AppTheme.thumbnailBottomFadeOpacity),
-                                ]
-                              : gradientColors.map((c) => Color(c)).toList(),
+                        clipBehavior: Clip.antiAlias,
+                        child: Stack(
+                          children: [
+                            if (_cachedImage != null)
+                              Positioned.fill(
+                                child: Image(
+                                  image: _cachedImage,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            else
+                              Positioned.fill(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: gradientColors.map((c) => Color(c)).toList(),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            if (_cachedImage != null)
+                              Positioned.fill(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.transparent,
+                                        Color(gradientColors.last).withOpacity(AppTheme.thumbnailBottomFadeOpacity),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            // Background pattern
+                            Positioned(
+                              right: -30,
+                              top: -30,
+                              child: Container(
+                                width: 150,
+                                height: 150,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                                ),
+                              ),
+                            ),
+                            // Optional lock overlay for non-subscribers
+                            if (isLocked)
+                              Positioned(
+                                top: 12,
+                                right: 12,
+                                child: Container(
+                                  height: 28,
+                                  width: 28,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.surface.withOpacity(0.85),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.lock,
+                                    size: 16,
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                ),
+                              ),
+                            // Content
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      if (isPremium)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          margin: const EdgeInsets.only(bottom: 8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withOpacity(0.6),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(Icons.workspace_premium, color: Colors.amber, size: 16),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'Plus',
+                                                style: GoogleFonts.norican(
+                                                  color: Colors.white,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      Text(
+                                        title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: gradientText,
+                                          fontSize: titleFontSize,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (!compact)
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: gradientText.withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.timer_outlined,
+                                                color: gradientText,
+                                                size: 16,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '$duration min',
+                                                style: TextStyle(
+                                                  color: gradientText,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: gradientText.withOpacity(0.3),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.play_arrow,
+                                            color: gradientText,
+                                            size: 24,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  else
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        if (category != null && category!.trim().isNotEmpty)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: gradientText.withOpacity(0.2),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              category!,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(color: gradientText, fontSize: 12),
+                                            ),
+                                          )
+                                        else
+                                          const SizedBox.shrink(),
+                                        Text(
+                                          '$duration min',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(color: gradientText.withOpacity(0.9)),
+                                        ),
+                                      ],
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                    ),
+                  ),
+                )
+              : Material(
+                  color: Colors.transparent,
+                  clipBehavior: Clip.antiAlias,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  child: Container(
+                    height: cardHeight,
+                    margin: compact ? EdgeInsets.zero : const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(gradientColors[0]).withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      clipBehavior: Clip.antiAlias,
                       child: Stack(
                         children: [
+                          if (_cachedImage != null)
+                            Positioned.fill(
+                              child: Image(
+                                image: _cachedImage,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          else
+                            Positioned.fill(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: gradientColors.map((c) => Color(c)).toList(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          if (_cachedImage != null)
+                            Positioned.fill(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.transparent,
+                                      Color(gradientColors.last).withOpacity(AppTheme.thumbnailBottomFadeOpacity),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           // Background pattern
                           Positioned(
                             right: -30,
@@ -258,201 +502,6 @@ class MeditationCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                )
-              : Material(
-                  color: Colors.transparent,
-                  child: Container(
-                    height: cardHeight,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      image: _cachedImage != null
-                          ? DecorationImage(image: _cachedImage, fit: BoxFit.cover)
-                          : null,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(gradientColors[0]).withOpacity(0.3),
-                          blurRadius: 15,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    foregroundDecoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: imageUrl.isNotEmpty
-                            ? [
-                                Colors.transparent,
-                                Color(gradientColors.last).withOpacity(AppTheme.thumbnailBottomFadeOpacity),
-                              ]
-                            : gradientColors.map((c) => Color(c)).toList(),
-                      ),
-                    ),
-                    child: Stack(
-                      children: [
-                        // Background pattern
-                        Positioned(
-                          right: -30,
-                          top: -30,
-                          child: Container(
-                            width: 150,
-                            height: 150,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-                            ),
-                          ),
-                        ),
-                        // Optional lock overlay for non-subscribers
-                        if (isLocked)
-                          Positioned(
-                            top: 12,
-                            right: 12,
-                            child: Container(
-                              height: 28,
-                              width: 28,
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.surface.withOpacity(0.85),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.lock,
-                                size: 16,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                        // Content
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (isPremium)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      margin: const EdgeInsets.only(bottom: 8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.6),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(Icons.workspace_premium, color: Colors.amber, size: 16),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            'Plus',
-                                            style: GoogleFonts.norican(
-                                              color: Colors.white,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  Text(
-                                    title,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: gradientText,
-                                      fontSize: titleFontSize,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              if (!compact)
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: gradientText.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.timer_outlined,
-                                            color: gradientText,
-                                            size: 16,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            '$duration min',
-                                            style: TextStyle(
-                                              color: gradientText,
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        color: gradientText.withOpacity(0.3),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        Icons.play_arrow,
-                                        color: gradientText,
-                                        size: 24,
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              else
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    if (category != null && category!.trim().isNotEmpty)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: gradientText.withOpacity(0.2),
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: Text(
-                                          category!,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(color: gradientText, fontSize: 12),
-                                        ),
-                                      )
-                                    else
-                                      const SizedBox.shrink(),
-                                    Text(
-                                      '$duration min',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(color: gradientText.withOpacity(0.9)),
-                                    ),
-                                  ],
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
                     ),
                   ),
                 ),
