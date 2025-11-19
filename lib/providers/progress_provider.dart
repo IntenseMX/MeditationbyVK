@@ -51,14 +51,16 @@ final progressDtoProvider = StreamProvider<Map<String, dynamic>>((ref) {
     Map<String, dynamic> latestAchievements = const <String, dynamic>{};
 
     Future<void> emit() async {
-      final now = DateTime.now().toUtc();
-      final todayKey = DateTime.utc(now.year, now.month, now.day);
+      // Use local day boundaries for all user-facing progress calculations
+      final nowLocal = DateTime.now();
+      final todayLocal = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
 
       // Daily totals (sum seconds, then round up to minutes)
       int todaySeconds = 0;
       for (final s in latestSessions) {
-        final day = DateTime.utc(s.completedAtUtc.year, s.completedAtUtc.month, s.completedAtUtc.day);
-        if (day == todayKey) {
+        final local = s.completedAtUtc.toLocal();
+        final sessionDay = DateTime(local.year, local.month, local.day);
+        if (sessionDay == todayLocal) {
           todaySeconds += (s.durationSec as num).toInt();
         }
       }
@@ -68,14 +70,15 @@ final progressDtoProvider = StreamProvider<Map<String, dynamic>>((ref) {
 
       // Weekly (current calendar week, Sunday -> Saturday), using UTC day boundaries
       final List<int> weeklyData = List<int>.filled(7, 0);
-      final int daysSinceSunday = todayKey.weekday % 7; // Monday=1..Sunday=7 -> 0 for Sunday
-      final DateTime weekStart = todayKey.subtract(Duration(days: daysSinceSunday));
+      final int daysSinceSunday = todayLocal.weekday % 7; // Monday=1..Sunday=7 -> 0 for Sunday
+      final DateTime weekStart = todayLocal.subtract(Duration(days: daysSinceSunday));
       for (int i = 0; i < 7; i++) {
         final day = weekStart.add(Duration(days: i));
-        final key = DateTime.utc(day.year, day.month, day.day);
+        final key = DateTime(day.year, day.month, day.day);
         int seconds = 0;
         for (final s in latestSessions) {
-          final d = DateTime.utc(s.completedAtUtc.year, s.completedAtUtc.month, s.completedAtUtc.day);
+          final local = s.completedAtUtc.toLocal();
+          final d = DateTime(local.year, local.month, local.day);
           if (d == key) seconds += (s.durationSec as num).toInt();
         }
         weeklyData[i] = (seconds + 59) ~/ 60;
@@ -84,10 +87,11 @@ final progressDtoProvider = StreamProvider<Map<String, dynamic>>((ref) {
 
       // Monthly (last 30 days)
       int monthlySeconds = 0;
-      final monthStart = todayKey.subtract(const Duration(days: 29));
+      final monthStart = todayLocal.subtract(const Duration(days: 29));
       for (final s in latestSessions) {
-        final d = DateTime.utc(s.completedAtUtc.year, s.completedAtUtc.month, s.completedAtUtc.day);
-        if (!d.isBefore(monthStart) && !d.isAfter(todayKey)) {
+        final local = s.completedAtUtc.toLocal();
+        final d = DateTime(local.year, local.month, local.day);
+        if (!d.isBefore(monthStart) && !d.isAfter(todayLocal)) {
           monthlySeconds += (s.durationSec as num).toInt();
         }
       }
@@ -96,10 +100,11 @@ final progressDtoProvider = StreamProvider<Map<String, dynamic>>((ref) {
       final List<int> monthlyData = List<int>.filled(30, 0);
       for (int i = 0; i < 30; i++) {
         final day = monthStart.add(Duration(days: i));
-        final key = DateTime.utc(day.year, day.month, day.day);
+        final key = DateTime(day.year, day.month, day.day);
         int seconds = 0;
         for (final s in latestSessions) {
-          final d = DateTime.utc(s.completedAtUtc.year, s.completedAtUtc.month, s.completedAtUtc.day);
+          final local = s.completedAtUtc.toLocal();
+          final d = DateTime(local.year, local.month, local.day);
           if (d == key) seconds += (s.durationSec as num).toInt();
         }
         monthlyData[i] = (seconds + 59) ~/ 60;
@@ -147,8 +152,9 @@ final progressDtoProvider = StreamProvider<Map<String, dynamic>>((ref) {
 
       // Build today's sessions list with denormalized titles
       final todaysSessions = latestSessions.where((s) {
-        final d = DateTime.utc(s.completedAtUtc.year, s.completedAtUtc.month, s.completedAtUtc.day);
-        return d == todayKey;
+        final local = s.completedAtUtc.toLocal();
+        final d = DateTime(local.year, local.month, local.day);
+        return d == todayLocal;
       }).toList();
 
       final List<Map<String, dynamic>> todaySessions = todaysSessions.map((s) => <String, dynamic>{

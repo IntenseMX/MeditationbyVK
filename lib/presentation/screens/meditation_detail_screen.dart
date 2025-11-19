@@ -23,6 +23,20 @@ class _MeditationDetailScreenState extends ConsumerState<MeditationDetailScreen>
   static const double _sectionSpacing = 32.0;
   static const double _pagePadding = 20.0;
   static const double _cardCornerRadius = 16.0;
+  static const Duration _overlayFadeDuration = Duration(milliseconds: 3000);
+
+  bool _showHeroOverlay = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Defer overlay tint so the Hero image can settle first, then fade the tint in
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      debugPrint('[DETAIL_HERO] Starting overlay tint fade-in');
+      setState(() => _showHeroOverlay = true);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +50,13 @@ class _MeditationDetailScreenState extends ConsumerState<MeditationDetailScreen>
         title: const Text('Meditation'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
         ),
       ),
       body: SafeArea(
@@ -174,21 +194,26 @@ class _MeditationDetailScreenState extends ConsumerState<MeditationDetailScreen>
           ),
         ),
         
-        // Gradient Overlay
-        Container(
-          height: 280,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(_cardCornerRadius * 2),
-              bottomRight: Radius.circular(_cardCornerRadius * 2),
-            ),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.transparent,
-                colors.surface.withOpacity(0.8),
-              ],
+        // Gradient Overlay – fades in after Hero settles to avoid snap
+        AnimatedOpacity(
+          opacity: _showHeroOverlay ? 1.0 : 0.0,
+          duration: _overlayFadeDuration,
+          curve: Curves.easeInOut,
+          child: Container(
+            height: 280,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(_cardCornerRadius * 2),
+                bottomRight: Radius.circular(_cardCornerRadius * 2),
+              ),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  colors.surface.withOpacity(0.8),
+                ],
+              ),
             ),
           ),
         ),
@@ -221,32 +246,42 @@ class _MeditationDetailScreenState extends ConsumerState<MeditationDetailScreen>
             ),
           ),
         
-        // Floating Play Button
+        // Floating Play Button (fades in with the overlay for a calmer arrival)
         Positioned(
           bottom: 20,
           left: 0,
           right: 0,
           child: Center(
-            child: GestureDetector(
-              onTap: onPlay,
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: colors.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.primary.withOpacity(0.4),
-                      blurRadius: 20,
-                      spreadRadius: 5,
+            child: AnimatedOpacity(
+              opacity: _showHeroOverlay ? 1.0 : 0.0,
+              duration: _overlayFadeDuration,
+              curve: Curves.easeInOut,
+              child: AnimatedScale(
+                scale: _showHeroOverlay ? 1.0 : 0.0,
+                duration: _overlayFadeDuration,
+                curve: Curves.easeOutCubic,
+                child: GestureDetector(
+                  onTap: onPlay,
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: colors.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.primary.withOpacity(0.4),
+                          blurRadius: 20,
+                          spreadRadius: 5,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.play_arrow,
-                  color: colors.onPrimary,
-                  size: 40,
+                    child: Icon(
+                      Icons.play_arrow,
+                      color: colors.onPrimary,
+                      size: 40,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -431,7 +466,7 @@ class _MeditationDetailScreenState extends ConsumerState<MeditationDetailScreen>
                         padding: EdgeInsets.only(right: index < meditations.length - 1 ? 12 : 0),
                         child: _RelatedMeditationCard(
                           meditation: meditation,
-                          onTap: () => context.go('/meditation-detail/${meditation.id}'),
+                          onTap: () => context.push('/meditation-detail/${meditation.id}'),
                         ),
                       );
                     },

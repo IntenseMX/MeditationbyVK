@@ -308,7 +308,8 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/meditation-detail/:id',
       name: 'meditation_detail',
-      pageBuilder: (context, state) => _buildPageWithTransition(
+      // Use the same calm, Hero-friendly fade style as the player screen
+      pageBuilder: (context, state) => _buildPlayerTransition(
         child: MeditationDetailScreen(
           meditationId: state.pathParameters['id'] ?? '',
         ),

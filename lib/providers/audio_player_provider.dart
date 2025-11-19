@@ -84,6 +84,8 @@ class AudioPlayerNotifier extends Notifier<AudioUiState> {
     ref.onDispose(() {
       // Block all future updates first, then cancel subscriptions
       _isMounted = false;
+      // Reset playback speed when leaving the player screen
+      unawaited(_handler.setSpeed(1.0));
       _posSub?.cancel();
       _durSub?.cancel();
       _stateSub?.cancel();

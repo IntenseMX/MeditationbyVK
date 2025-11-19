@@ -282,7 +282,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             onTap: () => context.push('/meditation-detail/${m.id}'),
                             compact: true,
                             category: category,
-                            enableHero: false,
+                            // Keep Hero enabled only for Recently Added to avoid duplicate tags
+                            enableHero: true,
                           ),
                         );
                       },
@@ -450,6 +451,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             onTap: () => context.push('/meditation-detail/${m.id}'),
                             compact: true,
                             category: category,
+                            // Disable Hero here to avoid duplicate tags across sections
                             enableHero: false,
                           ),
                         );
@@ -694,7 +696,8 @@ class _TrendingBeltState extends State<TrendingBelt> with SingleTickerProviderSt
               onTap: () => context.push('/meditation-detail/${meditation.id}'),
               compact: true,
               category: category,
-              enableHero: false,
+            // Infinite auto-scroll belt repeats items, so Hero must be disabled here
+            enableHero: false,
             ),
           );
         },

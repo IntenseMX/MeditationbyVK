@@ -253,6 +253,11 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
     return WillPopScope(
       onWillPop: () async {
         HapticFeedback.lightImpact();
+        // Ensure playback speed is reset when exiting the player
+        try {
+          await ref.read(audioPlayerProvider.notifier).setSpeed(1.0);
+          debugPrint('[PlayerScreen] Reset playback speed to 1.0 onWillPop');
+        } catch (_) {}
         ref.read(audioPlayerProvider.notifier).stop();
         return true;
       },
@@ -335,8 +340,13 @@ class _PlayerScreenRedesignedState extends ConsumerState<PlayerScreenRedesigned>
                       ),
                       child: IconButton(
                         icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
-                        onPressed: () {
+                        onPressed: () async {
                           HapticFeedback.lightImpact();
+                          // Ensure playback speed is reset when exiting the player
+                          try {
+                            await ref.read(audioPlayerProvider.notifier).setSpeed(1.0);
+                            debugPrint('[PlayerScreen] Reset playback speed to 1.0 on back button');
+                          } catch (_) {}
                           ref.read(audioPlayerProvider.notifier).stop();
                           context.pop();
                         },
@@ -855,6 +865,8 @@ Listen on UP by VK''';
   @override
   void dispose() {
     // Stop audio when screen is disposed
+    // Also reset speed as a final safety
+    _audio.setSpeed(1.0);
     _audio.stop();
     _sleepTimer?.cancel();
     _countdownTimer?.cancel();

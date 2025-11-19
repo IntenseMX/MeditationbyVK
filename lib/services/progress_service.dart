@@ -300,7 +300,8 @@ class ProgressService {
     if (sessions.isEmpty) return (current: 0, longest: 0);
     final days = <String>{};
     for (final s in sessions) {
-      final d = _utcDayKey(s.completedAtUtc);
+      // Use local day boundaries for streaks so they match the user's calendar
+      final d = _localDayKey(s.completedAtUtc);
       days.add(d);
     }
     final sorted = days.toList()..sort();
@@ -324,13 +325,14 @@ class ProgressService {
       prev = day;
     }
 
-    // Adjust current streak relative to today
-    final todayKey = _utcDayKey(DateTime.now().toUtc());
+    // Adjust current streak relative to today (local)
+    final todayKey = _localDayKey(DateTime.now());
+    final yesterdayKey = _localDayKey(DateTime.now().subtract(const Duration(days: 1)));
     if (prev == null) return (current: 0, longest: longest);
     if (prev == todayKey) {
       // ok
-    } else if (prev == _incrementDayKey(_utcDayKey(DateTime.now().toUtc().subtract(const Duration(days: 1))))) {
-      // prev == yesterday (already logically covered by sequence); keep current
+    } else if (prev == yesterdayKey) {
+      // Last meditation day was yesterday; keep current streak value
     } else {
       current = 0;
     }
@@ -339,6 +341,12 @@ class ProgressService {
 
   String _utcDayKey(DateTime dtUtc) {
     final d = DateTime.utc(dtUtc.year, dtUtc.month, dtUtc.day);
+    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
+  String _localDayKey(DateTime dt) {
+    final local = dt.toLocal();
+    final d = DateTime(local.year, local.month, local.day);
     return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   }
 
