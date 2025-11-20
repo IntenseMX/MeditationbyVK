@@ -20,25 +20,31 @@ class MoodConfig {
       id: 'calm',
       name: 'Calm Me',
       tagline: 'Calm your mind',
-      description: 'A gentle reset for restless thoughts. Breathe deeper, soften your nervous system, and return to ease.',
+      description:
+          'A gentle reset for restless thoughts. Breathe deeper, soften your nervous system, and return to ease.',
       icon: Icons.self_improvement,
       categoryIds: <String>['stress', 'anxiety'],
+      tags: <String>['calm', 'reset', 'soothe', 'music'],
     ),
     Mood(
       id: 'focus',
       name: 'Focus',
       tagline: 'Sharpen your focus',
-      description: 'Cut through mental noise and find your flow. Center your attention and channel calm, steady energy.',
+      description:
+          'Cut through mental noise and find your flow. Center your attention and channel calm, steady energy.',
       icon: Icons.psychology,
       categoryIds: <String>['focus', 'productivity'],
+      tags: <String>['focus', 'flow', 'productivity', 'music'],
     ),
     Mood(
       id: 'sleep',
       name: 'Sleep',
       tagline: 'Sleep well tonight',
-      description: 'Let the day melt away as your body unwinds. Drift into deep, unhurried rest with a quiet mind.',
+      description:
+          'Let the day melt away as your body unwinds. Drift into deep, unhurried rest with a quiet mind.',
       icon: Icons.nightlight_round,
       categoryIds: <String>['sleep', 'relaxation'],
+      tags: <String>['sleep', 'night', 'unwind', 'music'],
     ),
   ];
 

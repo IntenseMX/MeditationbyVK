@@ -9,6 +9,7 @@ import '../../providers/meditations_list_provider.dart';
 import '../../providers/category_map_provider.dart';
 import '../../services/meditation_service.dart';
 import '../../providers/favorites_provider.dart';
+import '../widgets/meditation_compact_card.dart';
 
 
 class MeditationDetailScreen extends ConsumerStatefulWidget {
@@ -464,7 +465,7 @@ class _MeditationDetailScreenState extends ConsumerState<MeditationDetailScreen>
                       final meditation = meditations[index];
                       return Padding(
                         padding: EdgeInsets.only(right: index < meditations.length - 1 ? 12 : 0),
-                        child: _RelatedMeditationCard(
+                        child: MeditationCompactCard(
                           meditation: meditation,
                           onTap: () => context.push('/meditation-detail/${meditation.id}'),
                         ),
@@ -748,118 +749,6 @@ class _InfoTag extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _RelatedMeditationCard extends StatelessWidget {
-  const _RelatedMeditationCard({
-    required this.meditation,
-    required this.onTap,
-  });
-
-  final dynamic meditation;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    final String title = (meditation.title as String?)?.trim() ?? 'Untitled';
-    final String imageUrl = (meditation.imageUrl as String?) ?? '';
-    final int? durationSec = meditation.durationSec as int?;
-    final bool isPremium = (meditation.isPremium as bool?) ?? false;
-
-    String formatMinutes(int? seconds) {
-      if (seconds == null || seconds <= 0) return '5 min';
-      final minutes = (seconds / 60).ceil();
-      return '$minutes min';
-    }
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 140,
-        decoration: BoxDecoration(
-          color: colors.surface.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colors.outline.withOpacity(0.2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-              child: imageUrl.isEmpty
-                  ? Container(
-                      height: 80,
-                      color: colors.surfaceVariant,
-                      child: Icon(Icons.spa, size: 40, color: colors.onSurfaceVariant),
-                    )
-                  : Image.network(
-                      imageUrl,
-                      height: 80,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-            ),
-            
-            // Content
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colors.onSurface,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          formatMinutes(durationSec),
-                          style: textTheme.labelSmall?.copyWith(
-                            color: colors.onSurfaceVariant,
-                          ),
-                        ),
-                        if (isPremium)
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.workspace_premium,
-                                color: Colors.amber,
-                                size: 14,
-                              ),
-                              const SizedBox(width: 2),
-                              Text(
-                                'Plus',
-                                style: GoogleFonts.norican(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

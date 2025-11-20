@@ -289,20 +289,21 @@ Note (2025-10-23):
 - Data: Consumes `meditationByIdProvider` + `categoryMapProvider` via Riverpod
 - Theme-aware: All colors via `Theme.of(context).colorScheme` (no hardcoded colors)
 
-### Mood System (2025-11-17)
+### Mood System (2025-11-20)
 
 - Added mood-based discovery flow with 3D carousel and detail screen
 - Route: `/mood/:moodId` (app_router.dart)
 - Files:
-  - `lib/domain/mood.dart` – Domain model (UI-agnostic)
-  - `lib/config/moods.dart` – Hardcoded MVP moods + card constants
+  - `lib/domain/mood.dart` – Domain model (UI-agnostic, now includes `tags` for future filtering/UI chips)
+  - `lib/config/moods.dart` – Hardcoded MVP moods (Calm, Focus, Sleep) + card constants + mood tags
   - `lib/presentation/widgets/mood_carousel_3d.dart` – 3D fan deck
-  - `lib/presentation/screens/mood_detail_screen.dart` – Decorative header + related meditations (filtered by categories)
+  - `lib/presentation/screens/mood_detail_screen.dart` – Decorative header + recommended meditations strip using compact cards
 - Home order: Recently Added → Mood Carousel → Trending → Recommended
 - Data: `MeditationService.streamByCategoryIds(categoryIds)` with composite index
 - Theme-aware gradients derived from `colorScheme` (no hardcoded colors)
+- Recommended meditations in mood detail reuse the same compact card visual language as meditation detail related content (`MeditationCompactCard`).
 
-Last Updated: 2025-11-18
+Last Updated: 2025-11-20
 
 ### Mood Carousel Rewrite (2025-11-18)
 

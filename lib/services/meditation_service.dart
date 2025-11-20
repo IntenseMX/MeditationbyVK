@@ -375,6 +375,50 @@ class MeditationService {
   // Holds the last document cursor for subsequent pagination calls
   PagedResult emptyPage() => const PagedResult(items: <MeditationListItem>[], lastDoc: null);
 
+  // Stream newest published meditations whose tags overlap (case-insensitive) with any of the provided tags.
+  // Used for mood-based recommendations where moods define semantic tags instead of categories.
+  Stream<List<MeditationListItem>> streamByTags(List<String> tags, {int limit = 20}) {
+    if (tags.isEmpty) {
+      return streamTrending(limit: limit);
+    }
+
+    final Set<String> loweredTags = tags
+        .map((t) => t.trim().toLowerCase())
+        .where((t) => t.isNotEmpty)
+        .toSet();
+    if (loweredTags.isEmpty) {
+      return streamTrending(limit: limit);
+    }
+
+    // Fetch a reasonable window of newest published meditations and filter client-side by tags (case-insensitive).
+    final Query<Map<String, dynamic>> q = _firestore
+        .collection('meditations')
+        .where('status', isEqualTo: 'published')
+        .orderBy('publishedAt', descending: true)
+        .limit(60);
+
+    return q.snapshots().map((snap) {
+      final List<MeditationListItem> out = <MeditationListItem>[];
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final List<String> meditationTags = (data['tags'] as List<dynamic>?)
+                ?.map((t) => t.toString().trim().toLowerCase())
+                .where((t) => t.isNotEmpty)
+                .toList(growable: false) ??
+            const <String>[];
+
+        final bool hasOverlap = meditationTags.any(loweredTags.contains);
+        if (hasOverlap) {
+          out.add(MeditationListItem.fromDoc(doc));
+          if (out.length >= limit) {
+            break;
+          }
+        }
+      }
+      return out;
+    });
+  }
+
   // Bulk operations using WriteBatch and atomic version increments
   Future<void> bulkPublish(List<String> ids) async {
     if (ids.isEmpty) return;

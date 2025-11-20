@@ -10,6 +10,7 @@ class Mood {
   final String description;
   final IconData icon;
   final List<String> categoryIds;
+  final List<String> tags;
 
   const Mood({
     required this.id,
@@ -18,6 +19,7 @@ class Mood {
     required this.description,
     required this.icon,
     required this.categoryIds,
+    required this.tags,
   });
 }
 

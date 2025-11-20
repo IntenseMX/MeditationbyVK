@@ -52,7 +52,7 @@ Theme Mode Persistence (2025-11-03)
 
 This document provides concise descriptions of all systems, services, and features in the Meditation by VK application.
 
-**Last Updated**: 2025-11-18
+**Last Updated**: 2025-11-20
 
 ### Performance & UX Updates (2025-11-10)
 
@@ -127,14 +127,18 @@ This document provides concise descriptions of all systems, services, and featur
 - Consumes `meditationByIdProvider(id)` and `categoryMapProvider` for real-time Firestore data
 - Loading/error/unavailable states with themed placeholders
 
-### Mood System (2025-11-17)
-- `lib/domain/mood.dart`: Mood model (id, name, tagline, description, icon, categoryIds)
-- `lib/config/moods.dart`: MVP hardcoded moods (Calm, Focus, Sleep) + card constants
+### Mood System (2025-11-20)
+- `lib/domain/mood.dart`: Mood model (id, name, tagline, description, icon, categoryIds, tags)
+- `lib/config/moods.dart`: MVP hardcoded moods (Calm, Focus, Sleep) + card constants + mood tags for future filtering/UI
 - `lib/presentation/widgets/mood_carousel_3d.dart`: 3D fan deck carousel (Stack-based, 3-card)
-- `lib/presentation/screens/mood_detail_screen.dart`: Decorative gradient header, actions, related meditations
+- `lib/presentation/screens/mood_detail_screen.dart`: Decorative gradient header, actions, recommended meditations using compact cards
 - `lib/services/meditation_service.dart`: `streamByCategoryIds(List<String> ids, {int limit})` for multi-category filtering
 - Home insertion: Recently Added → Mood Carousel → Trending → Recommended
 - Routing: `/mood/:moodId` added in `presentation/app_router.dart`
+
+### MeditationCompactCard (2025-11-20)
+- `lib/presentation/widgets/meditation_compact_card.dart`: Shared compact meditation card for horizontal belts (thumbnail, title, duration, premium badge)
+- Used by `MeditationDetailScreen` related section and `MoodDetailScreen` recommended strip for consistent visuals
 
 ### Mood Carousel Rewrite (2025-11-18)
 - Replaced `PageView` with Stack of 3 visible cards (+1 hidden) for precise control

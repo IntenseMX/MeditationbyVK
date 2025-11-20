@@ -9,6 +9,7 @@ import '../../providers/category_map_provider.dart';
 import '../../providers/meditations_list_provider.dart';
 import '../../services/meditation_service.dart';
 import '../widgets/meditation_card.dart';
+import '../widgets/meditation_compact_card.dart';
 import '../../core/theme.dart';
 
 class MoodDetailScreen extends ConsumerStatefulWidget {
@@ -121,7 +122,7 @@ class _MoodDetailScreenState extends ConsumerState<MoodDetailScreen> {
                 const SizedBox(height: _sectionSpacing),
                 // Related meditations header
                 Text(
-                  'Related',
+                  'Recommended for this mood',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -130,9 +131,9 @@ class _MoodDetailScreenState extends ConsumerState<MoodDetailScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Related meditations list
+                // Related meditations list (horizontal strip of compact cards, tag-based)
                 StreamBuilder<List<MeditationListItem>>(
-                  stream: svc.streamByCategoryIds(mood.categoryIds, limit: 10),
+                  stream: svc.streamByTags(mood.tags, limit: 10),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: Padding(
@@ -147,33 +148,22 @@ class _MoodDetailScreenState extends ConsumerState<MoodDetailScreen> {
                         style: TextStyle(color: cs.onSurfaceVariant),
                       );
                     }
-                    final colors = Theme.of(context).colorScheme;
-                    final gradient = <int>[colors.primary.value, colors.tertiary.value];
-                    return ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: items.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final m = items[index];
-                        final minutes = _minutesFromSeconds(m.durationSec);
-                        final category = _resolveCategoryName(m.categoryId, categoryMap);
-                        return SizedBox(
-                          height: 140,
-                          child: MeditationCard(
-                            id: m.id,
-                            title: m.title,
-                            duration: minutes,
-                            imageUrl: m.imageUrl ?? '',
-                            gradientColors: gradient,
-                            isPremium: m.isPremium ?? false,
-                            onTap: () => context.push('/meditation-detail/${m.id}'),
-                            compact: true,
-                            category: category,
-                            enableHero: false,
-                          ),
-                        );
-                      },
+                    return SizedBox(
+                      height: 160,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final m = items[index];
+                          return Padding(
+                            padding: EdgeInsets.only(right: index < items.length - 1 ? 12 : 0),
+                            child: MeditationCompactCard(
+                              meditation: m,
+                              onTap: () => context.push('/meditation-detail/${m.id}'),
+                            ),
+                          );
+                        },
+                      ),
                     );
                   },
                 ),
